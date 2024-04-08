@@ -1,0 +1,39 @@
+<!--Modal to confirm removing a user-->
+
+@using Models.Entities
+<ResultModal TResult="bool" @ref="_resultModal">  
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Confirm removal</h5>
+        <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+    </div>   
+    @if (_user != null)
+    {
+        <div class="modal-body">
+            Are you sure you would like to remove @_user.FirstName @_user.LastName?
+        </div>
+    }
+    <div class="modal-footer">     
+        <ResultButton Value="true" id="close-modal" class="btn btn-outline-secondary">
+            Close
+        </ResultButton>
+        <ResultButton Value="false" id="confirm-user-removal" class="btn btn-danger">
+            Confirm
+        </ResultButton>    
+    </div>  
+</ResultModal>
+
+@code {
+    private ResultModal<bool> _resultModal;
+
+    private User _user;
+
+    /// <summary>
+    /// Updates the state of the user, sets hasConfirmed to false and displays the modal.
+    /// </summary>
+    /// <param name="user">User to update state to</param>
+    /// <returns>Task of bool that is true if modal if selection is cancelled, otherwise false</returns>
+    public async Task<bool> Show(User user) {
+        _user = user;
+        return await _resultModal.Show();
+    }
+}

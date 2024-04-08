@@ -1,0 +1,153 @@
+@using ScrumBoard.Models.Statistics
+@using ScrumBoard.Models.Messages
+@using ScrumBoard.Services
+@using System.Drawing
+
+<div class="card p-2 mb-4">
+    <div class="card-body">
+        <div class="card-title">
+            <h5 id="stat-card-title">@Title</h5>
+        </div>
+        @if (Statistic != null)
+        {
+            <div class="row d-flex align-items-center">
+                <div class="col-auto position-relative">
+                    <div>
+                        <canvas id="chart" @ref="_canvasReference"/>
+                    </div>
+                    @if (Statistic.Population != 0)
+                    {
+                        <div class="position-absolute" style="left: 50%; top: 50%; transform: translate(-50%, -50%)">
+                            @(Math.Round(100 * Statistic.Value / Statistic.Population))%
+                        </div>
+                    }
+                </div>
+                <div id="stat-card-text" class="col text-center">
+                    @foreach (var token in Statistic.GenerateMessage())
+                    {
+                        <DynamicComponent Type="token.Component" Parameters="GetParams(token)"/>
+                    }
+                </div>
+            </div>
+
+        }
+        else
+        {
+            <LoadingSpinner/>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+    
+    [Parameter]
+    public IStatistic Statistic { get; set; }
+    
+    [Inject]
+    protected IJsInteropService JsInteropService { get; set; }
+
+    private Dictionary<string, object> GetParams(IMessageToken token)
+    {
+        return new Dictionary<string, object>
+        {
+            ["Token"] = token,
+        };
+    }
+    
+    private ElementReference _canvasReference;
+    
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
+    {
+        if (Statistic != null)
+        {
+            await UpdateChart();
+        }   
+    }
+    
+    private async Task UpdateChart()
+    {
+        var remainder = Statistic.Population - Statistic.Value;
+        var valueColor = ColorTranslator.ToHtml(Color.DodgerBlue);
+        var populationColor = ColorTranslator.ToHtml(Color.Gray);
+        var populationBorder = ColorTranslator.ToHtml(Color.Gray);
+
+        // Create an anonymous type with all the options that need to be sent to Chart.js
+        if (Statistic.Population == 0)
+        {
+            remainder = 1;
+            populationColor = ColorTranslator.ToHtml(Color.White);
+            populationBorder = ColorTranslator.ToHtml(Color.LightSlateGray);
+        }
+
+        var config = new
+        {
+            Type = "doughnut",
+            Options = new
+            { 
+                Responsive = true,
+                AspectRatio = 1,
+                Cutout = 40, 
+                Layout = new
+                {
+                    AutoPadding = false,
+                    Padding = 0,
+                },
+                Plugins = new
+                {
+                    Tooltip = new
+                    {
+                        Enabled = false
+                    },
+                    Hover = new
+                    {
+                        Filter = new
+                        {
+                            Type = "none"
+                        }
+                    }
+                }
+            },
+            Data = new
+            {
+                Datasets = new object[]
+                {
+                    new
+                    {
+                        Data = new object[] 
+                        {
+                            new 
+                            {
+                                Value = Statistic.Value
+                            }, 
+                            new 
+                            {
+                                Value = remainder
+                            }
+                        }, 
+                        BackgroundColor = new[]
+                        {
+                            valueColor,
+                            populationColor
+                        }, 
+                        BorderColor = new[]
+                        {
+                            valueColor, 
+                            populationBorder
+                        }, 
+                        BorderWidth = 0.5,
+                        HoverBackgroundColor = new[] 
+                        {
+                            valueColor, 
+                            populationColor
+                        }
+                    }
+                }
+            }
+        };
+
+        await JsInteropService.ChartSetup(_canvasReference, config);
+    }
+}

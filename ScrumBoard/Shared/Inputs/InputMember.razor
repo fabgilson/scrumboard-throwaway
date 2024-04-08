@@ -1,0 +1,159 @@
+<!--Input to select users from a dropdown, and displays selected user avatars and names as tooltips when hovered-->
+
+@using Models
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+
+<div class="m-2" @attributes="AdditionalAttributes">
+    @foreach (User user in Value)
+    {
+        <span id="user-@user.Id" class="text avatar-container">
+            @if(!NoTooltip) 
+            {
+                <div class="name-tooltip display-content" style="font-size: small;">@user.FirstName @user.LastName</div>
+            }
+            <UserAvatar class="avatar" User="user"/>
+            @if (!Disabled)
+            {
+                <button
+                    id="remove-user-button"
+                    type="button"
+                    class="remove-button display-content text-light bi bi-x"
+                    @onclick="() => RemoveUser(user)">
+                </button>
+            }
+        </span>
+    }
+    @if (Value.Count < MaxUsers && !Disabled)
+    {
+        <button
+            type="button"
+            class="add-user btn btn-light bi bi-plus rounded-circle"
+            id="user-menu-button"
+            aria-expanded="false"
+            data-bs-toggle="dropdown"
+            style="max-width: 2.5rem;max-height:2.5rem;"
+            @onclick="ShowDropdown">
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="user-menu-button" style="z-index: 1001;">
+            @if(_allUsers != null) {
+                @foreach (User user in UnselectedUsers)
+                {
+                    <li>
+                        <button class="dropdown-item" type="button" id="@IdPrefix-user-select-@user.Id" @onclick="() => SelectUser(user)">
+                            @user.FirstName @user.LastName
+                        </button>
+                    </li>
+                }
+                @if(!UnselectedUsers.Any())
+                {
+                    <li>
+                        <button class="dropdown-item disabled" type="button">
+                            No users available
+                        </button>
+                    </li>
+                }
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+
+    /// <summary> List of users that may be selected either from "AllUsers" or from "UserProvider" </summary>
+    private ICollection<User> _allUsers;
+
+    /// <summary> List of users that may be selected </summary>
+    [Parameter]
+    public ICollection<User> AllUsers { get; set; } = new List<User>();
+
+    /// <summary> 
+    /// Alternative method for specifying the users that may be selected via a callback triggered when the dropdown opens
+    /// </summary>
+    [Parameter]
+    public Func<Task<ICollection<User>>> UserProvider { get; set; }
+
+    [Parameter]
+    public ICollection<User> Value { get; set; } = new List<User>();
+
+    [Parameter]
+    public EventCallback<ICollection<User>> ValueChanged { get; set; }
+
+    [Parameter]
+    public int MaxUsers { get; set; } = 2;
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    [Parameter]
+    public string IdPrefix { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public bool NoTooltip { get; set; }
+
+    private ICollection<User> UnselectedUsers {
+        get {
+            var selectedUserIds = new HashSet<long>(Value.Select(u => u.Id));
+            return _allUsers
+                .Where(user => !selectedUserIds.Contains(user.Id))
+                .OrderBy(user => user.Id == Self.Id ? 0 : 1) // Ensure current user is shown first
+                .ThenBy(user => user.FirstName)
+                .ThenBy(user => user.LastName)
+                .ToList();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (UserProvider != null) {
+            if (AllUsers.Any()) {
+                throw new InvalidOperationException("Cannot provide both AllUsers and UserProvider");
+            }
+            _allUsers = null;
+        } else {
+            _allUsers = AllUsers;
+        }
+    }
+
+    /// <summary>
+    /// If The user provider is not null and allUsers is null, 
+    /// set allUsers to return value of UserProvider
+    /// </summary>
+    /// <returns>Task to be completed</returns>
+    private async Task ShowDropdown()
+    {
+        if (UserProvider != null && _allUsers == null) {
+            _allUsers = await UserProvider();
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Adds a user to the list of users and calls InvokeAsync on ValueChanged with 
+    /// the updated list of users.
+    /// </summary>
+    /// <param name="user">User to be added to the list Value</param>
+    /// <returns>Task to be completed</returns>
+    private async Task SelectUser(User user)
+    {
+        Value.Add(user);
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    /// <summary>
+    /// Removes given user from the list and calls InvokeAsync on ValueChanged with
+    /// the updated list of users.
+    /// </summary>
+    /// <param name="user">User to be removed from the list Value</param>
+    /// <returns>Task to be completed</returns>
+    private async Task RemoveUser(User user)
+    {
+        Value.Remove(user);
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

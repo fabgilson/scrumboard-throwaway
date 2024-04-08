@@ -1,0 +1,125 @@
+@using ScrumBoard.Shared.Inputs
+@if (_announcementForm is not null)
+{
+    <EditForm Model="@_announcementForm" OnValidSubmit="@HandleValidSubmit">
+        <DataAnnotationsValidator/>
+
+        <div class="col col-sm-auto mt-2 mt-sm-0 form-group">
+            <div class="row">
+                <div class="col">
+                    <label class="text-muted">Description</label>
+                    <InputMarkdown
+                        id="description-input"
+                        class="form-control text-area-expand"
+                        placeholder="Enter announcement message (Markdown supported)"
+                        UpdateOnInput="true"
+                        @bind-Value="_announcementForm.Content"/>
+                    <ValidationMessage For="@(() => _announcementForm.Content)" id="content-validation-message"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="col mt-2 form-group">
+            <InputCheckbox @bind-Value="HasStartDate" /> Has start date / time
+            <span
+                class="bi bi-info rounded-circle"
+                style="color: #fff; background-color: #5c96ff; border-color: #5c96ff;"
+                id="start-sprint-date-tooltip"
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Check this box to specify a start date and time for the announcement to show. If you wish to show the announcement immediately, leave this unchecked."/>
+            @if (HasStartDate)
+            {
+                <DateTimePicker
+                    DateLabel="Start date"
+                    TimeLabel="Start time"
+                    @bind-Value="_announcementForm.Start"/>
+                <ValidationMessage For="@(() => _announcementForm.Start)" id="start-validation-message"/>
+            }
+        </div>
+
+        <div class="col mt-2 form-group">
+            <InputCheckbox @bind-Value="HasEndDate" /> Has end date / time
+            <span
+                class="bi bi-info rounded-circle"
+                style="color: #fff; background-color: #5c96ff; border-color: #5c96ff;"
+                id="end-sprint-date-tooltip"
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Check this box to specify when the announcement will stop showing. If you wish to show the announcement indefinitely (i.e until it is manually archived) then leave this unchecked."/>
+            @if (HasEndDate)
+            {
+                <DateTimePicker
+                    DateLabel="End date"
+                    TimeLabel="End time"
+                    @bind-Value="_announcementForm.End"/>
+                <ValidationMessage For="@(() => _announcementForm.End)" id="end-validation-message"/>
+            }
+        </div>
+
+        <div class="col mt-2 form-group">
+            <InputCheckbox @bind-Value="_announcementForm.CanBeHidden"/> Allow users to hide the announcement
+            <span
+                class="bi bi-info rounded-circle"
+                style="color: #fff; background-color: #5c96ff; border-color: #5c96ff;"
+                id="end-sprint-date-tooltip"
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Check this box to allow a user to hide the announcement. Users can only hide announcements for themselves."/>
+        </div>
+
+        @if (PreviewAnnouncement is not null)
+        {
+            <div class="card p-2 my-3">
+                <h5>Announcement preview:</h5>
+                <AnnouncementDisplay Announcement=PreviewAnnouncement />
+                <div class="row">
+                    <span>
+                        <strong>Starts showing: </strong>@StartShowingPreviewText
+                    </span>
+                </div>
+                <div class="row">
+                    <span>
+                        <strong>Stops showing: </strong>@StopShowingPreviewText
+                    </span>
+                </div>
+                <ValidationSummary/>
+            </div>
+        }
+
+        @if (!_isNewAnnouncement)
+        {
+            <div class="col mt-2 form-group">
+                <InputCheckbox @bind-Value="_announcementForm.ManuallyArchived"/> Is archived
+                <span
+                    class="bi bi-info rounded-circle"
+                    style="color: #fff; background-color: #5c96ff; border-color: #5c96ff;"
+                    id="end-sprint-date-tooltip"
+                    data-toggle="tooltip"
+                    data-placement="top"
+                    title="Check this box to archive the announcement, meaning it will no longer be shown to anyone."/>
+            </div>
+        }
+
+        <button class="btn btn-primary mt-2 me-2" type="submit">@(_isNewAnnouncement ? "Submit" : "Update")</button>
+        @if (!_isNewAnnouncement)
+        {
+            if (CancelCallback.HasDelegate)
+            {
+                <button class="btn btn-secondary mt-2 mw-2" type="button" @onclick="HandleCancel">Cancel</button>
+            }
+            else
+            {
+                <button class="btn btn-success mt-2 mw-2" type="button" @onclick="HandleCancel">Create another announcement</button>
+            }
+        }
+
+        @if(!string.IsNullOrEmpty(_submitMessage))
+        {
+            <div class="col mt-2 form-group">
+                @_submitMessage
+            </div>
+        }
+
+    </EditForm>
+}

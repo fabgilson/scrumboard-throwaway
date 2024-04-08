@@ -1,0 +1,63 @@
+﻿@attribute [Route(PageRoutes.AdminDashboard)]
+
+@using ScrumBoard.Shared.Announcements
+@using ScrumBoard.Shared.ProjectFeatureFlags
+@using ScrumBoard.Services
+@inject IConfigurationService ConfigurationService
+
+@attribute [Authorize(Roles = "GlobalProjectAdmin,SystemAdmin")]
+
+<div class="row mb-5 border-bottom mx-auto align-content-center text-center">
+  <h1>Admin control panel</h1>
+  <p class="text-body">
+    This page contains a series of controls where administrators can perform site-wide actions - <strong>proceed with caution</strong>.
+  </p>
+</div>
+<div class="col px-3" id="adminDashboardCollapse">
+  <div class="row" id="announcementHeader">
+    <div class="col">
+      <h2>Announcements</h2>
+      <p class="text-body">Manage site-wide announcements.</p>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#announcementCollapse" aria-expanded="true" aria-controls="announcementCollapse">
+        Show / Hide
+      </button>
+    </div>
+  </div>
+  <div id="announcementCollapse" class="collapse" aria-labelledby="announcementHeader" data-bs-parent="#adminDashboardAccordion">
+    <AnnouncementManagementComponent/>
+  </div>
+  @if (ConfigurationService.StudentGuideEnabled)
+  {
+    <div class="row border-top pt-3 mt-3" id="studentGuideHeader">
+      <div class="col">
+        <h2>Student guide</h2>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#studentGuideCollapse" aria-expanded="true" aria-controls="studentGuideCollapse">
+          Show / Hide
+        </button>
+      </div>
+    </div>
+    <div id="studentGuideCollapse" class="collapse" aria-labelledby="studentGuideHeader" data-bs-parent="#adminDashboardAccordion">
+      <StudentGuideManagementComponent/>
+    </div>
+  }
+  <div class="row border-top pt-3 mt-3" id="featureFlagsHeader">
+    <div class="col">
+      <h2>Feature flags</h2>
+      <p class="text-body">Enable or disable features per-project.</p>
+    </div>
+    <div class="col-auto">
+      <button id="toggle-feature-flags-button" class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#featureFlagsCollapse" aria-expanded="true" aria-controls="featureFlagsCollapse">
+        Show / Hide
+      </button>
+    </div>
+  </div>
+  <div id="featureFlagsCollapse" class="collapse" aria-labelledby="featureFlagsHeader" data-bs-parent="#adminDashboardAccordion">
+    <ProjectFeatureFlagManagementComponent />
+  </div>
+</div>
+
+

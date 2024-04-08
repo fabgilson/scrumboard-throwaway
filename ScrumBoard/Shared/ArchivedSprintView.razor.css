@@ -1,0 +1,11 @@
+.show-hide-button:not(.collapsed)::after {
+    content: "Hide Stories";
+}
+
+.show-hide-button::after {
+    content: "Show Stories";
+}
+
+.list-group .list-group-item:first-child {
+    border-top: 0px;
+}

@@ -1,0 +1,31 @@
+<div @attributes="_attributes" role="progressbar" style="@Style" aria-valuemin="0" aria-valuenow="@Value" aria-valuemax="@Total">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter(Name = "Total")]
+    public double Total { get; set; }
+
+    [Parameter] 
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public double Value { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+    private double Proportion => Total == 0 ? 0 : (Value / Total);
+
+    private string Style => $"position: absolute; left: {Proportion * 100}%; width: 300px; margin-left: -150px;";
+
+    private Dictionary<string, object> _attributes = new();
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _attributes = new Dictionary<string, object>(AdditionalAttributes);
+
+        _attributes.TryGetValue("class", out var klass);
+        _attributes["class"] = $"{klass} progress-bar";
+    }
+}

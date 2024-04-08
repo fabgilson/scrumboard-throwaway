@@ -1,0 +1,16 @@
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+<ul class="list-group rounded-0 rounded-bottom custom-list border-bottom" style="max-height: 22rem;overflow-y:auto;min-width: 0">
+        @foreach (var association in Project?.MemberAssociations ?? new List<ProjectUserMembership>())
+        {
+            if (OnlyShowSingleRole && association.Role != AllowedRole)
+            {
+                continue;
+            }
+            <li class="list-group-item" style="min-width: 0">
+                <UserListItem User=@association.User>
+                    @association.Role
+                </UserListItem>
+            </li>
+        }
+    </ul>     

@@ -1,0 +1,176 @@
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.UserStoryTask" ResourceId="IsNewTask ? -1 : Task.Id"/>
+<EditForm id="edit-task-form" Model="Model" OnValidSubmit="OnSubmitForm">
+    @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+    <DataAnnotationsValidator />
+    <div @ref="ContainerDivReference">
+        <div class="row mb-2 align-items-start">
+            <div class="col">
+                <div class="input-group">
+                    <EagerInputTextArea
+                        id="name-input" 
+                        class="@NameCssClasses" 
+                        placeholder="Enter Name"
+                        style="font-size: 1.5rem;"
+                        rows="1"
+                        @bind-Value="Model.Name"
+                        Disabled="IsReadOnly"
+                    />
+                </div>
+                <ValidationMessage For="@(() => Model.Name)" id="name-validation-message"/>
+            </div> 
+            @if(!IsNewTask) {
+                <div class="col-auto">
+                    <button 
+                        id="close-button" 
+                        type="button" 
+                        class="btn-close" 
+                        tabindex="-1" 
+                        aria-label="Close" 
+                        @onclick="OnClose"
+                    />
+                </div>   
+            }                    
+        </div>
+        <div class="row">
+            <div class="col-sm pb-2">
+                <div class="col">
+                    <div class="input-group">
+                        <EagerInputTextArea 
+                            id="description-input"
+                            type="text" 
+                            class="@("form-control hide-valid" + (IsReadOnly ? "" : " text-area-expand") + (IsEditingDescription ? "" : " transparent-input"))" 
+                            placeholder="Enter Description" 
+                            @bind-Value="Model.Description"
+                            Disabled="IsReadOnly"
+                        />
+                    </div>
+                    <ValidationMessage For="@(() => Model.Description)" id="description-validation-message" />
+                </div>
+            </div>
+            <div class="col-sm-auto">
+                <div class="row">
+                    @if(!IsNewTask) 
+                    {
+                        <div class="ms-auto col-auto col-sm-auto ps-0 d-flex align-items-center">
+                            <h4 class="p-0 my-2">
+                                <TaskStatusChanger
+                                    id="status-changer"
+                                    @bind-Value="Model.Stage"
+                                    Disabled="IsReadOnly || !IsSprintStarted"
+                                />
+                            </h4>                        
+                        </div>
+                    }          
+                </div>
+                <div class="row align-items-center mb-2">
+                    <div class="col-auto pe-0 me-0 text-muted" style="width: 6rem">
+                        Priority
+                    </div>
+                    <div class="col">
+                        <InputPriority
+                            id="priority-input"
+                            @bind-Value="Model.Priority"
+                            Disabled="IsReadOnly"/>
+                    </div>
+                </div>
+                <ValidationMessage For="@(() => Model.Priority)" id="priority-validation-message"/>
+                <div class="row align-items-center mb-2">
+                    <div class="col-auto pe-0 me-0 text-muted text-nowrap" style="width: 6rem;">
+                        Complexity
+                    </div>
+                    <div class="col" style="width: 8rem;">
+                        <InputComplexity
+                            id="complexity-input"
+                            @bind-Value="Model.Complexity"
+                            Disabled="IsReadOnly"/>
+                    </div>
+                </div>
+                <ValidationMessage For="@(() => Model.Complexity)" id="complexity-validation-message"/>
+                <div class="row align-items-center">
+                    <div class="col-auto pe-0 me-0 text-muted" style="width: 6rem">
+                        Estimate
+                    </div>
+                    <div class="col">
+                        <InputDuration
+                            id="estimate-input"
+                            placeholder="e.g. 1h 10m"
+                            class="form-control hide-valid text-end"
+                            style="max-width: 7.5rem;"
+                            @bind-Value="Model.Estimate"
+                            Disabled="IsReadOnly"/>
+                    </div>
+                </div>
+                <ValidationMessage For="@(() => Model.Estimate)" id="estimate-validation-message" style="max-width: 13rem;"/>
+            </div>
+            <div class="row mt-2">
+                <div class="col-auto d-flex align-items-center">
+                    <InputTag 
+                        TTag="UserStoryTaskTag" 
+                        @bind-Value="Model.Tags" 
+                        Disabled="IsReadOnly"
+                        TagProvider="UserStoryTaskTagRepository.GetAllAsync()"
+                        />                
+                </div>
+                <ValidationMessage For="@(() => Model.Tags)" id="tags-validation-message" />
+            </div>             
+            <div class="row mb-1">                
+                <div class="col-auto d-flex align-items-center">
+                    <span class="label text-muted">Assigned To:</span>
+                    <InputMember 
+                        id="assignee-select"      
+                        IdPrefix="assignee"                 
+                        AllUsers="@ValidAssignees"                      
+                        @bind-Value="Model.Assignees"
+                        Disabled="IsReadOnly"
+                    />
+                </div> 
+                <span class="col-auto d-flex align-items-center">
+                    <span class="label text-muted">Reviewers:</span>
+                    <InputMember 
+                        id="reviewer-select" 
+                        IdPrefix="reviewer"                   
+                        AllUsers="@ValidReviewers"                     
+                        @bind-Value="Model.Reviewers"
+                        Disabled="IsReadOnly"
+                    />
+                </span>
+            </div>
+            @if(_isEditing)
+            {
+                <div class="row mb-3 justify-content-end mt-2 gx-2">
+                    @if (_saveError) {            
+                        <div class="col-auto" style="font-size:small;line-height: 35px;">
+                            <span class="text-danger" id="task-concurrency-error">Task has been updated while you were editing. Please reopen and try again.</span>
+                        </div>                   
+                    }  
+                    <div class="col-auto">
+                        <button class="btn btn-outline-secondary" type="button" @onclick="OnCancelPressed" id="cancel-button">
+                            Cancel
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" type="submit" id="save-button">
+                            @(IsNewTask ? "Create" : "Save")
+                        </button>
+                    </div>
+                </div>
+            }
+            <div class="row pe-0">
+            @if (!IsNewTask) 
+            {
+                <CascadingValue Value="AddingWorklog" Name="AddingWorklog">
+                    <TaskTabs Task="Task" WorklogEntryFocusedOnInit="WorklogEntryFocusedOnInit" OnUpdate="async () => await OnUpdate.InvokeAsync(_task.Id)"/>
+                </CascadingValue>
+            }
+        </div>
+        </div>
+    </div>
+</EditForm>
+
+<UpdateStoryStageModal @ref="UpdateStoryStageModal"></UpdateStoryStageModal>

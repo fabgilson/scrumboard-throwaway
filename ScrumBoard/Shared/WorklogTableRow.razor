@@ -1,0 +1,80 @@
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+<!-- A component to display a single row of the worklog table -->
+
+<tr id="table-row-@Entry.WorklogId" class="worklog-table-entry selectable" @onclick="() => OnSelected.InvokeAsync(Entry)">
+    @foreach (var column in Columns)
+    {
+        <td id="entry-@Entry.WorklogId-@column">
+            @switch (column) {
+                case TableColumn.Occurred:
+                    @Entry.Occurred
+                    break;
+                case TableColumn.Created:
+                    @Entry.Created
+                    break;
+                case TableColumn.StoryName:
+                    @Entry.StoryName
+                    break;
+                case TableColumn.TaskName:
+                    @Entry.TaskName
+                    break;
+                case TableColumn.OriginalEstimate:
+                    @DurationUtils.DurationStringFrom(Entry.OriginalEstimate)
+                    break;
+                case TableColumn.CurrentEstimate:
+                    @DurationUtils.DurationStringFrom(Entry.CurrentEstimate)
+                    break;
+                case TableColumn.TimeSpent:
+                    @DurationUtils.DurationStringFrom(Entry.TimeSpent)
+                    break;
+                case TableColumn.TimeRemaining:
+                    @DurationUtils.DurationStringFrom(Entry.TimeRemaining)
+                    break;
+                case TableColumn.TotalTimeSpent:
+                    @DurationUtils.DurationStringFrom(Entry.TotalTimeSpent)
+                    break;
+                case TableColumn.Assignees:
+                    <div class="row gx-0">
+                        @foreach (var assignee in Entry.Assignees)
+                        {
+                            <div class="col">
+                                <UserListItem User="assignee" Size="small"/>
+                            </div>
+                        }
+                    </div>
+                    break;
+                case TableColumn.TaskTags:                  
+                    <InputTag TTag="UserStoryTaskTag" Value="Entry.TaskTags" Disabled/>
+                    break;
+                case TableColumn.WorklogTags:
+                    <InputTag TTag="WorklogTag" Value="Entry.WorklogTags" Disabled/>
+                    break;
+                case TableColumn.IssueTags:
+                    <InputTag TTag="IssueTag" Value="Entry.IssueTags" Disabled/>
+                    break;
+                case TableColumn.Description:
+                    <Markdown Source="@Entry.Description" NoFormat/>
+                    break;    
+                default:
+                    throw new ArgumentException($"Unknown column: {column}");
+            }
+        </td>
+    }
+</tr>
+
+
+@code
+{
+    [Parameter]
+    public WorklogTableEntry Entry { get; set; }
+
+    [Parameter]
+    public EventCallback<WorklogTableEntry> OnSelected { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<TableColumn> Columns { get; set; }
+}

@@ -1,0 +1,76 @@
+﻿@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+
+<div>
+    @{ int index = 0; }
+    @foreach (var linkedProjects in _currentProjects)
+    {
+        <div class="mb-2 p-3 container">
+            <div class="row">
+                <div class="col-auto text-muted d-flex align-items-center">
+                    @(index+1)
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-auto d-flex align-items-center">
+                            <div class="text-muted">
+                                First Project
+                            </div>
+                        </div>
+                        <div class="col">
+                              <SearchableDropDown
+                                  T="Project"
+                                  AllowMultipleSelect="false"
+                                  CollapseAfterSingleItemSelected="true"
+                                  ConvertItemToStringDelegate="project => project.Name"
+                                  SearchDelegate="SearchForProjects"
+                                  StartingPrompt="Select projects for which to enable flag"
+                                  OnSingleSelect="(project) => OnProjectSelectionChanged(project, true, linkedProjects)"
+                                  GenerateButtonTextDelegate="@((i) => $"{LanguageUtils.PluraliseNoun("Project", i)} Selected")"
+                                  ButtonClickDoesNothing="true"
+                                  ClearSelectionAfterActionPerformed="false"
+                                  HideSelectorWhenOneItemIsSelected="true"
+                                  LargeSelectedEntries="true"/>              
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-center">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-auto d-flex align-items-center"> 
+                            <div class="text-muted">
+                                Second Project
+                            </div>
+                        </div>
+                        <div class="col"> 
+                            <SearchableDropDown
+                                   T="Project"
+                                   AllowMultipleSelect="false"
+                                   CollapseAfterSingleItemSelected="true"
+                                   ConvertItemToStringDelegate="project => project.Name"
+                                   SearchDelegate="SearchForProjects"
+                                   StartingPrompt="Select projects for which to enable flag"
+                                   OnSingleSelect="(project) => OnProjectSelectionChanged(project, false, linkedProjects)"
+                                   GenerateButtonTextDelegate="@((i) => $"{LanguageUtils.PluraliseNoun("Project", i)} Selected")"
+                                   ButtonClickDoesNothing="true"
+                                   ClearSelectionAfterActionPerformed="false"
+                                   HideSelectorWhenOneItemIsSelected="true"
+                                   LargeSelectedEntries="true"/>             
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-center">
+                    @{
+                        int pairIndex = index;
+                    }
+                    <button id="remove-linked-projects-@index" type="button" class="col-auto btn btn-outline-danger" @onclick="() => RemoveProjectPair(pairIndex)"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+        </div>
+        index++;
+    }
+    <button type="button" class="btn btn-outline-primary" @onclick="AddEmptyProjectPair">Add project pair</button>
+</div>

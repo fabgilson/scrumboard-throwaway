@@ -1,0 +1,11 @@
+<div class="announcements-container col" id="announcements-container">
+    @foreach (var announcement in _announcements) 
+    {
+        <div class="@((!announcement.Equals(_announcements.Last())) ? "not-last-announcement" : "")">
+            <AnnouncementDisplay Announcement="announcement" HideAnnouncementCallback="async () => await HideAnnouncement(announcement.Id)"/>
+        </div>
+    }
+</div>
+<CascadingValue Value="ForceRefreshCallback" Name="ForceAnnouncementRefresh">
+    @ChildContent
+</CascadingValue>

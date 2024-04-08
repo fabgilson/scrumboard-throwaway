@@ -1,0 +1,131 @@
+﻿@attribute [Route(PageRoutes.ViewFormResponses)]
+@attribute [Authorize(Roles = nameof(GlobalLensRole.SystemAdmin))]
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.Forms
+@using ScrumBoard.Models.Entities.Forms.Templates
+@using ScrumBoard.Shared.FormAdministration
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@using SharedLensResources
+@inherits BaseProjectScopedComponent
+
+
+@if (_assignment is null && !_forbidden)
+{
+    <LoadingSpinner />
+}
+else if (_forbidden)
+{
+    <h4 class="text-danger">You are not permitted to view this page.</h4>
+}
+else if (_assignment is not null)
+{
+    if (_assignment.AssignmentType is AssignmentType.Team)
+    {
+        <div>(Inter-team) @_assignment.Name</div>
+    }
+    else
+    {
+        <div id="filter-row" class="row mb-3">
+            <div class="col">
+                @if (_assignment.AssignmentType is AssignmentType.Individual)
+                {
+                    <span>(Individual) @_assignment.Name</span>
+                }
+                else
+                {
+                    <span>(Pairwise) @_assignment.Name, viewing @GetCurrentlyViewedFormInstances().Count() of @_formInstances.Count forms</span>
+                }
+            </div>
+            
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-text">View forms written by</div>
+                    <InputSelection
+                        TResult="User"
+                        Options="_usersInAssigment"
+                        @bind-Value="_filteredAssignee">
+                        <Template Context="selectedUser">
+                            @(selectedUser?.GetFullName() ?? "No user selected")
+                        </Template>
+                    </InputSelection>
+                    @if (_filteredAssignee is not null)
+                    {
+                        <button class="btn btn-dark" @onclick="() => _filteredAssignee = null">Clear</button>
+                    }
+                </div>
+            </div>
+            
+            @if (_assignment.AssignmentType is AssignmentType.Pairwise)
+            {
+                <div class="col">
+                    <div class="input-group">
+                        <div class="input-group-text">View forms written about</div>
+                        <InputSelection
+                            TResult="User"
+                            Options="_usersInAssigment"
+                            @bind-Value="_filteredPair">
+                            <Template Context="selectedUser">
+                                @(selectedUser?.GetFullName() ?? "No user selected")
+                            </Template>
+                        </InputSelection>
+                        @if (_filteredPair is not null)
+                        {
+                            <button class="btn btn-dark" @onclick="() => _filteredPair = null">Clear</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+
+@if (_assignment is not null && _formInstances is not null)
+{
+        <div class="overflow-auto" id="table-container">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col" class="first-column first-row" style="z-index: 10">Question prompt</th>
+                    @foreach (var formInstance in GetCurrentlyViewedFormInstances())
+                    {
+                        <th scope="col" class="first-row">@formInstance.GetAssignmentDescription()</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row" class="first-column">Meta</th>
+                    @foreach (var formInstance in GetCurrentlyViewedFormInstances())
+                    {
+                        <td>
+                            Status: <FormStageBadge Stage="formInstance.Status"/><br/>
+                            Submitted:
+                            @(formInstance.SubmittedDate?.ToString("dd MMM hh:mm tt") ?? "never")
+                            <span class="@(IsOverdue(formInstance) ? "text-danger fw-bold" : "")">
+                                (@TimeFromSubmissionString(formInstance) @(IsOverdue(formInstance) ? "overdue" : "before deadline"))
+                            </span>
+                        </td>
+                    }
+                </tr>
+                @foreach (var block in _orderedTemplateBlocks)
+                {
+                    if (block is not Question question) continue;
+                    <tr>
+                        <th scope="row" class="first-column">@question.Prompt</th>
+                        @foreach (var formInstance in GetCurrentlyViewedFormInstances())
+                        {
+                            <td>
+                                <FormInstanceAnswerReadOnlyDisplay
+                                    FormInstanceId="formInstance.Id"
+                                    Question="question"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+}

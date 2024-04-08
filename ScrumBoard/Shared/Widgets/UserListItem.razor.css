@@ -1,0 +1,14 @@
+::deep .avatar {
+    background-color: white;
+    max-width: 2.5rem;
+    max-height: 2.5rem;
+}
+
+.avatar.small {
+    padding: 3px;
+    border: 0.10em solid white;
+}
+
+#user-list-item {
+    min-width: 7rem;
+}

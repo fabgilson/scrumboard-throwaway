@@ -1,0 +1,28 @@
+<!--Renders textarea component with oninput event binding-->
+
+@inherits InputTextArea
+
+@if (Disabled)
+{
+    <div 
+        @attributes="@AdditionalAttributes" 
+        class="disabled @CssClass"
+    >
+        @CurrentValueAsString
+    </div>
+}
+else
+{
+    <textarea 
+        @attributes="@AdditionalAttributes" 
+        class="@CssClass" 
+        @bind="@CurrentValueAsString" 
+        @bind:event="oninput" 
+    ></textarea>
+}
+
+@code
+{
+    [Parameter]
+    public bool Disabled { get; set; }
+}

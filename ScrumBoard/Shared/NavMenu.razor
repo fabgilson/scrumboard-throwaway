@@ -1,0 +1,409 @@
+﻿@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.FeatureFlags
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Statistics
+@using ScrumBoard.Pages
+@using ScrumBoard.Repositories
+@using ScrumBoard.Services
+@using ScrumBoard.Services.StateStorage
+@using ScrumBoard.Services.UsageData
+@using ScrumBoard.Shared.ProjectFeatureFlags
+@using ScrumBoard.Shared.ReflectionCheckIns
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+<!-- Application navigation menu that switched from a sidebar to a topbar on small screens. -->
+@inject IScrumBoardStateStorageService StateStorageService
+@inject NavigationManager NavigationManager
+@inject IJsInteropService JSInteropService
+@inject IProjectRepository ProjectRepository
+@inject ILogger<NavMenu> Logger
+@inject IConfigurationService ConfigurationService
+@inject IUsageDataService UsageDataService
+@inject IStandUpMeetingService StandUpMeetingService
+ 
+<div>
+    <div class="top-row d-flex px-1 align-items-center navbar-dark">
+        <div class="col">
+            <a id="root-homepage-link" class="navbar-brand ms-2 me-2" href="">ScrumBoard</a>
+        </div>
+        <div class="col-5 col-sm-auto">
+            <CurrentUserAvatar />
+        </div>
+        <div class="col-auto navbar-toggler-container">
+            <button class="navbar-toggler" @onclick="ToggleNavMenu" style="margin-left: auto;">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>   
+    </div>
+
+    <div class="@NavMenuCssClass text-truncate">
+        <ul class="nav d-flex flex-column">
+            <li class="nav-item px-3 py-2 border-bottom">
+                <h5 class="mb-0">
+                    <NavLink id="toggle-select-project" class="nav-link " @onclick="() => _expandProjectNav = !_expandProjectNav" style="@SelectProjectCssString">
+                        @if(!_expandProjectNav){<span class="bi bi-chevron-down pe-2"></span>}
+                        else {<span class="bi bi-chevron-up pe-2"></span>}
+
+                        Select Project
+                    </NavLink>
+                </h5>
+                @if (_expandProjectNav)
+                {
+                    <div class="py-2 mx-2 rounded-bottom" id="project-selection-container" style="background-color: rgba(255,255,255,0.05);">
+                        <SelectProject ToggleNav="CloseSelectProjectMenu" ToggleNavCreateProject="CloseSelectProjectMenuNoProject" SelectedProjectName="SelectedProjectName"/>
+                    </div>            
+                }
+            </li>
+        
+            @if (ConfigurationService.StudentGuideEnabled)
+            {
+                <li class="nav-item px-3 pt-2 d-flex flex-column border-bottom">
+                    <h5 class="mb-0">
+                        <NavLink class="nav-link" href="@PageRoutes.ToStudentGuidePage()" Match="NavLinkMatch.All">
+                            <span class="bi bi-book-fill pe-2" aria-hidden="true"></span>
+                            <span class="text-truncate">Student Guide</span>
+                        </NavLink>
+                    </h5>
+                </li>
+            }
+
+            @if (ProjectState is not null)
+            {
+                <div class="border-bottom">
+                    <li class="nav-item px-3 pt-2 d-flex flex-column" style="max-width: 100%;">
+                        <h5>
+                            <NavLink class="nav-link" href="@PageRoutes.ToProjectHome(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                <span class="bi bi-house-fill pe-2" aria-hidden="true"></span>
+                                <span class="text-truncate">@SelectedProjectName</span>
+                            </NavLink>
+                        </h5>
+                    </li>
+                    <li class="nav-item px-3">
+                        <h5>
+                            <NavLink class="nav-link" href="@PageRoutes.ToProjectSprintBoard(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                <span class="bi bi-kanban pe-2" aria-hidden="true"></span>
+                                Sprint Board
+                            </NavLink>
+                        </h5>
+                    </li>
+                    @if (ProjectState.ProjectRole != ProjectRole.Reviewer)
+                    {
+                        <li class="nav-item px-3">
+                            <h5>
+                                <NavLink class="nav-link" href="@PageRoutes.ToProjectBacklog(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                    <span class="bi bi-list-task pe-2" aria-hidden="true"></span>
+                                    Backlog
+                                </NavLink>
+                            </h5>
+                        </li>
+                    }
+                    @if (ProjectState.ProjectRole is ProjectRole.Developer or ProjectRole.Leader or ProjectRole.Guest)
+                    {
+                        <li class="nav-item px-3">
+                            <h5>
+                                <NavLink class="nav-link" href="@PageRoutes.ToProjectCeremonies(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                    <span class="bi bi-calendar2-check pe-2" aria-hidden="true"></span>
+                                    Formal Events
+                                </NavLink>
+                            </h5>
+                        </li>
+                    }
+                    @if (ProjectState.ProjectRole is ProjectRole.Developer or ProjectRole.Leader)
+                    {
+                        <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckIn">
+                            <li class="nav-item px-3 mb-2">
+                                <NavLink
+                                    class="nav-link d-flex flex-column h-auto align-content-center"
+                                    href="@PageRoutes.ToWeeklyReflectionCheckIn(ProjectState.ProjectId)"
+                                    Match="NavLinkMatch.All"
+                                >
+                                    <h5 class="mt-1 mb-0 w-100">
+                                        <span class="bi bi-journal-album pe-2"></span>
+                                        Weekly Reflection
+                                    </h5>
+                                    <div class="my-1 text-wrap text-center mx-3" style="line-height: normal">
+                                        <WeeklyReflectionCheckInNotification/>
+                                    </div>
+                                </NavLink>
+                            </li>
+                        </ProjectFeatureFlagRequiredComponent>
+                    }
+                    @if (ProjectState.ProjectRole is ProjectRole.Reviewer or ProjectRole.Leader or ProjectRole.Developer)
+                    {
+                        <li class="nav-item px-3">
+                            <h5>
+                                <NavLink class="nav-link" href="@PageRoutes.ToProjectReview(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                    <span class="bi bi-clipboard-check pe-2" aria-hidden="true"/>
+                                    Sprint Review
+                                </NavLink>
+                            </h5>
+                        </li>
+                    }
+                    <li class="nav-item px-3">
+                        <h5>
+                            <NavLink class="nav-link" href="@PageRoutes.ToFillForms(ProjectState.ProjectId)" @onclick="CloseNavMenuIfSmall" Match="NavLinkMatch.All">
+                                <span class="bi bi-person-lines-fill pe-2" aria-hidden="true"/>
+                                Forms
+                            </NavLink>
+                        </h5>
+                    </li>
+                    @if (ProjectState is not null)
+                    {
+                        <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.StandUpMeetingSchedule">
+                            <li class="nav-item px-3">
+                                <h5>
+                                    <NavLink class="nav-link" href="@PageRoutes.ToStandUpSchedule(ProjectState.ProjectId)" Match="NavLinkMatch.All">
+                                        <span class="bi bi-calendar-week pe-2" aria-hidden="true"></span>
+                                        Daily Scrums
+                                    </NavLink>
+                                </h5>
+                                @if (_upcomingStandUpMeeting is not null)
+                                {
+                                    <div class="mx-1 mt-1 rounded stand-up-preview"
+                                         id="upcoming-stand-up-container"
+                                         @key="_upcomingStandUpComponentKey">
+                                        <NavLink
+                                            class="nav-link h-auto"
+                                            href="@PageRoutes.ToUpcomingStandUp(ProjectState.ProjectId)"
+                                            Match="NavLinkMatch.All">
+                                            <div class="col lh-base text-center">
+                                                <div class="row">
+                                                    @if (_upcomingStandUpHappeningNow)
+                                                    {
+                                                        <p class="text-wrap mb-1 fw-bold" id="stand-up-right-now-label">Daily Scrum happening right now!</p>
+                                                        <p class="text-wrap mb-1" id="time-remaining-in-stand-up-label">
+                                                            Ends in
+                                                            <LiveTimeText
+                                                                TargetTime="_upcomingStandUpMeeting.ScheduledStart.Add(_upcomingStandUpMeeting.Duration)"
+                                                                DateTimeFormatFunc="TimeToNextStandUpFunc"
+                                                                OnTimerPassesNow="RefreshUpcomingStandUp"/>
+                                                        </p>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="text-wrap mb-1" id="next-stand-up-label">
+                                                            Next Daily Scrum in:<br>
+                                                            <strong>
+                                                                <LiveTimeText
+                                                                    TargetTime="_upcomingStandUpMeeting.ScheduledStart"
+                                                                    DateTimeFormatFunc="TimeToNextStandUpFunc"
+                                                                    OnTimerPassesNow="RefreshUpcomingStandUp"/>
+                                                            </strong>
+                                                        </p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </NavLink>
+                                    </div>
+                                }
+                            </li>
+                        </ProjectFeatureFlagRequiredComponent>
+                        <li class="nav-item px-3 report-dropdown">
+                            <h5>
+                                <NavLink
+                                    id="navmenu-reports-button"
+                                    class="nav-link"
+                                    href="@PageRoutes.ToProjectReport(ProjectState.ProjectId)"
+                                    Match="NavLinkMatch.Prefix">
+                                    <span class="bi bi-graph-up pe-2" aria-hidden="true"></span>
+                                    Report
+                                </NavLink>
+                                <div
+                                    class=@($"mx-1 rounded-bottom fs-6 {(AlwaysShowReportDropdown ? "report-dropdown-menu-always-open" : "report-dropdown-menu")}")
+                                    id="project-report-selection-container"
+                                    style="background-color: rgba(255,255,255,0.05);"
+                                    @onmouseout:stopPropagation="true">
+                                    @foreach (var reportType in ReportTypeUtils.GetAllowedReportTypesForRole(ProjectState.ProjectRole))
+                                    {
+                                        if (reportType is ReportType.MyWeeklyReflections)
+                                        {
+                                            <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckInReportPage">
+                                                <NavLink
+                                                    class="nav-link sub-menu-item lh-base"
+                                                    href="@PageRoutes.ToProjectReport(ProjectState.ProjectId, reportType)"
+                                                    Match="NavLinkMatch.All">
+                                                    <span class="@ReportTypeDetails.ReportTypeIcons[reportType]" aria-hidden="true"></span>
+                                                    @ReportTypeDetails.ReportTypeDescriptions[reportType]
+                                                </NavLink>
+                                            </ProjectFeatureFlagRequiredComponent>
+                                        }
+                                        else
+                                        {
+                                            <NavLink
+                                                class="nav-link sub-menu-item lh-base"
+                                                href="@PageRoutes.ToProjectReport(ProjectState.ProjectId, reportType)"
+                                                Match="NavLinkMatch.All">
+                                                <span class="@ReportTypeDetails.ReportTypeIcons[reportType]" aria-hidden="true"></span>
+                                                @ReportTypeDetails.ReportTypeDescriptions[reportType]
+                                            </NavLink>
+                                        }
+                                    }
+                                </div>
+                            </h5>
+                        </li>
+                    }
+                </div>
+            }
+            <AuthorizeView Roles="GlobalProjectAdmin,SystemAdmin">
+                <li class="nav-item px-3 py-2 border-bottom admin-dropdown">
+                    <h5 class="mb-0">
+                        <NavLink class="nav-link" href="@PageRoutes.ToAdminDashboard()" Match="NavLinkMatch.Prefix">
+                            <span class="bi bi-gear pe-2" aria-hidden="true"></span>
+                            Administration
+                        </NavLink>
+                        <div 
+                            class=@($"mx-1 rounded-bottom fs-6 {(AlwaysShowAdminDropdown ? "admin-dropdown-menu-always-open" : "admin-dropdown-menu")}")
+                            id="administration-selection-container" 
+                            style="background-color: rgba(255,255,255,0.05);"
+                        >
+                            <NavLink class="nav-link sub-menu-item lh-base" href="@PageRoutes.ToAdminDashboard()" Match="NavLinkMatch.All">
+                                <span class="bi bi-house pe-2" aria-hidden="true"></span>
+                                Admin home
+                            </NavLink>
+                            <NavLink class="nav-link sub-menu-item lh-base" href="@PageRoutes.ToAdminStandUpSchedule()" Match="NavLinkMatch.All">
+                                <span class="bi bi-calendar-week pe-2" aria-hidden="true"></span>
+                                Scheduled Daily Scrums
+                            </NavLink>
+                            <NavLink class="nav-link sub-menu-item lh-base" href="@PageRoutes.ToAdminFormManagement()" Match="NavLinkMatch.All">
+                                <span class="bi bi-ui-checks pe-2" aria-hidden="true"></span>
+                                Form Management
+                            </NavLink>
+                        </div>
+                    </h5>
+                </li>
+            </AuthorizeView>
+            <li class="mt-auto nav-item px-3 pt-2">
+                <h5 class="mb-0">
+                    <NavLink id="logout" class="nav-link" @onclick="Logout">
+                        <span class="bi bi-box-arrow-left pe-2" aria-hidden="true"></span>
+                        Logout
+                    </NavLink>
+                </h5>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@code {
+
+    // Currently logged in user
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+    
+    [CascadingParameter(Name = "ProjectState")]
+    public ProjectState ProjectState { get; set; }
+    
+    [Inject]
+    public IClock Clock { get; set; }
+
+    private bool OnConfigurationPage => NavigationManager.ToBaseRelativePath(NavigationManager.Uri).StartsWith("configuration/");
+
+    private bool AlwaysShowReportDropdown => NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
+        .StartsWith(PageRoutes.ToProjectReport(ProjectState.ProjectId).TrimStart('.', '/')
+            .TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'));
+
+    private bool AlwaysShowAdminDropdown => NavigationManager.ToBaseRelativePath(NavigationManager.Uri).StartsWith("admin-dashboard");
+    
+    private bool _collapseNavMenu = true;
+
+    private string NavMenuCssClass => _collapseNavMenu ? "collapse nav-menu-overflow" : null;
+
+    private string SelectProjectCssString => "cursor:pointer;user-select:none;" + (_expandProjectNav ? "background-color: rgba(255, 255, 255, 0.1);" : "");
+
+    private bool _expandProjectNav = false;
+
+    private bool HasSelectedProject => _selectedProject is not null;
+
+    private Project _selectedProject;
+    private string SelectedProjectName => _selectedProject?.Name ?? "";
+
+    private int _upcomingStandUpComponentKey;
+    private bool _upcomingStandUpHappeningNow;
+    private StandUpMeeting _upcomingStandUpMeeting;
+
+    private Func<DateTime, DateTime, string> TimeToNextStandUpFunc => (now, nextStandUpStart) => DurationUtils.DurationStringFrom(
+        nextStandUpStart.Subtract(now), 
+        DurationFormatOptions.FormatForLongString 
+            | DurationFormatOptions.TakeTwoHighestUnitsOnly
+            | DurationFormatOptions.UseDaysAsLargestUnit
+            | DurationFormatOptions.AlwaysShowAsPositiveValue
+    );
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ProjectState is not null)
+        {
+            if (ProjectState.Project == null){
+                Logger.LogWarning("Tried to select missing project Id={ProjectStateProjectId}", ProjectState.ProjectId);
+                NavigationManager.NavigateTo("", true);
+                return;
+            }
+            _selectedProject = ProjectState.Project;
+            var role = _selectedProject.GetRole(Self);
+            if (!role.HasValue) {
+                Logger.LogWarning("Tried to select project that the current user is not a member of Id={ProjectStateProjectId}", ProjectState.ProjectId);
+                NavigationManager.NavigateTo("", true);
+                return;
+            }
+        }
+
+        await RefreshUpcomingStandUp();
+    }
+
+    private async Task RefreshUpcomingStandUp()
+    {
+        if (_selectedProject is null || Self is null) return;
+        _upcomingStandUpMeeting = await StandUpMeetingService.GetUpcomingStandUpIfPresentAsync(Self, _selectedProject);
+        if (_upcomingStandUpMeeting is null) return;
+        _upcomingStandUpHappeningNow = _upcomingStandUpMeeting.ScheduledStart < Clock.Now && _upcomingStandUpMeeting.ScheduledStart.Add(_upcomingStandUpMeeting.Duration) >= Clock.Now;
+        _upcomingStandUpComponentKey++;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Toggles the current collapse state of the navmenu.
+    /// </summary>
+    private void ToggleNavMenu()
+    {
+        _collapseNavMenu = !_collapseNavMenu;
+    }
+
+    /// <summary>
+    /// Closes the project select sub menu. Invoked as a callback by SelectProject when creating a new project.
+    /// Separate from CloseNavMenu because we don't want to modify _hasSelectedProject.
+    /// </summary>
+    private void CloseSelectProjectMenuNoProject() {
+        _expandProjectNav = false;
+        CloseNavMenuIfSmall();      
+    }
+
+    /// <summary>
+    /// Closes the project select sub menu and reveals all project related options. 
+    /// Invoked as a callback by SelectProject.
+    /// </summary>
+    private void CloseSelectProjectMenu() {
+        _expandProjectNav = false;
+        CloseNavMenuIfSmall();
+    }
+    
+    /// <summary>
+    /// Logs out the current user by deleting their bearer token and navigating to the login page.
+    /// </summary>
+    /// <returns>A task</returns>
+    private async Task Logout()
+    {
+        UsageDataService.AddUsageEvent(new AuthenticationUsageEvent(Self.Id, AuthenticationUsageEventType.LogOut));
+        await StateStorageService.RemoveBearerTokenAsync();
+        NavigationManager.NavigateTo("", true);
+    }
+
+    /// <summary> Closes the navmanu only when the navmenu is shown at the top of the screen </summary>
+    private async Task CloseNavMenuIfSmall() {     
+        string navmenuBreakpointMedia = "(max-width: 641px)";
+        bool shouldClose = await JSInteropService.WindowMatchMedia(navmenuBreakpointMedia);       
+        if (shouldClose) {
+            ToggleNavMenu();
+        }
+    }
+}

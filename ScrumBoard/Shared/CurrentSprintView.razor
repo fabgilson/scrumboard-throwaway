@@ -1,0 +1,90 @@
+<!-- Component to display a sprint that is created or started. I.e. The currently active sprint. -->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using Utils
+
+<div>
+    <EditForm id="sprint-start-form" Model="Model" OnValidSubmit="StartSprint" class="list-group">
+        @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+        <ObjectGraphDataAnnotationsValidator />
+        <li class="list-group-item grey-input-group-background rounded-top border-bottom-0 story-list">
+            <div class="row">
+                <div class="col">
+                    <div class="row align-items-center pb-2">
+                        <div class="col-auto">
+                            <h3 class="m-0">
+                                @Sprint.Name 
+                            </h3>
+                        </div>
+                        <div class="col-auto">
+                            <SprintStageBadge Stage="Sprint.Stage" Timestamp="Sprint.TimeStarted"/>
+                        </div>
+                    </div>
+                </div>
+                @if (!IsReadOnly)
+                {
+                    <div class="col-auto">
+                        @if (Sprint.Stage.Equals(SprintStage.Created)) {
+                            <button 
+                                id="btn-start-sprint"
+                                type="submit"
+                                class="btn btn-sm btn-primary"
+                            >
+                                Start Sprint
+                            </button>
+                        } else {
+                            <button 
+                                type="button"
+                                id="btn-end-sprint"
+                                class="btn btn-sm btn-outline-danger"
+                                @onclick="async () => await EndSprint.InvokeAsync()"
+                            >
+                                Ready For Review
+                            </button>
+                        }
+                    </div>
+                    <div class="col-auto">
+                        <button 
+                            type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            @onclick="async () => await EditSprint.InvokeAsync(Sprint)"
+                        >
+                            <span class="bi bi-pencil"/>
+                            Edit Sprint
+                        </button>
+                    </div>
+                }
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    @Sprint.StartDate - @Sprint.EndDate
+                </div>
+                <div class="col-auto">
+                    Total points:
+                    <span class="fw-bold">
+                        @_totalPoints
+                    </span>
+                    Total estimate:
+                    <span class="fw-bold">
+                        @(DurationUtils.DurationStringFrom(_totalEstimate))
+                    </span>
+                </div>
+            </div>
+            <ValidationMessage id="stories-validation-message" For="@(() => Model.Stories)"/>
+            <ValidationMessage id="start-date-validation-message" For="@(() => Model.StartDate)"/>
+            <ValidationMessage id="previous-sprint-closed-validation-message" For="@(() => Model.PreviousSprintClosed)"/>
+        </li>
+        <ul class="list-group rounded-0 sprint-list" style="overflow-x: auto;">    
+            @foreach (var story in Model.Stories)
+            {   
+                <li class="list-group-item" @onmouseup="async () => await ItemMouseUp(story.Story)">
+                    <BacklogStoryListItem Story="story.Story"/>
+                    <ValidationMessage id="story-estimate-validation-message" For="@(() => story.Estimate)"/>
+                    <ValidationMessage id="tasks-validation-message" For="@(() => story.Tasks)"/>
+                </li>            
+            }
+        </ul>
+    </EditForm>
+    <SprintChangelog Sprint="Sprint"/>
+</div>

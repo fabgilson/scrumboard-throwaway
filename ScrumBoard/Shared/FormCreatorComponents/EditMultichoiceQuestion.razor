@@ -1,0 +1,76 @@
+<!-- Edit form component for a multichoice question feedback form block -->
+
+@using ScrumBoard.Models.Forms.Feedback
+@using ScrumBoard.Models.Forms.Feedback.TemplateBlocks
+@using Microsoft.AspNetCore.Components
+
+<EditQuestion FormBlockForm="FormBlockForm"/>
+
+<div class="row g-1 align-items-center mt-0">
+    <div class="col-auto">
+        <label class="text-muted">
+            Allow Multiple Selections
+        </label>
+    </div>
+    <div class="col-auto">
+        <InputCheckbox @bind-Value="Question.AllowMultiple"/>
+        <ValidationMessage For="@(() => Question.AllowMultiple)"/>
+    </div>
+</div>
+@{
+    var index = 0;
+}
+@foreach (var option in Question.Options)
+{
+    var currentIndex = index++;
+    <div class="mt-2 option" @key=option>
+        <div class="input-group option">
+            <InputText 
+                rows="1"
+                class="@("form-control option-input" + (_newOptionMade ? " autofocus" : ""))" 
+                @bind-Value="option.Content"
+            />
+            <button class="btn btn-outline-danger btn-delete-option" type="button" @onclick="@(_ => RemoveOption(currentIndex))">
+                <div class="bi bi-backspace-fill"/>
+            </button>
+        </div>
+        <ValidationMessage For="@(() => option.Content)"/>
+    </div>
+}
+<ValidationMessage id="options-validation-message" For="@(() => Question.Options)"></ValidationMessage>
+<div class="row justify-content-start mt-2">
+    <div class="col-auto">
+        <button class="btn btn-outline-primary" type="button" @onclick="AddOption" id="add-option">
+            <div class="bi bi-plus-lg"/>
+        </button>
+    </div>
+</div>
+
+@code
+{
+    
+    [Parameter]
+    public FormTemplateBlockForm FormBlockForm { get; set; }
+
+    private MultiChoiceQuestionForm Question => (MultiChoiceQuestionForm)FormBlockForm;
+
+    private bool _newOptionMade = false;
+
+    /// <summary> 
+    /// Removes a question option by its index.
+    /// </summary>
+    /// <param name="index">The index of the option to remove.</param>
+    /// <returns>A newly created FeedBackForm</returns>
+    private void RemoveOption(int index)
+    {
+        Question.Options.RemoveAt(index);
+    }
+
+    /// <summary> 
+    /// Adds a new empty option to the question.
+    /// </summary>
+    public void AddOption() {
+        _newOptionMade = true;
+        Question.Options.Add(new());
+    }
+}

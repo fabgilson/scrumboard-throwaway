@@ -1,0 +1,36 @@
+@using ScrumBoard.Models.Entities.FeatureFlags
+@using EnumsNET
+
+<div class="accordion" id="featureFlagsHolder">
+
+    @foreach (var featureFlagDefinition in Enum.GetValues<FeatureFlagDefinition>().Except(new[] { FeatureFlagDefinition.None }))
+    {
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="@($"headerFor{featureFlagDefinition.GetName()}")">
+                <button
+                    class="accordion-button collapsed primary"
+                    type="button"
+                    id="@($"expandButtonFor{featureFlagDefinition.GetName()}")"
+                    data-bs-toggle="collapse"
+                    data-bs-target="@($"#collapseFor{featureFlagDefinition.GetName()}")"
+                    aria-expanded="true"
+                    aria-controls="@($"collapseFor{featureFlagDefinition.GetName()}")">
+                    <div class="col">
+                        <div class="row mb-2">
+                            <strong>@featureFlagDefinition.GetName()</strong>
+                        </div>
+                        <div class="row">
+                            <i>@featureFlagDefinition.AsString(EnumFormat.Description)</i>
+                        </div>
+                    </div>
+                </button>
+            </h2>
+            <div id="@($"collapseFor{featureFlagDefinition.GetName()}")" class="accordion-collapse collapsed collapse" aria-labelledby="@($"headerFor{featureFlagDefinition.GetName()}")">
+                <div class="accordion-body">
+                    <FeatureFlagManagementDisplay
+                        FeatureFlagDefinition="featureFlagDefinition"/>
+                </div>
+            </div>
+        </div>
+    }
+</div>

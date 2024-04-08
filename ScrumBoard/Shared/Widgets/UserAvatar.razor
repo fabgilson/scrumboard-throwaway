@@ -1,0 +1,44 @@
+@using ScrumBoard.Models.Entities
+@using System.Security.Cryptography
+@using System.Text
+<img 
+    @attributes="_attributes"
+    id="user-avatar-@User.Id"
+    src="@Url"
+    alt="@User.FirstName @User.LastName"
+/>
+
+@code {
+    [Parameter]
+    public User User { get; set; }
+
+    [Parameter]
+    public int Size { get; set; } = 100;
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+
+    private string _hexHash;
+    
+    private Dictionary<string, object> _attributes;
+
+    private string Url => GenerateGravatarUrl(_hexHash, Size);
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _attributes = new Dictionary<string, object>(AdditionalAttributes);
+        _attributes.TryGetValue("class", out var klass);
+        _attributes["class"] = $"{klass} rounded-circle p-0 border";
+
+        var email = User?.Email ?? "";
+
+        var hash = MD5.HashData(Encoding.UTF8.GetBytes(email));
+        _hexHash = Convert.ToHexString(hash).ToLower();
+    }
+
+    private string GenerateGravatarUrl(string hexHash, int size)
+    {
+        return $"https://www.gravatar.com/avatar/{hexHash}?s={size}&d=identicon";
+    }
+}

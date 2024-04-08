@@ -1,0 +1,39 @@
+<!--Renders input component with input bound to InputChanged function used 
+to compare input with the set confirmation string-->
+
+<input 
+    id="confirm-input" 
+    class="form-control" 
+    value="@_inputText"
+    @oninput="args => InputChanged(args?.Value?.ToString())"
+/>
+
+@code {
+    [Parameter]
+    public string ConfirmText { get; set; }
+
+    private bool _valid;
+    
+    [Parameter]
+    public EventCallback<bool> ValidChanged { get; set; }
+
+    private string _inputText;
+    
+    /// <summary>
+    /// Takes the given input text and compares that it is equal to the ConfirmText value. 
+    /// If it is, calls InvokeAsync on ValidChanged. 
+    /// </summary>
+    /// <param name="value">String content of input</param>
+    /// <returns>Task to be completed</returns>
+    private async Task InputChanged(string value)
+    {
+        _inputText = value;
+
+        var shouldBeValid = string.Equals(value.Trim(), ConfirmText.Trim(), StringComparison.CurrentCultureIgnoreCase);
+        if (shouldBeValid != _valid)
+        {
+            _valid = shouldBeValid;
+            await ValidChanged.InvokeAsync(_valid);
+        }
+    }
+}

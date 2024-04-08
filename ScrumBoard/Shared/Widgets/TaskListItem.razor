@@ -1,0 +1,29 @@
+@using Models.Entities;
+
+<div id="user-list-item">
+    <div class="row align-items-center justify-content-between">
+        <div class="col-auto ps-1 pe-0">
+            <PriorityIndicator Priority="Task.Priority"/>
+        </div>
+        <div class="col ps-1 text-truncate">
+            <span>@Task.Name</span>
+        </div>
+        <div class="col-auto">
+            <StageBadge Stage="Task.Stage"/>
+        </div>
+    </div>
+</div>
+<div class="row align-items-center">
+    <div class="col-auto">
+        @ChildContent
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public UserStoryTask Task { get; set; }   
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

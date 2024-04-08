@@ -1,0 +1,33 @@
+@using Models.Entities;
+
+<div id="user-list-item" @attributes="AdditionalAttributes" class="@Size">
+    <div class="row align-items-center gx-2">
+        <div id="image-container" class="col-auto">
+            <UserAvatar 
+                class="@($"avatar {Size}")"
+                User="User"
+            />
+        </div>
+        <div class="col name text-truncate p-1">
+            @User.FirstName @User.LastName
+        </div>
+        <div class="col-auto">
+            @ChildContent
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public User User { get; set; }   
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string Size { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+}

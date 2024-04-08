@@ -1,0 +1,115 @@
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities.Changelog
+@using ScrumBoard.Repositories.Changelog
+@using ScrumBoard.Utils
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Messages
+@using ScrumBoard.Services
+@using ScrumBoard.Shared.Widgets.Messages
+@inject IOverheadEntryChangelogRepository OverheadEntryChangelogRepository
+
+
+<div class="overhead-entry">
+    <div class="row gx-2 align-items-center justify-content-between">
+        <div class="col-auto fw-bold">
+            @Entry.Occurred
+        </div>
+        <div class="col-auto">
+            <div class="row g-2 justify-content-end align-items-center">
+                <div class="col-auto">
+                    <Badge Style="@BadgeStyle.Light">
+                        @Entry.Session.Name
+                    </Badge>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-secondary rounded-pill">
+                        @DurationUtils.DurationStringFrom(Entry.Duration)
+                    </span>
+                </div>
+                <div class="col-auto">
+                    <InputMember Value="new List<User> { Entry.User }" Disabled class="p-0 m-0 me-2" />
+                </div>
+                @if (!_isReadOnly)
+                {
+                    <div class="col-auto">
+                        <button type="button" class="@("btn btn-sm btn-outline-primary " + (IsEditing ? "disabled" : ""))"
+                                @onclick="() => EditOverhead.InvokeAsync(Entry)" @onclick:stopPropagation="true">
+                            <span class="bi bi-pencil"/>
+                            Edit
+                        </button>
+                    </div>
+                }
+                <div class="col-auto">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                        @onclick="ToggleChangelog" @onclick:stopPropagation="true">
+                        <span class="bi bi-clock-history" aria-hidden="true"></span> @(_changelog == null ? "Show" : "Hide") Changelog
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <Markdown Source="@Entry.Description"/>
+        </div>
+        @if (_changelog != null)
+        {
+            <div class="col-12 border-top mt-1">
+                <ul class="list-group mt-2">
+                    
+                @foreach (var message in _changelog)
+                {
+                    <li class="list-group-item">
+                        <MessageListItem Message="message"/>
+                    </li>
+                }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+    
+    [CascadingParameter(Name = "ProjectState")]
+    public ProjectState ProjectState { get; set; }
+    
+    [Parameter]
+    public OverheadEntry Entry { get; set; }
+    
+    /// <summary>
+    /// Whether a different overhead entry is being edited at the moment
+    /// </summary>
+    [Parameter]
+    public bool IsEditing { get; set; }
+    
+    [Parameter]
+    public EventCallback<OverheadEntry> EditOverhead { get; set; }
+
+    private bool _isReadOnly;
+
+    private List<IMessage> _changelog;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        _isReadOnly = ProjectState.ProjectRole != ProjectRole.Leader && Entry.UserId != Self.Id;
+    }
+
+    private async Task ToggleChangelog()
+    {
+        if (_changelog != null)
+        {
+            _changelog = null;
+        }
+        else
+        {
+            var changes = await OverheadEntryChangelogRepository.GetByOverheadEntryAsync(Entry, OverheadEntryChangelogIncludes.Display);
+            _changelog = changes
+                .Cast<IMessage>()
+                .Concat(new []{ new CreatedMessage(Entry.Created, Entry.User, "overhead entry")})
+                .ToList();
+        }
+    }
+}

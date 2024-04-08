@@ -1,0 +1,47 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.SaveStatus
+@using ScrumBoard.Models.Entities.Forms.Instances
+@inherits BaseProjectScopedComponent
+
+@if (TextQuestion is not null && TextAnswerForm is not null)
+{
+    <div class="row">
+        <div class="col">
+            <Markdown Source="@TextQuestion.Prompt"/>
+        </div>
+        <div class="col-auto">
+            @if (_textAnswerId is not null)
+            {
+                <LiveUpdateNotifier TEntity="TextAnswer" EntityId="_textAnswerId.Value"/>
+            }
+        </div>
+    </div>
+    <div class="row g-0 my-1">
+        <textarea
+            id="form-text-answer-text-input"
+            disabled="@IsReadOnly" 
+            class="form-control text-area-expand question-input"
+            @onfocusin="BroadcastUpdateStarted"
+            @onfocusout="BroadcastUpdateEnded"
+            @bind:event="oninput"
+            @bind="TextAnswerForm.Content"
+            @bind:after="StartSaveCountdown"
+        ></textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <ValidationMessage For="() => TextAnswerForm.Content"/>
+        </div>
+        <div class="col-12 col-md-6 text-start text-md-end d-flex justify-content-end">
+            <SaveStatusIndicator id="text-form-response-save-status-indicator" @bind-Status="_saveStatus"/>
+            <div id="word-count">Word count: @((TextAnswerForm.Content ?? "").Split(" ").Count(x => !string.IsNullOrWhiteSpace(x)))</div>
+        </div>
+        @if (!string.IsNullOrEmpty(_saveErrorText))
+        {
+            <div class="col-12">    
+                <span id="save-error-text" class="text-danger">@_saveErrorText</span>
+            </div>
+        }
+    </div>
+}

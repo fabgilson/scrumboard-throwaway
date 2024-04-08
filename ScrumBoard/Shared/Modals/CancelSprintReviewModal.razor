@@ -1,0 +1,60 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+
+<!-- Modal for confirming selection to cancel a sprint review -->
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;"> 
+  <div class="modal-header">
+    <h5 class="modal-title" id="review-sprint-modal">Cancel Reviewing Sprint</h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    <div>
+      <div>
+        This will move
+        <span class="fw-bold">
+          @_sprint.Name
+        </span>  
+        to
+        <SprintStageBadge Stage="SprintStage.ReadyToReview"/>
+        and the review in progress will be discarded.
+      </div>
+      <p class="pt-2 m-0">Are you sure you want to proceed?</p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <ResultButton
+      Value="true"
+      id="close-modal"
+      class="btn btn-outline-secondary"
+    >
+      Cancel
+    </ResultButton>
+    <ResultButton
+      Value="false"
+      id="cancel-review-sprint" 
+      class="btn btn-primary" 
+    >
+      Cancel Sprint Review
+    </ResultButton>
+  </div> 
+</ResultModal>
+
+@code {
+  private ResultModal<bool> _resultModal;
+
+  private Sprint _sprint;
+
+  /// <summary>
+  /// Displays the modal and information from the given sprint.
+  /// </summary>
+  /// <param name="sprint">Sprint instance to display relevant information from</param>
+  /// <returns>Task with boolean that is true if the selection is cancelled</returns>
+  public virtual Task<bool> Show(Sprint sprint)
+  {
+    _sprint = sprint;
+    return _resultModal.Show();
+  }
+
+}

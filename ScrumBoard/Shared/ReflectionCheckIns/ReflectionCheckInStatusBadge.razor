@@ -1,0 +1,32 @@
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+<div class="badge border d-inline-flex align-items-center w-100 bg-opacity-75 @BackgroundColorClass">
+    <div class="row g-0 w-100">
+        <div class="col-12 fs-6 text-wrap">@StatusAsString</div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public CheckInCompletionStatus? Status { get; set; }
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AllOtherAttributes { get; set; }
+
+    private string BackgroundColorClass => Status switch
+    {
+        CheckInCompletionStatus.NotYetStarted => "bg-warning",
+        CheckInCompletionStatus.Incomplete => "bg-info",
+        CheckInCompletionStatus.Completed => "bg-success",
+        _ => ""
+    };
+
+    private string StatusAsString => Status switch
+    {
+        CheckInCompletionStatus.NotYetStarted => "Not started",
+        CheckInCompletionStatus.Incomplete => "Incomplete",
+        CheckInCompletionStatus.Completed => "Completed",
+        _ => throw new ArgumentOutOfRangeException()
+    };
+
+}

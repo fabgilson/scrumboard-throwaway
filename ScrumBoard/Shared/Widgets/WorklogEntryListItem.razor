@@ -1,0 +1,180 @@
+@using Models.Entities
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets.Messages
+@using Utils
+
+@if (IsExpanded)
+{
+    <ProjectViewLoaded Type="ViewLoadedUsageEventType.WorklogEntryView" ResourceId="Entry.Id"/>
+}
+<div id="worklog-list-item" class="worklog-entry" @onclick="() => IsExpanded = !IsExpanded"
+    style="cursor: pointer">
+    <div class="row align-items-center gx-2 mb-0">
+        @if (IsExpanded)
+        {
+            <div id="worklog-entry-finished-datetime-long" class="col-auto pe-1 fw-bold">
+                @Entry.Occurred
+            </div>
+        }
+        else
+        {
+            <div id="worklog-entry-finished-datetime-short" class="col-auto pe-1 fw-bold">
+                @LanguageUtils.AsShortString(Entry.Occurred)
+            </div>
+        }
+        @if (!IsExpanded)
+        {
+            <div id="worklog-entry-name" class="col-sm text-truncate" style="min-width: 7em">
+                <Markdown Source="@Entry.Description" NoFormat/>
+            </div>
+            <div class="col-auto">
+                <div class="justify-content-end d-flex">
+                    <InputTag TTag="WorklogTag" Value="Entry.GetWorkedTags().ToList()" LimitShown Disabled />
+                </div>
+            </div>
+        }
+        <div id="worklog-entry-duration" class="col-auto fw-bold pe-1 ms-auto">
+            <span class="badge bg-secondary rounded-pill">@DurationUtils.DurationStringFrom(Entry.GetTotalTimeSpent())</span>
+        </div>
+        @if (IsExpanded)
+        {
+            <div id="contributors" class="row gx-md-2 col col-md-auto my-sm-0 my-2">
+                @foreach (User user in _users.Concat(_pairUsers))
+                {
+                    <div class="col-auto">
+                        <span class="badge bg-light text-dark">
+                            <UserListItem User="user" Size="small" />
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div id="worklog-entry-people" class="row gx-2 col-auto">
+                <div class="col">
+                    <InputMember Value="_users" Disabled class="p-0 m-0" />
+                </div>
+                <div class="col">
+                    <InputMember Value="_pairUsers" Disabled class="p-0 m-0" />
+                </div>
+            </div>
+        }
+    </div>
+    @if (IsExpanded)
+    {
+        <div class="row gx-2 mb-3" style="max-height: 500px;">
+            <div class="col">
+                <Markdown Source="@Entry.Description"/>
+            </div>
+        </div>
+        @if (Entry.LinkedCommits.Any())
+        {
+            <div class="border p-2">
+                <strong>Linked Commits</strong>
+                <ul class="list-group overflow-auto" style="max-height: 250px;">
+                    @foreach (var commit in Entry.LinkedCommits)
+                    {
+                        <li class="list-group-item commit-item">
+                            <CommitDetails Commit="commit"/>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <div class="p-2 text-muted text-center border rounded-3">
+                <em>No linked commits</em>
+            </div>
+        }
+    }
+    
+    <div class="row gx-2 tags-display mt-2 justify-content-between">
+        @if (IsExpanded)
+        {
+            <div class="col mx-0 px-0">
+                <small id="worklog-entry-datetime-long" class="pe-1 text-muted">
+                    Created @Entry.Created
+                </small>
+            </div>
+        }
+        @if (ShowTaskName) {
+            <div id="worklog-entry-task-name" class="col text-truncate-name text-muted" style="min-width: 5em">
+                <span>
+                    @Entry.Task.Name
+                </span>
+            </div>
+        } else {
+            <div class="col mx-0 px-0"/>
+        }
+
+        @if(IsExpanded) {
+            <div class="col-auto">
+                <div class="justify-content-end d-flex">
+                    <InputTag TTag="WorklogTag" Value="Entry.GetWorkedTags().ToList()" LimitShown Disabled />
+                </div>
+            </div>
+        }
+
+        <div class="col-auto">
+            <div class="dropdown dropstart">
+                <button 
+                    class="btn p-0" 
+                    type="button" 
+                    id="dropdownMenuButton1" 
+                    data-bs-toggle="dropdown"
+                    data-bs-boundary="@(Boundary)"
+                    aria-expanded="false"
+                    @onclick:stopPropagation="true"
+                >
+                    <i class="bi bi-three-dots-vertical" />
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    <li>
+                        @if (!_isReadOnly)
+                        {
+                            <button id="edit-worklog" type="button" class="@("dropdown-item " + (IsEditing ? "disabled" : ""))"
+                                @onclick="() => EditWorklog.InvokeAsync(Entry)" @onclick:stopPropagation="true">
+                                <span class="bi bi-pencil"/>
+                                Edit
+                            </button>
+                        }
+                        <button type="button" id="changelog-toggle-button" class="dropdown-item" @onclick="async () => await ToggleChangelog()"
+                            @onclick:stopPropagation="true">
+                            <span class="bi bi-clock-history" aria-hidden="true"></span> @(_showChangelog ? "Hide" : "Show") changelog
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    @if (_showChangelog)
+    {
+        <div id="worklog-changelog-container">
+            <div id="changelog-for-entry-@Entry.Id">
+                <hr>
+                @if (_changelogEntries.Count == 0)
+                {
+                    <li id="no-changelog-items" class="list-group-item text-center">
+                        <em>No items in changelog</em>
+                    </li>
+                }
+                <div class="row p-0 m-0">
+                    <ul id="worklog-entry-changelog-list" class="list-group" style="max-height: 18rem;overflow-y:auto;">
+                        @foreach (var entry in _changelogEntries)
+                        {
+                            <li id="worklog-entry-changelog-entry" class="list-group-item">
+                                <MessageListItem Message="entry" />
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    }
+</div>

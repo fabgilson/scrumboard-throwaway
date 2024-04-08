@@ -1,0 +1,10 @@
+.card {
+    min-width: 320px;
+    max-width: 400px;
+    height: 220px;
+}
+
+#chart {
+    width: 100px;
+    margin-top: -8px;
+}

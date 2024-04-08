@@ -1,0 +1,51 @@
+::deep .avatar {
+    padding: 3px;
+    background-color: white;
+    max-width: 2rem;
+    max-height: 2rem;
+    box-shadow: 0 0 0 0.25em white;
+    border: 1px solid black;
+}
+
+.avatar-container {
+    margin-right: -0.5rem;
+    padding: 0;
+    position: relative;
+    display: inline-block;
+    z-index: 1;
+}
+
+.avatar-container:hover {
+    z-index: 2;
+}
+
+
+.display-content {
+    visibility: hidden;
+}
+.avatar-container:hover .display-content {
+    visibility: visible;
+}
+
+.remove-button {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.25em solid white;
+    cursor: pointer;
+    transform: translate(-50%,-50%);
+    margin-left: -0.25em;
+    margin-top: 0.25em;
+    left: 100%;
+    top: 0;
+    border-radius: 50%;
+    width: 1.5em; 
+    height: 1.5em;
+    padding: 0;
+    background-color: #dc3545;
+}
+
+.remove-button:hover {
+    background-color: #ff4154;
+}

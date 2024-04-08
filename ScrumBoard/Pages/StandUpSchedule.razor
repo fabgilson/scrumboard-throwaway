@@ -1,0 +1,185 @@
+@attribute [Route(PageRoutes.StandUpSchedule)]
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.StandUpMeetings
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.StandUpSchedule"/>
+<div id="stand-up-page-container">
+    <div class="row mb-3 border-bottom mx-auto">
+        <div class="align-content-center text-center">
+            <h1>Daily Scrum schedule</h1>
+        </div>
+        <div class="row mb-2">
+            <div class="col-12 col-lg my-auto">
+                This page allows for scheduling and management of team Daily Scrums.
+            </div>
+            <div class="col-12 col-lg-auto">
+                <div class="d-flex">
+                    <div class="me-2"><StandUpCalendarLinkManagement/></div>
+                    @if (_availableSprints is not null)
+                    {
+                        <SprintSelector
+                            @bind-SprintSelection="_sprintSelection"
+                            AvailableSprints="_availableSprints"
+                            ShowWholeProjectSelection="false"
+                            AfterSelectionChangedCallback="RefreshAllStandUps"/>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (_sprintSelection.sprint is null)
+    {
+        <div class="align-content-center text-center">
+            <h3>Please select a sprint to continue</h3>
+        </div>
+    }
+    else if (_sprintSelection.sprint.Stage is SprintStage.InReview or SprintStage.Reviewed or SprintStage.Closed or SprintStage.ReadyToReview)
+    {
+        <div class="align-content-center text-center">
+            <h3>The sprint has ended</h3>
+        </div>
+    }
+    else
+    {
+        <div class="col px-3" id="standUpManagementCollapse">
+            <div class="row" id="upcomingHeader">
+                <div class="col my-auto">
+                    <h3>Upcoming Daily Scrums</h3>
+                    <p class="text-body">See and manage scheduled Daily Scrums that are yet to occur.</p>
+                </div>
+                <div class="col-auto my-auto">
+                    <i>@(_upcomingIsLoading ? "" : $"({_upcomingStandUps.TotalCount} total)")</i>
+                </div>
+                <div class="col-auto my-auto">
+                    <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#upcomingCollapse" aria-expanded="true" aria-controls="upcomingCollapse">
+                        Show / Hide
+                    </button>
+                </div>
+            </div>
+            <div id="upcomingCollapse" class="collapse show" aria-labelledby="upcomingHeader">
+                <div class="card card-body">
+                    @if (_upcomingIsLoading)
+                    {
+                        <LoadingSpinner/>
+                    }
+                    else
+                    {
+                        <div class="col">
+                            @if (_upcomingStandUps.Any())
+                            {
+                                <div class="row">
+                                    @foreach (var standUp in _upcomingStandUps)
+                                    {
+                                        <StandUpMeetingDisplay 
+                                            StandUpMeeting="standUp"
+                                            ShowLocationSection="true"
+                                            IsEditable="true"
+                                        />
+                                    }
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto mx-auto">
+                                        <PageButtons
+                                            TotalPages="_upcomingStandUps.TotalPages"
+                                            CurrentPage="_upcomingStandUps.PageNumber"
+                                            CurrentPageChanged="RefreshUpcomingStandUps"/>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col">
+                                    <label class="m-auto">
+                                        <i>No upcoming Daily Scrums scheduled.</i>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (!IsReadOnly)
+                    {
+                        <div class="row border-top" id="schedule-new-stand-up-container">
+                            @if (_isSchedulingNewStandUp)
+                            {
+                                <EditStandUpMeetingForm
+                                    CancelCallback="() => _isSchedulingNewStandUp = false"
+                                    AfterValidSubmitCallback="RefreshAllStandUps"
+                                    Sprint="_sprintSelection.sprint"
+                                    ForSchedulingNew="true"
+                                />
+                            }
+                            else
+                            {
+                                <button
+                                    class="btn btn-outline-primary mt-3"
+                                    @onclick="() => _isSchedulingNewStandUp = !_isSchedulingNewStandUp"
+                                    id="schedule-new-stand-up-button">
+                                    Schedule new Daily Scrum
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+            </div>
+            <div class="row mt-4" id="pastHeader">
+                <div class="col my-auto">
+                    <h3>Past Daily Scrums</h3>
+                    <p class="text-body">See and manage scheduled Daily Scrums that are now in the past.</p>
+                </div>
+                <div class="col-auto my-auto">
+                    <i>@(_pastIsLoading ? "" : $"({_pastStandUps.TotalCount} total)")</i>
+                </div>
+                <div class="col-auto my-auto">
+                    <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#pastCollapse" aria-expanded="true" aria-controls="pastCollapse">
+                        Show / Hide
+                    </button>
+                </div>
+            </div>
+            <div id="pastCollapse" class="collapse" aria-labelledby="pastHeader">
+                <div class="card card-body">
+                    @if (_pastIsLoading)
+                    {
+                        <LoadingSpinner/>
+                    }
+                    else
+                    {
+                        <div class="col">
+                            @foreach (var standUp in _pastStandUps)
+                            {
+                                <StandUpMeetingDisplay 
+                                    StandUpMeeting="standUp"
+                                    IsEditable="true"
+                                />
+                            }
+                        </div>
+                    }
+
+                    @if (_pastStandUps.Any())
+                    {
+                        <div class="row">
+                            <div class="col-auto">
+                                <PageButtons
+                                    TotalPages="_pastStandUps.TotalPages"
+                                    CurrentPage="_pastStandUps.PageNumber"
+                                    CurrentPageChanged="RefreshPastStandUps"/>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col">
+                            <label class="m-auto">
+                                <i>No Daily Scrums found in the past.</i>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

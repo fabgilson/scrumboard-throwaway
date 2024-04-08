@@ -1,0 +1,117 @@
+@using ScrumBoard.Models.Entities.Forms.Templates
+@using ScrumBoard.Services
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities.Forms
+@inherits ComponentBase
+
+
+<li class="list-group-item mb-2">
+    <div class="row align-items-center mb-2">
+        <div class="col">
+            <h2>@Template.Name</h2>
+        </div>
+        <div class="col-auto">
+            <button id="assign-form-button" type="button" class="btn btn-sm btn-outline-success px-5" @onclick="() => OnAssigningFormTemplate.InvokeAsync(Template)">
+                Send Out Form
+            </button>
+            <button id="preview-button" type="button" class="btn btn-sm btn-outline-primary" @onclick="() => OnPreview.InvokeAsync(Template)">
+                Preview
+            </button>
+            <button id="edit-button" type="button" class="btn btn-sm btn-outline-primary" @onclick="() => OnEditing.InvokeAsync(Template)" disabled="@DisableEditing">
+                <span class="bi bi-pencil">
+                    Edit
+                </span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="container ps-3 pe-3">
+        <div class="row fw-bold pb-2 border-bottom">
+            <div class="col-1 text-secondary">
+                Run #
+            </div>
+            <div class="col text-secondary">
+                Name
+            </div>
+            <div class="col text-secondary">
+                Start Date
+            </div>
+            <div class="col text-secondary">
+                Due Date
+            </div>
+            <div class="col text-secondary">
+            </div>
+        </div>
+        @foreach(var assignment in _assignments)
+        {
+            <AssignedFormInstanceCard Assignment="assignment"/>
+        }
+        @if (!_assignments.Any())
+        {
+            <div>This template has not yet been used</div>
+        }
+                        
+    </div>
+    @if (_hasNextPage)
+    {
+        <div class="text-center">
+            <button id="load-more-button" type="button" class="btn btn-md text-primary" @onclick="NewPage">
+                Load More...
+            </button>
+        </div>
+    }
+</li>
+
+
+
+
+@code {
+
+    [Parameter]
+    public EventCallback<FormTemplate> OnAssigningFormTemplate { get; set; }
+
+    [Parameter]
+    public EventCallback<FormTemplate> OnPreview { get; set; }
+
+    [Parameter]
+    public EventCallback<FormTemplate> OnEditing { get; set; }
+
+    [Parameter]
+    public FormTemplate Template { get; set; }
+    
+    [Inject]
+    public IFormInstanceService FormInstanceService { get; set; }
+    
+    private bool DisableEditing => Template.RunNumber != 0;
+    
+    private List<Assignment> _assignments = new();
+
+    private int _currentPage = 1;
+
+    private bool _hasNextPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetPage();
+    }
+
+    private async Task NewPage()
+    {
+        _currentPage++;
+        await GetPage();
+    }
+
+    private async Task GetPage()
+    {
+
+        var paginatedAssignments = await FormInstanceService.GetPaginatedAssignments(Template.Id, _currentPage);
+        _hasNextPage = paginatedAssignments.HasNextPage;
+        _assignments.AddRange(paginatedAssignments.ToList());
+    }
+    
+
+    private async Task StartPreview(FormTemplate template)
+    {
+        await OnPreview.InvokeAsync(template);
+    }
+}

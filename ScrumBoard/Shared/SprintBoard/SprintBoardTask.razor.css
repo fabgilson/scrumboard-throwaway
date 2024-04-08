@@ -1,0 +1,23 @@
+.draggable {
+    margin-bottom: 10px;
+    cursor: pointer;
+    background: #FFFFFF;
+    color: #000000;   
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 10px;      
+}
+
+.section {
+    margin: 0;
+    align-items: center;
+    font-size: small;
+}
+
+.label {
+    color: gray;
+}
+
+.card-tag {
+    margin: 0 0 0 10px;
+    padding: 5px;
+}

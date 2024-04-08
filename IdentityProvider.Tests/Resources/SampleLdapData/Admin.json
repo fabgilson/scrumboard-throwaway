@@ -1,0 +1,71 @@
+﻿{
+  "DN": "CN=AdminUsername,OU=Student,DC=canterbury,DC=ac,DC=nz",
+  "LdapAttributeSetSingles": [
+    {
+      "type": "cn",
+      "value": "AdminUsername"
+    },
+    {
+      "type": "sn",
+      "value": "Admin"
+    },
+    {
+      "type": "givenName",
+      "value": "Admin"
+    },
+    {
+      "type": "distinguishedName",
+      "value": "CN=AdminUsername,OU=Student,DC=canterbury,DC=ac,DC=nz"
+    },
+    {
+      "type": "displayName",
+      "value": "Admin Admin"
+    },
+    {
+      "type": "employeeType",
+      "value": "Student"
+    },
+    {
+      "type": "name",
+      "value": "AdminUsername"
+    },
+    {
+      "type": "uidNumber",
+      "value": "10000000"
+    },
+    {
+      "type": "mail",
+      "value": "admin@canterbury.ac.nz"
+    }
+  ],
+  "LdapAttributeSetArrays": [
+    {
+      "type": "objectClass",
+      "values": [
+        "top",
+        "person",
+        "organizationalPerson",
+        "user"
+      ]
+    },
+    {
+      "type": "memberOf",
+      "values": [
+        "CN=zzz EXO Migration,OU=Exchange2010DLs,OU=DistributionLists,OU=IT,OU=Departments,DC=canterbury,DC=ac,DC=nz",
+        "CN=COSC440S2,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=CSSE-SENG302files,OU=Groups,OU=ComputerScience,OU=Departments,DC=canterbury,DC=ac,DC=nz",
+        "CN=CSSE-RedFlagTutors,OU=Groups,OU=ComputerScience,OU=Departments,DC=canterbury,DC=ac,DC=nz",
+        "CN=ENGR200A,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=SENG403S2,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=SENG401S1,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=SENG402W,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=SENG440S1,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=COSC-cosc-seng302,OU=NonStandardExchange2010DLs,OU=DistributionLists,OU=IT,OU=Departments,DC=canterbury,DC=ac,DC=nz",
+        "CN=COSC421S1,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=COSC424S2,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=cosc790a,OU=Course,OU=Managed,DC=canterbury,DC=ac,DC=nz",
+        "CN=Students,OU=Student,DC=canterbury,DC=ac,DC=nz"
+      ]
+    }
+  ]
+}

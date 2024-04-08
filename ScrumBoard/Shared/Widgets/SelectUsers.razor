@@ -1,0 +1,53 @@
+@using ScrumBoard.Models.Entities
+<div id="select-users">
+    <div class="overflow-auto">
+        <ul class="list-group" id="selected-users-list">
+            @foreach (var user in SelectedUsers)
+            {
+                <li class="list-group-item">
+                    <UserListItem User="@user">
+                        <div class="row">
+                            @if (HasRoleChanger)
+                            {
+                                <div class="col-auto">                                
+                                    <select @key="user.Id" id="role-changer-select-@user.Id" class="form-select" @onchange="(e) => ChangeRole(e, user)">                                
+                                        @foreach (ProjectRole role in Enum.GetValues(typeof(ProjectRole)))
+                                        {
+                                            <option selected="@IsSelected(@user, @role)" value="@role">@role</option>
+                                        }                                
+                                    </select>
+                                </div>
+                            }      
+                            @if (user.Id != Self.Id)
+                            {
+                                <button id="remove-user-@user.Id" type="button" class="col-auto remove-button btn btn-outline-secondary" @onclick="() => ConfirmRemoval(user)"><i class="bi bi-x-lg"></i></button>
+                            }
+                            else 
+                            {
+                                 <button id="remove-user-@user.Id" style="visibility: hidden;" type="button" class="col-auto remove-button btn btn-outline-secondary disabled"><i class="bi bi-x-lg"></i></button>
+                            }
+                        </div>
+                    </UserListItem>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="overflow-auto">
+        <ul class="list-group" style="max-height: 15rem;">
+            @foreach (var user in Users)
+            {
+                @if (!SelectedUsers.Any(u => u.Id == user.Id)) 
+                {
+                    <li class="list-group-item">
+                        <UserListItem User="@user">
+                            <button id="select-user-@user.Id" type="button" class="select-button btn btn-outline-primary" @onclick="() => SelectUser(user)">
+                                <span class="bi bi-plus-lg"></span>
+                            </button>
+                        </UserListItem>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+    <RemoveUserModal @ref="_modal"/>
+</div>

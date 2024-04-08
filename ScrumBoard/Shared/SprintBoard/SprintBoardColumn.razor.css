@@ -1,0 +1,21 @@
+.column-name {
+    user-select: none;
+    background-color: white;
+    z-index: 2;
+    position: sticky;
+    top: 0;
+}
+
+.sprintboard-column {
+    display: flex;
+    flex-direction: column;
+    min-width:300px;    
+    max-width:450px;
+    user-select: none;
+}
+
+.dropzone {
+    padding: 15px;
+    background-color: rgba(167, 174, 184, 0.205);
+    list-style: none;
+}

@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  scrumboard-db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_ROOT_PASSWORD: lens-dev-password
+      MYSQL_USER: lens-developer
+      MYSQL_PASSWORD: lens-dev-password
+    volumes:
+      - ./sql-dumps/2023:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+        
+  scrumboard-research-db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: 127.0.0.1
+      MYSQL_ROOT_PASSWORD: lens-dev-password
+      MYSQL_USER: lens-developer
+      MYSQL_PASSWORD: lens-dev-password
+    volumes:
+      - ./sql-dumps/2022:/docker-entrypoint-initdb.d
+    ports:
+      - "13306:3306"

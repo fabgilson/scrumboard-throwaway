@@ -1,0 +1,175 @@
+@attribute [Route(PageRoutes.ProjectReview)]
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.BlackBoxReview
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.SprintReview" ResourceId="_viewingSprint?.Id"></ProjectViewLoaded>
+<div class="container">
+    <div class="row align-items-end mb-2 page-header align-items-center">
+        <div class="row mb-2 align-items-center">
+            <div class="col-auto">
+                <h1 class="m-0">Sprint Review</h1>
+            </div>
+            @if (Project != null) {            
+                <div class="col-auto mt-3 mt-sm-0">                
+                    <button
+                        class="btn border dropdown-toggle d-block"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+                        @if (_viewingSprint != null) {
+                            <div id="current-viewing-sprint-display" class="row gx-1 d-sm-inline me-1">
+                                <span class="fw-bold">
+                                    @_viewingSprint.Name
+                                </span>
+                                <span >
+                                    <SprintStageBadge Stage="@_viewingSprint.Stage"/>
+                                </span>
+                                <span>
+                                    @_viewingSprint.StartDate - @_viewingSprint.EndDate
+                                </span>
+                            </div> 
+                        } else {
+                            <div class="row d-inline-block">
+                                <div id="select-sprint-label" class="col-auto me-1">
+                                    Select Sprint
+                                </div>                            
+                            </div>
+                        }               
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sprint-menu-button">
+                        @if (_availableSprints.Any())
+                        {
+                            foreach (var sprint in _availableSprints)
+                            {
+                                <li class="selectable">
+                                    <button type="button" class="dropdown-item sprint-selector-item" id="sprint-select-@sprint.Id" @onclick="() => ViewSprint(sprint)">
+                                        <div class="row gx-3">
+                                            <div class="col fw-bold">
+                                                @sprint.Name
+                                            </div>
+                                            <div class="col d-flex justify-content-end">
+                                                <SprintStageBadge Stage="@sprint.Stage"/>
+                                            </div>
+                                            <div class="col-auto">
+                                                @sprint.StartDate - @sprint.EndDate
+                                            </div>
+                                        </div> 
+                                    </button>
+                                </li>
+                            }                    
+                        }
+                        else
+                        {
+                            <li>
+                                <a class="dropdown-item disabled">
+                                    No sprints available
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            @if (_viewingSprint != null) {            
+                if (_viewingSprint.Stage == SprintStage.ReadyToReview)
+                {
+                    <div class="col-auto">
+                        <button id="start-sprint-review" class="btn btn-outline-primary" @onclick="StartReview">
+                            Start Review
+                        </button>
+                    </div>
+                    
+                    if (RoleInCurrentProject == ProjectRole.Leader)
+                    {
+                        <div class="col-auto">
+                            <button id="skip-sprint-review" class="btn btn-outline-primary" @onclick="SkipReview">
+                                Skip Review
+                            </button>
+                        </div>
+                    }           
+                }
+                if (_errorMessage != null)
+                {
+                    <div class="col-auto">
+                        <span id="general-error-message" class="text-danger">
+                            @_errorMessage
+                        </span>
+                    </div>
+                }
+            }
+
+        </div>
+        <div class="row">
+            @if (_viewingSprint == null) 
+            {
+                <ErrorMessage id="no-viewing-sprint-error-message">
+                    Select a sprint to review
+                </ErrorMessage>
+                if (_errorMessage != null)
+                {
+                    <div class="col-auto">
+                        <span class="text-danger">
+                            @_errorMessage
+                        </span>
+                    </div>
+                }
+            }
+            else if (_viewingSprint.Stage is SprintStage.Created or SprintStage.Started) {
+                <ErrorMessage id="sprint-still-in-progress-error-message">
+                    This sprint is still in progress. End date: @_viewingSprint.EndDate
+                </ErrorMessage>
+            }
+            else
+            {
+                if (_reviewInProgress)
+                {
+                    <div id="in-progress-sprint-review">
+                        <InProgressSprintReview
+                            SprintId="_viewingSprint.Id"
+                            OnFinished="FinishReview"
+                            StartFromStoryId="_startFromStoryId"
+                        />
+                    </div>
+                }
+                else
+                {
+                    if (_viewingSprint.Stage == SprintStage.Reviewed)
+                    {
+                        <div class="text-warning mb-2 fw-bold">
+                            The review has been completed. Click the button below to move the review back to in-progress.
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-warning mb-3" @onclick="StartReview">
+                            Edit review
+                        </button>
+                    }
+                    else if(_viewingSprint.Stage == SprintStage.InReview)
+                    {
+                        <div class="text-info mb-2">
+                            A review is in progress. Click the button below to continue the review.
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-info mb-3" @onclick="StartReview">
+                            Continue review
+                        </button>
+                    }
+                    
+                    foreach (var story in _stories)
+                    {
+                        <StoryInReview 
+                            id="@($"readonly-story-{story.Id}")"
+                            StoryId="story.Id" 
+                            Disabled="true" 
+                            OnEdit="() => EditStoryPressed(story)"/>  
+                    }
+                }
+            }
+        </div>
+    </div>        
+        
+    <SkipSprintReviewModal @ref="_skipSprintReviewModal"/>
+</div>

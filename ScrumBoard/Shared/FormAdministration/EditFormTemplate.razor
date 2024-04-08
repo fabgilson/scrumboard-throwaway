@@ -1,0 +1,100 @@
+<!-- Component to edit/create a form template -->
+
+@using Models.Entities
+@using Repositories
+@using ScrumBoard.Models.Entities.Forms.Templates
+@using ScrumBoard.Models.Forms.Feedback
+@using Microsoft.EntityFrameworkCore
+@inject IFormTemplateRepository FormTemplateRepository
+@using Markdig.Syntax
+@inject ILogger<EditFormTemplate> Logger
+
+<div class="border p-2">
+    <div class="col">
+        @if (IsNewForm)
+        {
+            <h2>Create Form</h2>
+        }
+    </div>
+    <EditForm id="edit-feedback-form-form" EditContext="_editContext" OnValidSubmit="OnSubmit">
+        <ObjectGraphDataAnnotationsValidator/>
+
+        <div class="card p-2">
+            <div class="text-muted">
+                Form Name
+            </div>
+            <InputText id="feedback-form-name-input" class="form-control" @bind-Value="_model.Name"/>
+            <ValidationMessage id="feedback-form-name-validation-message" For="@(() => _model.Name)"/>
+        </div>
+
+        @{
+            var index = 0;
+        }
+        @foreach (var block in _model.Blocks)
+        {
+            var currentIndex = index++;
+            <div class="card p-2 mt-2 block-@block.BlockName.ToLower().Replace(' ', '-')">
+                <div class="row g-2 align-items-center">
+                    <div class="col">
+                        @block.BlockName
+                    </div>
+                    <div id="block-movement-buttons" class="col-auto" style="display: flex; flex-direction: column">
+                        @if (currentIndex > 0)
+                        {
+                            <button id="move-up-button" type="button" class="btn btn-outline-primary" @onclick="() => { MoveUp(currentIndex); }" style="line-height: 0.5rem">
+                                <div class="bi bi-arrow-up-short"></div>
+                            </button>
+                        }
+                        @if (currentIndex < _model.Blocks.Count - 1)
+                        {
+                            <button id="move-down-button" type="button" class="btn btn-outline-primary position-relative" @onclick="() => { MoveDown(currentIndex); }" style="line-height: 0.5rem">
+                                <div class="bi bi-arrow-down-short"></div>
+                            </button>
+                        }
+                    </div>
+                    
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-block" @onclick="() => RemoveBlock(currentIndex)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="block">
+                    @if (block.RazorComponentType != null)
+                    {
+                        <DynamicComponent Type="@block.RazorComponentType" Parameters="CreateDictionaryFromBlock(block)"/>    
+                    }
+                </div>
+            </div>
+        }
+        <ValidationMessage id="blocks-validation-message" For="() => _model.Blocks"/>
+        <div class="row mt-0 g-2">
+            @foreach (var factory in BlockTypes)
+            {
+                var blockName = factory().BlockName;
+                <div class="col-auto">
+                    <button id="add-@blockName.ToLower().Replace(' ', '-')" type="button" class="btn btn-sm btn-outline-primary" @onclick="() => AddBlock(factory())">
+                        Add @blockName
+                    </button>
+                </div>
+            }
+            <div class="col d-flex flex-row-reverse align-items-center mb-2">
+                <button type="submit" class="btn btn-primary" disabled="@_isCurrentlySubmitting">
+                    @(IsNewForm ? "Create" : "Save")
+                </button>
+                <button type="button" class="btn btn-outline-primary me-2" id="open-preview-button" @onclick="OpenPreview">
+                    Preview
+                </button>
+                <button type="button" class="btn btn-outline-secondary me-2" @onclick="OnCancel">
+                    Cancel
+                </button>
+                @if (_concurrentUpdate)
+                {   
+                    <div class="text-danger me-2" id="project-concurrency-error">
+                        Form template has been updated while you were editing. Please cancel and try again.
+                    </div>
+                }
+            </div>
+        </div>
+    </EditForm>
+</div>

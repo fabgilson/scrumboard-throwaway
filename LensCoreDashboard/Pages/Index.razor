@@ -1,0 +1,59 @@
+﻿@page "/"
+@using SharedLensResources
+
+<PageTitle>LENS Identity</PageTitle>
+
+<AuthorizeView Roles="@nameof(GlobalLensRole.SystemAdmin)">
+    <Authorized>
+        <Heading>System administrator controls</Heading>
+        <Accordion class="mb-5">
+            <Collapse Visible="_collapseCreateNewUserVisible">
+                <CollapseHeader>
+                    <Heading>
+                        <Button Clicked="@(() => _collapseCreateNewUserVisible = !_collapseCreateNewUserVisible)">
+                            Create new user account
+                        </Button>
+                    </Heading>
+                </CollapseHeader>
+                <CollapseBody>
+                    <CreateUser/>
+                </CollapseBody>
+            </Collapse>
+
+            <Collapse Visible="_collapseManageUsersVisible">
+                <CollapseHeader>
+                    <Heading>
+                        <Button Clicked="@(() => _collapseManageUsersVisible = !_collapseManageUsersVisible)">
+                            Manage existing users
+                        </Button>
+                    </Heading>
+                </CollapseHeader>
+                <CollapseBody>
+                    <UserTable/>
+                </CollapseBody>
+            </Collapse>
+        </Accordion>
+    </Authorized>
+</AuthorizeView>
+
+<Heading>Manage my account</Heading>
+<Accordion>
+    <Collapse Visible="_collapseChangeMyPassword">
+        <CollapseHeader>
+            <Heading>
+                <Button Clicked="@(() => _collapseChangeMyPassword = !_collapseChangeMyPassword)">
+                    Change my password
+                </Button>
+            </Heading>
+        </CollapseHeader>
+        <CollapseBody>
+            <ChangeOwnPassword/>
+        </CollapseBody>
+    </Collapse>
+</Accordion>
+
+@code {
+    bool _collapseCreateNewUserVisible = true;
+    bool _collapseManageUsersVisible;
+    bool _collapseChangeMyPassword;
+}

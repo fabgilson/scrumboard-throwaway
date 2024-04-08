@@ -1,0 +1,42 @@
+@attribute [Route(PageRoutes.UpcomingStandUp)]
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.StandUpMeetings
+@using ScrumBoard.Models.Entities.UsageData
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.UpcomingStandUp"/>
+
+@if (_isLoading)
+{
+    <LoadingSpinner />
+}
+else if(_standUpMeeting is null)
+{
+    <div class="col w-100" id="loaded-upcoming-container">
+        <div class="row">
+            <p class="text-center fs-3">No upcoming Daily Scrum found</p>
+        </div>
+        <div class="row">
+            <p class="text-center text-muted fs-5">
+                The next Daily Scrum for '@Project.Name' that is scheduled to start within @LookForwardPeriodText will be shown here.<br>
+                Scheduled Daily Scrums can be managed from the 'Daily Scrums' entry in the sidebar.
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="col" id="loaded-upcoming-container">
+        <div class="row align-content-center text-center mx-auto">
+            <h2>@("Next Daily Scrum")</h2>
+        </div>
+        <div class="row container mx-auto">
+            <StandUpMeetingDisplay
+                StandUpMeeting="_standUpMeeting"
+                IsEditable="false"
+                ShowNotesSection="true"
+                ShowLocationSection="true"/>
+        </div>
+    </div>
+}

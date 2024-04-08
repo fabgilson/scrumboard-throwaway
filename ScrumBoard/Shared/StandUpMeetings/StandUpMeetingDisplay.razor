@@ -1,0 +1,101 @@
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities
+
+@if (StandUpMeeting is not null)
+{
+    <div class="row mx-auto" id="stand-up-display-container-@StandUpMeeting.Id">
+        <div class="card px-0 my-2 w-100 align-content-center">
+            @if (_isEditing)
+            {
+                <div class="p-2">
+                    <EditStandUpMeetingForm
+                        Sprint="StandUpMeeting.Sprint"
+                        StandUpMeeting="StandUpMeeting"
+                        CancelCallback="() => _isEditing = false"
+                        AfterValidSubmitCallback="RefreshStandUpMeeting" />
+                </div>
+            }
+            else
+            {
+                @if (ShowProjectNameSection && _project is not null)
+                {
+                    <div class="card-header">
+                        <p class="fw-bold fs-5 my-auto text-center" id="project-name-display">@_project.Name</p>
+                    </div>
+                }
+                <div class="card-body p-2">
+                    <div class="row py-1 w-100">
+                        <div class="col my-auto">
+                            <p class="fw-bold fs-5 my-auto text-wrap">@StandUpMeeting.Name</p>
+                        </div>
+                        <div class="col my-auto lh-1">
+                            <p class="text fw-bold mb-2" id="time-and-date-display">@TimeAndDateString</p>
+                            <p class="text-muted mb-0" id="time-from-now-display"><em>@TimeFromNowString</em></p>   
+                        </div>
+                        <div class="col">
+                            <div class="px-2 text-muted">
+                                Expected attendees
+                            </div>
+                            <div
+                                @onclick:stopPropagation="true"
+                                @onclick:preventDefault="true">
+                                <InputMember
+                                    id="assignee-select"
+                                    class="m-0"
+                                    IdPrefix="assignee"
+                                    Value="StandUpMeeting.ExpectedAttendances.Select(x => x.User).ToList()"
+                                    UserProvider="GetValidAssignees"
+                                    ValueChanged="UpdateAssignees"
+                                    MaxUsers="20"
+                                    Disabled=@(IsReadOnly || !IsEditable) />
+                            </div>
+                        </div>
+                        @if (!IsReadOnly && IsEditable)
+                        {
+                            <div class="col-auto my-auto">
+                                <button type="button" class="btn btn-outline-primary" @onclick="() => _isEditing = true">
+                                    <span class="bi bi-pencil"/>
+                                    Edit
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    @if (ShowNotesSection)
+                    {
+                        <div class="row border-top py-2 mx-1">
+                            <div class="col my-auto">
+                                <p class="fw-bold fs-6 my-auto text-wrap">Meeting notes:</p>
+                                <div id="stand-up-notes-content">
+                                    @if (string.IsNullOrEmpty(StandUpMeeting.Notes))
+                                    {
+                                        <em>No notes found</em>
+                                    }
+                                    else
+                                    {
+                                        <Markdown Source="@StandUpMeeting.Notes"/>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (ShowLocationSection)
+                {
+                    <div class="card-footer d-flex">
+                        <p class="fw-bold fs-6 my-auto me-2 text w-auto">Meeting location: </p>
+                        <div class="w-auto px-0" id="stand-up-location-content">
+                            @if (string.IsNullOrEmpty(StandUpMeeting.Location))
+                            {
+                                <em>No location set</em>
+                            }
+                            else
+                            {
+                                <Markdown Source="@StandUpMeeting.Location"/>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}

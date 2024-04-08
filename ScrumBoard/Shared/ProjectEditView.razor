@@ -1,0 +1,206 @@
+<!-- Edit form component for editing a project. -->
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+@inherits BaseProjectScopedForm
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.EditProject"/>
+<div class="container" style="max-width: 650px;">
+    <EditForm id="edit-project-form" EditContext="_editContext" OnValidSubmit="OnSubmit">
+        @* Automatically validate form against data annotations specified on model class, and display any errors beside
+            the relevant control*@
+        <ObjectGraphDataAnnotationsValidator />        
+        <div class="row">
+            <div class="col form-group input-group-lg mb-4">
+                <label class="text-muted" for="name-input">Name</label>
+                <InputText id="name-input" placeholder="Enter a project name" class="form-control"
+                    @bind-Value="Model.Name" />
+                <ValidationMessage For="@(() => Model.Name)" id="name-validation-message" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-6 form-group mb-3">
+                <label class="text-muted" for="start-date-input">Start Date</label>
+                <InputDate id="start-date-input" class="form-control" min="FindMinDate" placeholder="Enter start date"
+                    @bind-Value="Model.StartDate" />
+                <ValidationMessage For="@(() => Model.StartDate)" id="start-date-validation-message" />
+            </div>
+
+            <div class="col-6 form-group">
+                <label class="text-muted" for="end-date-input">End Date</label>
+                <InputDate id="end-date-input" class="form-control"
+                    min="@Model.StartDate.AddDays(1).ToString("yyyy-MM-dd")" placeholder="Enter end date"
+                    @bind-Value="Model.EndDateOptional" />
+                <ValidationMessage For="@(() => Model.EndDateOptional)" id="end-date-validation-message" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group mb-4">
+                    <label class="text-muted" for="description-input">Description</label>
+                    <InputMarkdown id="description-input" type="text" class="form-control text-area-expand"
+                        placeholder="Enter Description (Markdown supported)" @bind-Value="Model.Description" />
+                    <ValidationMessage For="@(() => Model.Description)" id="description-validation-message" />
+                </div>
+            </div>
+        </div>
+        <div class="row gx-2 mb-3 align-items-end">
+            <div class="col text-muted">
+                GitLab
+                <input type="checkbox" id="gitlab-enabled-checkbox"  @onchange="UpdateGitlabEnabled" checked="@(Model.GitlabCredentialsForm != null && Model.GitlabCredentialsForm.ProjectId != default(long))"/>
+            </div>
+            @if(Model.GitlabCredentialsForm != null && Model.GitlabCredentialsForm.ProjectId != default(long))
+            {
+                <div class="col-auto">
+                    @{
+                        var checkButtonCss = "btn btn-sm";
+                        if (_isCheckingCredentials || CredentialsValid)
+                        {
+                            checkButtonCss += " disabled";
+                        }
+                        checkButtonCss += CredentialsValid ? " btn-outline-success" : " btn-outline-primary";
+                    }
+                    <button id="check-gitlab-credentials" type="button" class="@checkButtonCss" @onclick="CheckGitlab">
+                        @(CredentialsValid ? "Valid" : _isCheckingCredentials ? "Checking" : "Check")
+                    </button>
+                </div>
+            }
+        </div>
+        @if(Model.GitlabCredentialsForm != null && Model.GitlabCredentialsForm.ProjectId != default(long))
+        {
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="card p-2">
+                        <div class="row">
+                            <div class="col-12 col-sm-6 form-group">
+                                <label class="text-muted mt-1" for="project-id-input">Project ID</label>
+                                <InputNumber id="project-id-input" class="form-control no-spinner" pattern="[0-9]*"
+                                    @bind-Value="Model.GitlabCredentialsForm.ProjectId" 
+                                />
+                                <ValidationMessage For="@(() => Model.GitlabCredentialsForm.ProjectId)"
+                                    id="project-id-validation-message" />
+                            </div>
+                            <div class="col-12 form-group">
+                                <label class="text-muted mt-1" for="project-url-input">URL</label>
+                                <InputText id="project-url-input" type="text" class="form-control"
+                                    @bind-Value="Model.GitlabCredentialsForm.URLString" 
+                                    placeholder="https://eng-git.canterbury.ac.nz/"
+                                />
+                                <ValidationMessage For="@(() => Model.GitlabCredentialsForm.URLString)"
+                                    id="project-url-validation-message" />
+                            </div>
+                            <div class="col-12 form-group">
+                                <label class="text-muted mt-1" for="project-access-token-input">
+                                    Access Token
+                                    <div class="btn-group dropend">
+                                        <button type="button" class="btn btn-sm p-0 rounded text-primary" style="line-height: 1" id="access-token-info-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="bi bi-info fs-5"/>
+                                        </button>
+                                        <div class="dropdown-menu px-2" style="min-width: 20rem">
+                                            <div>
+                                                <span class="fw-bold">Access Tokens</span> settings
+                                            </div>
+                                            <img class="img-fluid" src="images/gitlab/settings_access_token.png" alt="Access Token Settings Location">
+                                            <div>
+                                                Set scope to <span class="fw-bold">read_api</span>
+                                            </div>
+                                            <img class="img-fluid" src="images/gitlab/read_api.png" alt="Set scope to read_api">
+                                            <div>
+                                                Create token
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                                <InputText id="project-access-token-input" type="text" class="form-control"
+                                    @bind-Value="Model.GitlabCredentialsForm.AccessToken" 
+                                />
+                                <ValidationMessage 
+                                    For="@(() => Model.GitlabCredentialsForm.AccessToken)"
+                                    id="project-access-token-validation-message" 
+                                />
+                            </div>
+                            @if (ConfigurationService.WebhooksEnabled) {
+                                    
+                                @if (_webhooksUrl != null)
+                                {
+                                    <div class="col-12">
+                                        <label class="text-muted mt-1">
+                                            Webhook URL
+                                            <div class="btn-group dropend">
+                                                <button type="button" class="btn btn-sm p-0 rounded text-primary" style="line-height: 1" id="webhook-url-info-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <span class="bi bi-info fs-5"/>
+                                                </button>
+                                                <div class="dropdown-menu px-2" style="min-width: 25rem">
+                                                    <div>
+                                                        <span class="fw-bold">Webhooks</span> settings
+                                                    </div>
+                                                    <img class="img-fluid" src="images/gitlab/settings_webhooks.png" alt="Webhooks Settings Location">
+                                                    <div>
+                                                        Add Webhook on <span class="fw-bold">Push events</span>
+                                                    </div>
+                                                    <img class="img-fluid" src="images/gitlab/webhooks.png" alt="Add webhook on push events">
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <div>
+                                            @(_webhooksUrl)
+                                        </div>
+                                    </div>
+                                }
+                                <div class="col-12 form-group">
+                                    <label class="text-muted mt-1" for="project-webhook-secret-token-input">Push Webhook Secret Token</label>
+                                    <InputText id="project-webhook-secret-token-input" type="text" class="form-control"
+                                        @bind-Value="Model.GitlabCredentialsForm.PushWebhookSecretToken" 
+                                    />
+                                    <ValidationMessage 
+                                        For="@(() => Model.GitlabCredentialsForm.PushWebhookSecretToken)"
+                                        id="project-webhook-secret-token-validation-message" 
+                                    />
+                                </div>
+                            }                            
+                        </div>
+                    </div>
+                    <ValidationMessage For="@(() => Model.GitlabCredentialsForm.AuthFailure)" id="gitlab-details-validation" />
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="col" style="min-height: 25rem;">
+                <label class="text-muted" for="members">Manage Members</label>
+                <SearchBar DoSearch="SearchUsers"></SearchBar>
+                <SelectUsers Users="@_allUsers" SelectedUsers="@_currentUsers"
+                    UserSelected="((tuple) => UpdateSelectedUsers(tuple.Item1, tuple.Item2))" HasRoleChanger
+                    RoleChanged="UpdateRoles"></SelectUsers>
+                @if (!_hasLeader)
+                {
+                    <h6 class="mt-1 " style="color:red;">There must be at least one project leader</h6>
+                }
+            </div>
+
+        </div> 
+        @if (_saveError) {
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="text-danger" id="project-concurrency-error">Project has been updated while you were editing. Please cancel and try again.</div>
+                </div>
+            </div>            
+        } else if (_gitlabSaveError) {
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="text-danger" id="project-concurrency-error">Two projects cannot share the same GitLab Project ID and URL.</div>
+                </div>
+            </div> 
+        }             
+        <div class="row justify-content-end mt-2 mb-2">
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
+            </div>
+            <div class="col-auto">
+                <button type="submit" disabled="@(_isCurrentlySubmitting || SaveDisabled())" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</div>

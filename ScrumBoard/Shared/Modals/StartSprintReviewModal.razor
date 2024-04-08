@@ -1,0 +1,60 @@
+<!--Modal to confirm changing sprint status from Created to InProgress-->
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;"> 
+  <div class="modal-header">
+    <h5 class="modal-title" id="review-sprint-modal">Prepare Sprint Review</h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    <div>
+      <div>
+        This will move
+         <span class="fw-bold">
+           @_sprint.Name
+         </span> 
+         to
+        <SprintStageBadge Stage="SprintStage.InReview"/>
+        and the stories within the sprint will no longer be editable.
+      </div>
+      <p class="pt-2 m-0">Are you sure you want to proceed?</p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <ResultButton
+      Value="true"
+      id="close-modal"
+      class="btn btn-outline-secondary"
+    >
+      Cancel
+    </ResultButton>
+    <ResultButton
+      Value="false"
+      id="confirm-review-sprint"
+      class="btn btn-primary"
+    >
+      Prepare Sprint Review
+    </ResultButton>
+  </div> 
+</ResultModal>
+
+@code {
+  private ResultModal<bool> _resultModal;
+
+  private Sprint _sprint;
+
+  /// <summary>
+  /// Updates sprint state and displays modal.
+  /// </summary>
+  /// <param name="sprint">Sprint to update state to</param>
+  /// <returns>Task with bool that is true if selection is cancelled, otherwise false</returns>
+  public virtual Task<bool> Show(Sprint sprint)
+  {
+    _sprint = sprint;
+    return _resultModal.Show();
+  }
+
+}

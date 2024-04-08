@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+@using LensCoreDashboard.Pages
+
+<AuthorizeView> 
+    <Authorized>
+        @if (AuthenticationState is null) {
+            <p>Logging in...</p>
+        }
+        else 
+        {
+            <div class="page">
+                <div class="sidebar">
+                    <NavMenu/>
+                </div>
+
+                <div class="main clean-scroll-bar" style="scroll-behavior: smooth;">
+                    <div class="content">
+                        @Body
+                    </div>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <Login/>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private AuthenticationState AuthenticationState { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        AuthenticationState = await AuthenticationStateTask!;
+    }
+}

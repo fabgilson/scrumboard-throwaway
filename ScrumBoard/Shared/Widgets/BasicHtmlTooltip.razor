@@ -1,0 +1,47 @@
+@using ScrumBoard.Services
+
+<span id="@_tooltipId"
+      class="bi bi-info-circle-fill"
+      style="color: #5c96ff; width: auto;"
+      data-bs-toggle="tooltip"
+      data-bs-placement="@PlacementDirection"
+      data-bs-html="true"
+      data-bs-custom-class="@CustomClass"
+      data-bs-container="@TooltipContainer"
+      >
+</span>
+
+<div class="d-none" id="@_htmlContentContainerId">
+    @ChildContent
+</div>
+
+@code {
+    // Set IDs as GUIDs so that multiple tooltips can be used on one page without issues
+    private string _tooltipId = Guid.NewGuid().ToString();
+    private string _htmlContentContainerId = Guid.NewGuid().ToString();
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string PlacementDirection { get; set; } = "top";
+
+    [Parameter]
+    public bool IsWiderTooltip { get; set; }
+
+    [Parameter]
+    public string TooltipContainer { get; set; } = "body";
+    
+    [Inject]
+    protected IJsInteropService JsInteropService { get; set; }
+
+    private bool _hasUpdatedTooltip = false;
+    private string CustomClass => IsWiderTooltip ? "custom-wider-tooltip-class" : null;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_hasUpdatedTooltip) return;
+        if (ChildContent is null) return;
+        await JsInteropService.SetTooltipHtml(_tooltipId, _htmlContentContainerId);
+    }
+}

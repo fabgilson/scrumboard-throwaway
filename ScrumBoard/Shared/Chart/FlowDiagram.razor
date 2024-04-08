@@ -1,0 +1,16 @@
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+
+<!--Displays a flow diagram chart using Chart.js, and renders its tooltips. -->
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.CumulativeFlowDiagram" ResourceId="Sprint?.Id ?? -1"/>
+<TooltipClippingParent>
+    <div @ref="_tooltipTarget" style="@_tooltipTargetStyle"/>
+    <canvas @ref="_canvasReference"></canvas>
+    <Tooltip Target="_tooltipTarget">
+        @if (_tooltipContent.HasValue)
+        {
+            var content = _tooltipContent.Value;
+            <MessageListTooltip Messages="content.Item1" ExcessNumber="content.Item2"/>
+        }
+    </Tooltip>
+</TooltipClippingParent>

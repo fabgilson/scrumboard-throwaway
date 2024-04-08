@@ -1,0 +1,135 @@
+.navbar-toggler {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-row {
+  height: 3.5rem;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.navbar-brand {
+  font-size: 1.1rem;
+}
+
+.oi {
+  width: 2rem;
+  font-size: 1.1rem;
+  vertical-align: text-top;
+  top: -2px;
+}
+
+.nav-item {
+  font-size: 0.9rem;
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.nav-item:first-of-type {
+  padding-top: 1rem;
+}
+
+.nav-item:last-of-type {
+  padding-bottom: 1rem;
+}
+
+.nav-item ::deep a {
+  color: #d7d7d7;
+  border-radius: 4px;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  line-height: 3rem;
+}
+
+.nav-item ::deep a.active {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.nav-item ::deep a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+
+.nav-menu-overflow {
+  overflow-y: auto;
+  max-height: calc(100vh - 3.5rem);
+  overflow-x: hidden;
+}
+
+@media (min-width: 641px) {
+  .navbar-toggler {
+    display: none;
+  }
+
+  .name-container {
+    max-width: 78px;
+  }
+
+  .navbar-toggler-container {
+    display: none;
+  }
+
+  .collapse {
+    /* Never collapse the sidebar for wide screens */
+    display: block;
+  }
+}
+
+#upcoming-stand-up-container {
+  background-color: rgb(1, 77, 94);
+}
+
+.nav-item ::deep .stand-up-preview  {
+  padding: 0 !important;
+  margin-left: 15px;
+  margin-right: 15px;
+}
+
+.nav-item ::deep .stand-up-preview a  {
+  padding: 2px 0;
+  border-radius: inherit;
+}
+
+.border-bottom {
+  border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+  max-width: 100%;
+}
+
+::deep a.sub-menu-item  {
+  padding: 3px 6px;
+  height: fit-content;
+  border-radius: inherit;
+}
+
+::deep a.sub-menu-item.active   {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.report-dropdown-menu {
+  display: none;
+}
+
+.report-dropdown-menu-always-open {
+  display: block;
+}
+
+.report-dropdown:hover .report-dropdown-menu {
+  display:block;
+  margin-top: 0;
+}
+
+.admin-dropdown-menu {
+  display: none;
+}
+
+.admin-dropdown-menu-always-open {
+  display: block;
+}
+
+.admin-dropdown:hover .admin-dropdown-menu {
+  display:block;
+  margin-top: 0;
+}

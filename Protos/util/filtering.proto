@@ -1,0 +1,30 @@
+syntax = "proto3";
+option csharp_namespace = "SharedLensResources";
+
+import "google/protobuf/timestamp.proto";
+
+enum StringFilterType {
+  MATCH_FULL_TEXT = 0;
+  CONTAINS = 1;
+}
+
+// Basic options for applying some string filter text.
+message BasicStringFilteringOptions {
+  // The string query text
+  string filter_text = 1;
+  
+  // If true, case must match exactly, otherwise ignored case during comparison
+  bool is_case_sensitive = 2;
+  
+  // Nature of search to apply, e.g full-match, fuzzy, ...
+  StringFilterType filter_type = 3; 
+}
+
+// Basic options for filtering a datetime value given some optional earliest and latest datetime
+message BasicDateTimeFilteringOptions {
+  // If given, only accept dates that are after a given datetime. If null, no filtering is applied.
+  optional google.protobuf.Timestamp earliest = 1;
+
+  // If given, only accept dates that are before a given datetime. If null, no filtering is applied.
+  optional google.protobuf.Timestamp latest = 2;
+}

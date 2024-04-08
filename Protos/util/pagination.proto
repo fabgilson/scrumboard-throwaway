@@ -1,0 +1,17 @@
+syntax = "proto3";
+option csharp_namespace = "SharedLensResources";
+
+message PaginationRequestOptions {
+  int32 offset = 1; // How many results to skip (offset of 0 means start at beginning, i.e page 1)
+  int32 limit = 2; // Max results to get - "results per page"
+  repeated OrderByOption order_by_options = 3; // Properties by which to sort results by, in descending order of priority
+}
+
+message OrderByOption {
+  string property_name = 1;
+  bool is_ascending_order = 2;
+}
+
+message PaginationResponseOptions {
+  int32 result_set_size = 1; // How many possible results there are (so we can say how many 'pages' are needed)
+}

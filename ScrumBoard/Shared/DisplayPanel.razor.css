@@ -1,0 +1,23 @@
+.panel {
+    position: fixed;
+    margin: auto;
+    width: 55rem;
+    height: auto;
+    max-height: 95%;
+    background-color: #fff;
+    z-index: 9999;
+    left: 50%;
+    transform: translate(-50%, 0);
+    top: 2.5%;
+}
+
+.full {
+    width: 90vw;
+}
+
+@media (max-width: 960px) {
+    .panel {
+        width: 90vw;
+        overflow: auto;
+    }
+}

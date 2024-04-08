@@ -1,0 +1,16 @@
+﻿@using Microsoft.AspNetCore.Components
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Forms.Feedback.TemplateBlocks
+<div class="row">
+    <div class="col mt-2">
+        <InputMarkdown class="form-control text-area-expand text-input" @bind-Value="Text.Content"/>
+        <ValidationMessage id="text-validation-message" For="() => Text.Content"/>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public FormTemplateBlockForm FormBlockForm { get; set; }
+
+    private TextBlockForm Text => (TextBlockForm)FormBlockForm;
+}

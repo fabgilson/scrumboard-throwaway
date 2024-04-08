@@ -1,0 +1,42 @@
+@typeparam T
+
+<div class="d-flex flex-wrap">
+    @foreach (var selectedItem in _currentlySelected)
+    {
+        <div class="@(LargeSelectedEntries ? "large-selected-entry" : "") selected-entry">
+            @ConvertItemToStringDelegate(selectedItem)
+            <span class="bi bi-x deselect-button" @onclick="async () => await DeSelectItem(selectedItem)"/>
+        </div>
+    }
+</div>
+
+<div class="btn-group w-100" style="display: @(_shouldDisplaySelector ? "" : "none")">
+    <button type="button" 
+        class="@($"btn btn-outline-{(_currentlySelected.Any() ? "primary font-weight-bold" : "info")} w-100")"
+        @onclick="PerformAction"
+    >
+        @(_currentlySelected.Any() ? GenerateButtonTextDelegate(_currentlySelected.Count) : "No items selected")
+    </button>
+    <button type="button" class="@($"btn btn-{(_currentlySelected.Any() ? "primary" : "info")} dropdown-toggle dropdown-toggle-split")" @onclick="ToggleDropDown">
+        <span class="visually-hidden">Toggle Dropdown</span>
+    </button>
+    <ul 
+        class="@(_showDropDown ? "dropdown-menu show" : "dropdown-menu")" 
+        id="search-results-container" 
+        @onfocusout="() => _showDropDown = false"
+        @ref="_dropDownComponent"
+    >
+        <li><input class="form-control border-bottom" type="text" placeholder="Type to filter" @oninput="PerformSearch"/></li>
+        <li><hr class="dropdown-divider"></li>
+        <Virtualize Context="item" ItemsProvider="@LoadItems" @ref="_virtualizeComponent">
+            <ItemContent>
+                <li class="dropdown-item" @onclick="async (e) => await HandleSelect(e, item)">
+                    @ConvertItemToStringDelegate(item)
+                </li>
+            </ItemContent>
+            <Placeholder>
+                <li class="dropdown-item"><i>Loading...</i></li>
+            </Placeholder>
+        </Virtualize>
+    </ul>
+</div>

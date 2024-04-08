@@ -1,0 +1,23 @@
+﻿@using Microsoft.AspNetCore.Components
+@using ScrumBoard.Models.Forms.Feedback
+@using ScrumBoard.Models.Forms.Feedback.TemplateBlocks
+
+<EditQuestion FormBlockForm="FormBlockForm"/>
+
+<div class="row">
+    <div class="col mt-2">
+        <label class="text-muted">
+            Max Response Length (characters)
+        </label>
+        <InputNumber class="form-control max-response-length-input" @bind-Value="TextQuestion.MaxResponseLength" style="width: 10em;"/>
+        <ValidationMessage id="max-response-length-validation-message" For="() => TextQuestion.MaxResponseLength"/>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public FormTemplateBlockForm FormBlockForm { get; set; }
+
+    private TextQuestionForm TextQuestion => (TextQuestionForm)FormBlockForm;
+}

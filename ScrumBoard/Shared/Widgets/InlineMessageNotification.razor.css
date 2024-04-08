@@ -1,0 +1,56 @@
+.show-message {
+    display: none;
+    border-radius: 2px;
+    text-align: center;
+    width: fit-content;
+    padding: 0 20px;
+
+    -webkit-animation-duration: 7500ms;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-fill-mode: forwards;
+}
+
+.show-message.show-success-message {
+    display: inherit;
+    -webkit-animation-name: show-success-message;
+}
+
+.show-message.show-error-message {
+    display: inherit;
+    -webkit-animation-name: show-error-message;
+}
+
+@-webkit-keyframes show-success-message {
+    from {
+        background-color: #ffffff;
+        opacity: 1;
+    }
+    2% {
+        background-color: #36d088;
+    }
+    85% {
+        background-color: #36d088;
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes show-error-message {
+    from {
+        background-color: #ffffff;
+        opacity: 1;
+    }
+    2% {
+        background-color: #fd596a;
+    }
+    85% {
+        background-color: #fd596a;
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

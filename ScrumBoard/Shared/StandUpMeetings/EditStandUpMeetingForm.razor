@@ -1,0 +1,127 @@
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@inherits BaseProjectScopedComponent
+
+@if (_standUpMeetingForm is not null)
+{
+    <EditForm id="stand-up-edit-form-container" Model="_standUpMeetingForm" OnValidSubmit="@HandleValidSubmit">
+        <DataAnnotationsValidator/>
+
+        <div class="row mt-3 mx-auto">
+            <div class="align-content-center text-center">
+                <span class="text fw-bold fs-4">@(_isNewStandUp ? "Scheduling new" : "Editing") Daily Scrum</span>
+            </div>
+        </div>
+
+        <div class="col col-sm-auto mt-sm-0 form-group">
+            <div class="row mt-2">
+                <div class="col">
+                    <label class="text">Name</label>
+                    <input
+                        id="name-input"
+                        class="form-control"
+                        placeholder="Name of Daily Scrum"
+                        @bind-value="_standUpMeetingForm.Name"/>
+                    <ValidationMessage For="@(() => _standUpMeetingForm.Name)" id="name-validation-message"/>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col col-sm-auto mt-sm-0 form-group">
+            <div class="row mt-3">
+                <div class="col">
+                    <label class="text-muted">Location <i>(optional)</i></label>
+                    <InputMarkdown
+                        UpdateOnInput="true"
+                        id="location-input"
+                        class="form-control"
+                        placeholder="Location of meeting (e.g room number, video chat URL, etc.)"
+                        @bind-Value="_standUpMeetingForm.Location" />
+                    <ValidationMessage For="@(() => _standUpMeetingForm.Location)" id="location-validation-message"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="col col-sm-auto mt-2 mt-sm-0 form-group">
+            <div class="row mt-3">
+                <div class="col">
+                    <label class="text-muted">Notes <i>(optional)</i></label>
+                    <InputMarkdown
+                        id="notes-input"
+                        class="form-control text-area-expand"
+                        placeholder="Enter optional Daily Scrum notes (Markdown supported)"
+                        @bind-Value="_standUpMeetingForm.Notes"/>
+                    <ValidationMessage For="@(() => _standUpMeetingForm.Notes)" id="notes-validation-message"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="col mt-2 form-group">
+            <div class="row mt-2">
+                <div class="col-8">
+                    @if (_standUpMeetingForm.ScheduledStart != default)
+                    {
+                        <DateTimePicker
+                            DateLabel="Start date"
+                            TimeLabel="Start time"
+                            ValueChanged="dt => { if (dt != null) _standUpMeetingForm.ScheduledStart = dt.Value; }"
+                            Value="_standUpMeetingForm.ScheduledStart"/>
+                        <ValidationMessage For="@(() => _standUpMeetingForm.ScheduledStart)" id="start-validation-message"/>
+                    }
+                </div>
+                <div class="col-4">
+                    <label class="text">Duration</label>
+                    <InputDuration
+                        id="duration-input"
+                        placeholder="e.g. 15m"
+                        class="hide-valid form-control"
+                        @bind-Value="_standUpMeetingForm.Duration"/>
+                    <ValidationMessage For="@(() => _standUpMeetingForm.Duration)" id="notes-validation-message"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="px-2">
+                    Expected attendees
+                </div>
+                <div
+                    @onclick:stopPropagation="true"
+                    @onclick:preventDefault="true">
+                    @if (_standUpMeetingForm.ExpectedAttendances is not null) {
+                        <InputMember
+                            id="assignee-select"
+                            IdPrefix="assignee"
+                            Value="_standUpMeetingForm.ExpectedAttendances.Select(x => x.User).ToList()"
+                            UserProvider="GetValidAssignees"
+                            ValueChanged="UpdateAssignees"
+                            MaxUsers="20"/>
+                    }
+                </div>
+            </div>
+            <div class="col-auto mt-auto">
+               
+                @if (!(_isNewStandUp || (!_isNewStandUp && !ForSchedulingNew)))
+                {
+                    <button class="btn btn-outline-success me-5 w-auto" type="button" @onclick="HandleScheduleAnother">Schedule another Daily Scrum</button>
+                }
+                
+                <button class="btn btn-secondary me-2 w-auto" type="button" @onclick="HandleCancel">Cancel</button>
+                
+                <button
+                    class="btn btn-primary me-2 w-auto"
+                    id="stand-up-edit-form-submit-button"
+                    type="submit"
+                    disabled="@_isCurrentlySubmitting">
+                    @(_isNewStandUp ? "Submit" : "Update")
+                </button>
+            </div>
+        </div>
+    </EditForm>
+    <div class="form-group col mt-2 justify-content-center">
+        <InlineMessageNotification 
+            @ref="_messageNotificationComponent"
+        />
+    </div>
+}

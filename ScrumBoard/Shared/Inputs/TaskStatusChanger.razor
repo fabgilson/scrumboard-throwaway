@@ -1,0 +1,53 @@
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Widgets
+<!--Input to change the status of a task by selecting the new status from a dropdown list-->
+
+@if (Disabled)
+{
+    <div 
+        @attributes=AdditionalAttributes
+    >
+        <Badge Style="@StageDetails.StageStyles[Value]">
+            @StageDetails.StageDescriptions[Value]
+        </Badge>
+    </div>
+}
+else
+{
+<button      
+    @attributes=AdditionalAttributes
+    class="btn badge dropdown-toggle @StageDetails.StageStyles[Value].GetCss()" 
+    type="button"
+    id="task-status-button" 
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    
+>
+    <div class="d-inline-block text-start " >
+        <div class="row gx-1">            
+            <div class="col">
+                @StageDetails.StageDescriptions[Value]
+            </div>   
+        </div>
+    </div>
+</button>
+    <ul class="dropdown-menu" aria-labelledby="task-status-button">
+        @foreach (Stage stage in Enum.GetValues(typeof(Stage)))
+        {
+            <li>
+                <button type="button" class="dropdown-item badge py-2 status-item" id="status-select-@stage" @onclick="@(() => ValueChanged.InvokeAsync(stage))">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            @StageDetails.StageDescriptions[stage]
+                        </div>
+
+                        <div class="col-auto me-2">
+                            <div id="status-select-color-@stage" class="@StageDetails.StageStyles[stage].GetCss() rounded-circle border align-self-end" style="width: 15px; height: 15px;"/>
+                        </div>
+                    </div>
+                </button>
+            </li>
+        }
+    </ul>
+}

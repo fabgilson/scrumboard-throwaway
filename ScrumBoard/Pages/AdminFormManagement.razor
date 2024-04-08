@@ -1,0 +1,60 @@
+@using ScrumBoard.Shared.FormAdministration
+@using SharedLensResources
+@attribute [Route(PageRoutes.AdminFormManagement)]
+@attribute [Authorize(Roles = nameof(GlobalLensRole.SystemAdmin))]
+
+<div class="container">
+
+    @if (PageState is FormManagementState.Assigning)
+    {
+        <AssignFormTemplate
+            FormTemplate="_assigningFormTemplate"
+            OnCancel="() => _assigningFormTemplate = null"
+            OnSave="OnSave"/>
+    }
+
+    else if (PageState is FormManagementState.Previewing or FormManagementState.PreviewingEdit)
+    {
+        <FormResponse FormTemplate="_previewFormTemplate" IsPreview OnClose="() => _previewFormTemplate = null"/>
+    }
+    else if (PageState is FormManagementState.Overview)
+    {
+        <div>
+            <h1 class="mb-4">
+                Form Management
+            </h1>
+            <div class="mb-2">
+                <button class="btn btn-primary mt-3 w-100" @onclick="CreateForm">
+                    Create New Form
+                </button>
+            </div>
+
+            <ul class="list-group">
+                @foreach (var template in _formTemplates)
+                {
+                    <ViewFormTemplate
+                        Template="template"
+                        OnPreview="StartPreviewing"
+                        OnEditing="StartEditing"
+                        OnAssigningFormTemplate="StartAssigningFormTemplate"/>
+                }
+                @if (!_formTemplates.Any())
+                {
+                    <li class="list-group-item text-muted">
+                        No forms exist
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+    @if (PageState is FormManagementState.Editing or FormManagementState.PreviewingEdit)
+    {
+        <div style="display: @(_previewFormTemplate is not null ? "none" : "")">
+            <EditFormTemplate
+                FormTemplate="_editingFormTemplate"
+                OnCancel="() => _editingFormTemplate = null"
+                OnPreview="StartPreviewing"
+                OnSave="OnSave"/>
+        </div>
+    }
+</div>

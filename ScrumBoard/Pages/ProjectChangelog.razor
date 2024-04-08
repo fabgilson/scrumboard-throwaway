@@ -1,0 +1,34 @@
+@attribute [Route(PageRoutes.ProjectChangeLog)]
+@inherits BaseProjectScopedComponent
+
+@using ScrumBoard.Shared.Widgets.Messages
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.ProjectChangelog"/>
+<div class="container border border-light" style="min-height: 50vh;"> 
+    @if (_isInitialized) {
+        <div class="fs-2 text-center mb-4">        
+            <div>
+                @Project.Name Changelog
+            </div>        
+        </div>
+        <br />
+        <div class="d-flex justify-content-center align-items-center">
+            <ul class="list-group">
+                @if (!_changelogEntries.Any())
+                {
+                    <div class="mb-4">There are no entries to display.</div>                    
+                }
+                else {
+                    @foreach (var changelogEntry in _changelogEntries)
+                        {
+                            <li class="list-group-item mb-2 border-top">
+                                <MessageListItem Message="changelogEntry"/>
+                            </li>
+                        }
+                }   
+            </ul>
+        </div>
+    }
+</div>

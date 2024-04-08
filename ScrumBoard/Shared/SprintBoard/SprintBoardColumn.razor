@@ -1,0 +1,26 @@
+<!--Component for sprint board column-->
+
+@using Models.Entities
+@using Widgets
+
+<div class="col sprintboard-column d-flex justify-content-center p-0" id="sprintboard-column-@ColumnStage" >
+    <h5 class="column-name" style="width: max-content;position:relative;">@StageDetails.StageDescriptions[ColumnStage]</h5>
+    <SortableList 
+        TItem="UserStoryTask" 
+        @bind-Items=_storyTasks 
+        class="p-2 flex-grow-1 sprintboard-content" 
+        ItemAdded="ItemAdded" 
+        Group="@Story.Id.ToString()"
+        style="min-height:12em;"
+        Disabled="IsReadOnly"
+    >
+        <Template Context="item">
+            <SprintBoardTask 
+                @onclick="() => TaskClicked.InvokeAsync(item)" 
+                TaskModel="item" 
+                MembersChanged="RefreshFilteredTasks"
+            />
+        </Template>
+    </SortableList>
+    <UpdateStoryStageModal @ref="_updateStoryStageModal"/>
+</div>

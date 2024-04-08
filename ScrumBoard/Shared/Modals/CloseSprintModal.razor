@@ -1,0 +1,89 @@
+<!-- Modal for closing a sprint -->
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;"> 
+  <div class="modal-header">
+    <h5 class="modal-title" id="review-sprint-modal">Close Sprint</h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    <div>
+      <div>
+        This will move
+         <span class="fw-bold">
+           @_sprint.Name
+         </span> 
+         to
+        <SprintStageBadge Stage="SprintStage.Closed"/>
+        and it will no longer be possible to log formal session time against this sprint.
+        <div>
+          It is not possible to move a sprint out of <SprintStageBadge Stage="SprintStage.Closed"/>.
+        </div>
+        <div>
+          Please type 
+          <span class="fw-bold">
+            Close Sprint 
+          </span>
+          to confirm.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div>
+      <InputConfirm 
+        ValidChanged="UpdateConfirmation" 
+        ConfirmText="Close Sprint"
+      />
+    </div>
+    <ResultButton Value="true" id="close-modal" class="btn btn-outline-secondary">
+      Cancel
+    </ResultButton>
+    <button type="button" id="close-sprint" class="@("btn btn-primary "  + (_hasConfirmed ? "" : "disabled"))" data-bs-dismiss="modal"
+            @onclick="ConfirmCloseSprint">
+      Close Sprint
+    </button>
+  </div> 
+</ResultModal>
+
+@code {
+  private ResultModal<bool> _resultModal;
+
+  private Sprint _sprint;
+
+  private bool _hasConfirmed;
+
+  /// <summary>
+  /// Updates the state of the sprint, sets hasConfirmed to false and displays the modal.
+  /// </summary>
+  /// <param name="sprint">Sprint to update state to</param>
+  /// <returns>Task of bool that is true if modal if selection is cancelled, otherwise false</returns>
+  public virtual Task<bool> Show(Sprint sprint)
+  {
+    _sprint = sprint;
+    _hasConfirmed = false;
+    return _resultModal.Show();
+  }
+
+  /// <summary>
+  /// Updates hasConfirmed state and refresh the modal.
+  /// </summary>
+  /// <param name="hasConfirmed">New value of hasConfirmed</param>
+  private void UpdateConfirmation(bool hasConfirmed)
+  {
+    _hasConfirmed = hasConfirmed;
+    _resultModal.Refresh();
+  }
+  
+  /// <summary>
+  /// If hasConfirmed state is true, sets the result of the modal to false.
+  /// </summary>
+  private void ConfirmCloseSprint()
+  {
+    if (_hasConfirmed) _resultModal.SetResult(false);
+  }
+}

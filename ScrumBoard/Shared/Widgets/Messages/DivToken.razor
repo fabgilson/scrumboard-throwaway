@@ -1,0 +1,20 @@
+@using Models.Messages
+<div>
+    @foreach (var token in Token.Tokens)
+    {
+        <DynamicComponent Type="token.Component" Parameters="GetParams(token)"/>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ScrumBoard.Models.Messages.DivToken Token { get; set; }
+
+    private Dictionary<string, object> GetParams(IMessageToken token)
+    {
+        return new Dictionary<string, object>
+        {
+            ["Token"] = token,
+        };
+    }
+}

@@ -1,0 +1,25 @@
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Marking
+@inherits BaseProjectScopedComponent
+
+<div>
+    @if (Self is not null && RoleInCurrentProject == ProjectRole.Leader)
+    {
+        <div id="marking-stats-report-container">
+            <div class="row">
+                <SprintSummaryTable SelectedUser="@SelectedUser"></SprintSummaryTable>
+            </div>
+        </div>
+        <div id="worklog-attn-zone-container">
+            <div class="row">
+                <WorklogTable IsMarkingTable="true" SelectedUser="SelectedUser ?? Self"></WorklogTable>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div id="marking-stats-report-forbidden-error-message" class="container mt-2">
+            Sorry, you are not permitted to view this report.
+        </div>
+    }
+</div>

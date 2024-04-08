@@ -1,0 +1,76 @@
+<!-- Modal for moving a story into done/deferred -->
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Widgets
+
+
+<ResultModal TResult="Stage?" @ref="_resultModal">  
+  <div class="modal-header">
+    <h5 class="modal-title" id="tasks-done-modal">Update story</h5>
+    <ResultButton TResult="Stage?" Value="null" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+      <div>
+        All tasks in this story are 
+        @if (_possibleStages.Count() == 2) {        
+            <span>
+              <StageBadge Stage="_possibleStages[0]"/> or <StageBadge Stage="_possibleStages[1]"/>.        
+            </span>
+        }
+        else
+        {
+          throw new InvalidOperationException($"Unexpected number of stages: {_possibleStages.Count}");
+        }
+      </div>
+    <p class="pt-2">Would you like to update the story status?</p>
+  </div>
+  <div class="modal-footer">    
+    <ResultButton
+      TResult="Stage?" 
+      Value="null"
+      id="close-modal" 
+      class="btn btn-outline-secondary" 
+      >
+      Cancel
+    </ResultButton>
+    @if (_possibleStages.Contains(Stage.Deferred)) 
+    { 
+      <ResultButton 
+        TResult="Stage?" 
+        Value="Stage.Deferred"
+        id="change-story-to-deferred"  
+        class="btn btn-secondary"
+        >
+        Mark as deferred
+      </ResultButton>
+    } 
+    @if (_possibleStages.Contains(Stage.Done)) 
+    { 
+      <ResultButton  
+        TResult="Stage?" 
+        Value="Stage.Done"
+        id="change-story-to-done"  
+        class="btn btn-success"
+      > 
+        Mark as done 
+      </ResultButton>     
+    } 
+  </div>     
+</ResultModal>
+
+@code {
+    private ResultModal<Stage?> _resultModal;
+
+    private List<Stage> _possibleStages;
+
+    /// <summary>
+    /// Updates the list of possible stages and displays the modal.
+    /// </summary>
+    /// <param name="possibleStages">New list of possible stages</param>
+    /// <returns>Task with a nullable stage</returns>
+    public Task<Stage?> Show(List<Stage> possibleStages)
+    {
+      _possibleStages = possibleStages;
+      return _resultModal.Show();
+    }
+}

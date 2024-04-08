@@ -1,0 +1,97 @@
+<!-- Edit form component for creating or editing an overhead entry. -->
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Inputs
+@inherits BaseProjectScopedForm
+
+<EditForm id="edit-overhead-entry-form" EditContext="_editContext" OnValidSubmit="OnFormSubmit">
+    <DataAnnotationsValidator />
+    @if (_concurrencyError) {            
+        <div class="row mb-1" style="font-size:small;">
+            <div class="col">
+                 <span class="text-danger" id="overhead-concurrency-error">Overhead entry has been updated while you were editing. Please cancel and try again.</span>
+            </div>           
+        </div>                   
+    }  
+    <div class="row gx-2 align-items-end mb-2">
+        <div class="col">
+            <InputMarkdown 
+                id="description-input" 
+                type="text"
+                class="hide-valid form-control text-area-expand"
+                placeholder="Enter description (Markdown supported)"
+                @bind-Value="_model.Description"
+            />
+            <ValidationMessage For="@(() => _model.Description)" id="description-validation-message"/>
+        </div>
+        <div class="col-auto">            
+            <div class="row">
+                <div class="col">
+                    <div class="text-muted">
+                        Duration
+                    </div>
+                    <div>
+                        <InputDuration 
+                            id="duration-input"
+                            placeholder="e.g. 1h 10m"
+                            class="hide-valid form-control"
+                            style="max-width: 7.5rem;"
+                            @bind-Value="_model.Duration"
+                        />
+                        <ValidationMessage For="@(() => _model.Duration)" id="duration-validation-message"/>
+                    </div>
+                </div>
+            </div>                 
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="text-muted">
+                Date occurred 
+            </div>
+            <InputDate 
+                id="date-input" 
+                @bind-Value="_model.DateOccurred" 
+                min="@_sprint?.StartDate.ToString("yyyy-MM-dd")"
+                max="@DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd")"
+                class="form-control" 
+                placeholder="Date finished"
+            />
+            <ValidationMessage For="@(() => _model.DateOccurred)" id="date-occurred-validation-message"/>
+        </div>
+        <div class="col">
+            <div class="text-muted">
+                Time finished
+            </div>
+            <InputTime 
+                id="time-input" 
+                @bind-Value="_model.TimeOccurred" 
+                class="form-control" 
+                placeholder="Time finished"
+            />
+            <ValidationMessage For="@(() => _model.TimeOccurred)" id="time-occurred-validation-message"/>
+        </div>
+    </div>
+    <div class="row gx-2 mt-2">
+        <div class="col">
+            <div id="session-input">
+                <InputSelection @bind-Value="_model.Session" Options="_overheadSessions">
+                    <Template Context="session">
+                        @(session == null ? "Choose Session" : session.Name)
+                    </Template>
+                </InputSelection>
+            </div>
+            <ValidationMessage For="@(() => _model.Session)" id="session-validation-message"/>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-secondary" type="button" id="cancel-button" @onclick="OnClose">
+                Cancel
+            </button>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" type="submit" id="save-button" disabled="@_isCurrentlySubmitting">
+                @(IsNewOverheadEntry ? "Create" : "Save")
+            </button>
+        </div>
+    </div>
+</EditForm>

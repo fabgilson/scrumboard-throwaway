@@ -1,0 +1,7 @@
+.custom-tooltip {
+    pointer-events: none;
+}
+
+.custom-tooltip:empty {
+    display: none;
+}

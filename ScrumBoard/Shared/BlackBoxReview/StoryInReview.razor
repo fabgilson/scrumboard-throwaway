@@ -1,0 +1,134 @@
+<!-- Component used to review a single story -->
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.Messages
+@using ScrumBoard.Shared.Widgets.SaveStatus
+@using ScrumBoard.Utils
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+@if (_story is not null && _editContext is not null)
+{
+    <div class="border rounded p-2 mb-2" @attributes="@AdditionalAttributes">
+        <EditForm EditContext="_editContext">
+            <DataAnnotationsValidator/>
+            <div class="row">
+                <div id="story-name-@_story.Id" class="col" style="min-width: 15em;">
+                    <h2>@_story.Name</h2>
+                </div>
+                <div class="col-auto">
+                    <div class="row align-items-center gx-2">
+                        <div id="story-estimate-@_story.Id" class="col-auto rounded-pill badge bg-secondary me-1">
+                            @(LanguageUtils.PluraliseNoun("point", _story.Estimate))
+                        </div>
+                        <div class="col-auto">
+                            <h4 class="mb-0">
+                                <PriorityIndicator Priority="_story.Priority"/>
+                            </h4>
+                        </div>
+                        @if (Disabled)
+                        {
+                            if (CanEdit)
+                            {
+                                <div class="col-auto">
+                                    <button type="button" id="start-editing-button" class="btn btn-outline-primary btn-sm" @onclick="OnEdit">
+                                        <span class="bi bi-pencil"></span>
+                                        Edit
+                                    </button>
+                                </div>
+                            }
+                            <div class="col-auto">
+                                <button id="toggle-changelog" type="button" class="btn btn-outline-secondary btn-sm" @onclick="ToggleChangelog">
+                                    <span class="bi bi-clock-history" aria-hidden="true"></span>
+                                    Changelog
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row pb-2">
+                <div class="col">
+                    <div id="story-description-@_story.Id">
+                        <Markdown Source="@_story.Description"/>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_story.ReviewComments) && Disabled)
+                    {
+                        <div class="row mt-3">
+                            <div class="col">
+                                <span class="fw-bold">
+                                    Comments from review
+                                </span>
+                            </div>
+                            <div class="col-auto">
+                                <LiveUpdateNotifier TEntity="UserStory" EntityId="@_story.Id" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <span id="review-comments-display" class="text-muted" style="white-space: pre-wrap">
+                                @_story.ReviewComments
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+            @if (_changelog != null)
+            {
+                <div class="my-2" id="review-changelog">
+                    @foreach (var entry in _changelog)
+                    {
+                        <li class="list-group-item" style="overflow-wrap: anywhere;">
+                            <MessageListItem Message="entry"/>
+                        </li>
+                    }
+                    @if (!_changelog.Any())
+                    {
+                        <li class="list-group-item text-center">
+                            <em>This story has no review changes</em>
+                        </li>
+                    }
+                </div>
+            }
+            <div class="row">
+                <div class="col">
+                    <ul class="list-group list-group-smart-border border-top border-bottom">
+                        @foreach (var acceptanceCriteria in _story.AcceptanceCriterias)
+                        {
+                            <li id="story-ac-@_story.Id-@acceptanceCriteria.Id" class="list-group-item" style="overflow-wrap: anywhere;">
+                                <AcceptanceCriteriaInReview
+                                    AcceptanceCriteria="acceptanceCriteria"
+                                    Disabled="Disabled"
+                                    @ref="@RegisterAcceptanceCriteriaInReviewComponent"
+                                    @key="acceptanceCriteria.Id"/>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            @if (!Disabled)
+            {
+                <div class="row mt-2">
+                    <div class="col">
+                        <label class="text-muted">
+                            Story Comments
+                        </label> 
+
+                        <textarea 
+                            id="story-comments" 
+                            class="form-control text-area-expand"
+                            @onfocusin="async () => await BroadcastUpdateBegun<UserStory>(_story.Id)"
+                            @onfocusout="async () => await BroadcastUpdateEnded<UserStory>(_story.Id)"
+                            @bind="_storyReviewForm.ReviewComments" 
+                            @bind:event="oninput"
+                            @bind:after="OnStoryCommentsChanged">
+                        </textarea>
+                        <LiveUpdateNotifier TEntity="UserStory" EntityId="@_story.Id" />
+                        <ValidationMessage id="story-comments-validation" For="@(() => _storyReviewForm.ReviewComments)"/>
+                    </div>
+                </div>
+            }
+            <ValidationSummary/>
+        </EditForm>
+        <SaveStatusIndicator id="story-in-review-save-status-indicator" Status="_saveStatus"/>
+    </div>
+    @ChildContent
+}

@@ -1,0 +1,158 @@
+<!-- Component for the tabs to display with a task. Two tabs are included: Worklog and Changelog  -->
+
+@using Models.Messages
+@using Models.Entities
+@using Models.Entities.Changelog
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.Messages
+@using Utils
+@using Extensions
+@using Repositories
+@using ScrumBoard.Repositories.Changelog
+@using Services
+@inherits BaseProjectScopedComponent
+
+<nav class="pe-0">
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button 
+            class="nav-link active" 
+            id="nav-task-worklog-tab" 
+            data-bs-toggle="tab" 
+            data-bs-target="#nav-task-worklog" 
+            type="button" 
+            role="tab" 
+            aria-controls="nav-task-worklog" 
+            aria-selected="true"
+        >
+            Worklog
+        </button>
+        <button 
+            class="nav-link" 
+            id="nav-task-changelog-tab" 
+            data-bs-toggle="tab" 
+            data-bs-target="#nav-task-changelog" 
+            type="button" 
+            role="tab" 
+            aria-controls="nav-task-changelog" 
+            aria-selected="false"
+        >
+            Changelog
+        </button>                       
+    </div>
+</nav>
+<div class="tab-content pe-0" id="nav-tabContent">
+    <div 
+        class="tab-pane fade show active" 
+        id="nav-task-worklog" 
+        role="tabpanel" 
+        aria-labelledby="nav-task-worklog-tab"
+    >
+        @if(_createdWorklogEntry != null)
+        {
+            <div class="card p-2 mb-2 mt-2">
+                <EditWorklogEntry 
+                    Entry="_createdWorklogEntry" 
+                    OnClose="() => _createdWorklogEntry = null"
+                    OnUpdate="OnUpdate"
+                    RefreshWorklogs="RefreshWorklogs"
+                />
+            </div>
+        }
+        else
+        {
+            <div class="row py-2">
+                @if (IsReadOnly)
+                {
+                    <div class="col"/>
+                }
+                else
+                {
+                    <div class="col-auto align-items-center d-flex">
+                        <div>
+                            <button
+                            id="add-worklog-entry-button"
+                            type="button"
+                            class="btn btn-sm btn-primary"
+                            @onclick="AddWorklogEntry"
+                            disabled="@_addWorklogEntryDisabled"                        
+                        >
+                            Add Entry
+                        </button>
+                        </div>                                    
+                    </div>
+                    @if (_worklogErrorMessage != null) 
+                    {
+                        <div id="add-worklog-error-message" class="col ps-0 text-danger align-items-center d-flex">
+                            @_worklogErrorMessage
+                            @if (_worklogErrorStage != null)
+                            {
+                                <StageBadge class="ms-1" Stage="_worklogErrorStage.Value"/>
+                            }
+                        </div>
+                    } 
+                    else 
+                    {
+                        <div class="col"></div>
+                    }
+                }
+                <div class="col-auto align-items-center d-flex">
+                    <div class="text-black">
+                        @DurationUtils.DurationStringFrom(_worklog.Select(log => log.TaggedWorkInstances.Sum(x => x.Duration)).Sum()) Total
+                    </div>
+                    
+                </div>
+            </div>                            
+        }
+        <ul class="list-group list-group-smart-border overflow-auto border-top border-bottom" id="task-tabs-scroll" style="overflow: visible !important;" >
+            <CascadingValue Value="@("task-tabs-scroll")" Name="BoundaryElementId">
+                @if (_worklog.Count == 0 && _createdWorklogEntry == null) 
+                {
+                    <li class="list-group-item text-center">
+                        <em>No items in worklog</em>
+                    </li>
+                }
+                @foreach (var entry in _worklog) {    
+                    @if(_editedWorklogEntry !=  null && entry == _editedWorklogEntry) {
+                        <li class="list-group-item p-2">
+                            <EditWorklogEntry 
+                                Entry="_editedWorklogEntry" 
+                                OnClose="() => _editedWorklogEntry = null"
+                                OnUpdate="OnUpdate"
+                                RefreshWorklogs="RefreshWorklogs"
+                            />
+                        </li>
+                    }         
+                    else 
+                    {
+                        <li class="@($"list-group-item worklog-item {ClassForWorklogRow(entry)}")" style="min-width: 0;">
+                            <WorklogEntryListItem 
+                                StartExpanded="_worklogEntryFocusedOnInitId is not null && entry.Id == _worklogEntryFocusedOnInitId"
+                                Entry="entry" 
+                                IsEditing="_editedWorklogEntry != null || _createdWorklogEntry != null" 
+                                EditWorklog="StartEditingWorklog"
+                            />
+                        </li>
+                    }                 
+                }
+            </CascadingValue>
+        </ul>
+    </div>
+    <div 
+        class="tab-pane fade" 
+        id="nav-task-changelog" 
+        role="tabpanel" 
+        aria-labelledby="nav-task-changelog-tab"
+    >
+    <ul class="list-group mt-2 overflow-auto" style="max-height:22rem">
+        @foreach (UserStoryTaskChangelogEntry entry in _changelog) {
+            <li class="list-group-item" style="overflow-wrap: anywhere;">
+                <MessageListItem Message="entry"/>
+            </li>    
+        }
+        <li class="list-group-item" style="overflow-wrap: anywhere;">
+            <MessageListItem Message="CreatedMessage"/>
+        </li>
+    </ul>
+        
+    </div>                    
+</div>

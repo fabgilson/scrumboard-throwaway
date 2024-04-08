@@ -1,0 +1,19 @@
+.text-truncate-name span {
+    -webkit-line-clamp: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (max-width: 576px) {
+    .text-truncate-name span {
+        -webkit-line-clamp: 4;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .text-truncate-name {
+        width: 150px;
+    }
+}

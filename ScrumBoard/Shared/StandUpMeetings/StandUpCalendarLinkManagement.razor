@@ -1,0 +1,72 @@
+@inherits BaseProjectScopedComponent
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="calendarIntegrationDropdownButton" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        Calendar integration
+    </button>
+    <ul class="dropdown-menu p-3" style="width: 600px; max-width: 95vw;" aria-labelledby="calendarIntegrationDropdownButton">
+        @if (_isLoading)
+        {
+            <li>
+                <span>Loading...</span>
+            </li>
+        }
+        else
+        {
+            <li>
+                <div class="text fw-bold">Daily Scrums meetings calendar integration</div>
+            </li>
+            <li>
+                <div class="text text-body me-2">
+                    From this interface you can generate a unique calendar link which you can then subscribe to as a web
+                    calendar in your calendar application of choice to sync upcoming Daily Scrums.
+                </div>
+            </li>
+            <li>
+                <hr class="dropdown-divider"/>
+            </li>
+            <li>
+                <div class="input-group">
+                    <span class="input-group-text">Your link</span>
+                    <input id="calendar-link-readonly-input" class="form-control" type="text" readonly="readonly" value="@CalendarLinkUrl"/>
+                </div>
+            </li>
+            <li>
+                <hr class="dropdown-divider"/>
+            </li>
+            if (_calendarLink != null)
+            {
+                <li>
+                    <div class="row">
+                        <div class="col text text-danger">
+                            <strong>Warning</strong>: Resetting or deleting the link will invalidate any current subscriptions.
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group my-auto">
+                                <button id="reset-button" type="button" class="btn btn-outline-warning" @onclick="RevokeLink">
+                                    Reset link
+                                </button>
+                                <button id="delete-button" type="button" class="btn btn-outline-danger" @onclick="DeleteLink">
+                                    Delete link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            }
+            else
+            {
+                <li>
+                    <button id="create-button" type="button" class="btn btn-outline-primary" @onclick="CreateLink">
+                        Generate your unique calendar link for <strong><em>@Project.Name</em></strong>
+                    </button>
+                </li>
+            }
+            if (!string.IsNullOrEmpty(_errorText))
+            {
+                <li><hr class="dropdown-divider"/></li>
+                <li><div class="text text-warning"><strong>Warning</strong>: @_errorText</div></li>
+            }
+        }
+    </ul>
+</div>

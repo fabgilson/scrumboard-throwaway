@@ -1,0 +1,14 @@
+@attribute [Route(PageRoutes.FillSingleForm)]
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities.Forms.Instances
+@inherits BaseProjectScopedComponent
+
+
+<div class="container">
+    @if (_formInstance is not null && _userIsAllowedToView)
+    {
+        <ProjectViewLoaded Type="ViewLoadedUsageEventType.FormInstance" ResourceId="_formInstance.Id"/>
+        <FormResponse FormInstance="_formInstance" IsPreview="false" IsReadOnly="@(_formInstance.Status == FormStatus.Submitted)" OnClose="() => { }"/>
+    }
+</div>

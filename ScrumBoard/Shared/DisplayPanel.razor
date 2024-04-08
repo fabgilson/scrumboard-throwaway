@@ -1,0 +1,65 @@
+<!-- A modal component with a backdrop that will display a given RenderFragment in the modal -->
+
+@if (!_hidden)
+{
+    <div class="panel rounded @CssClass" style="overflow-y: auto;overflow-x:hidden;" id="ModalRootContainer">
+        @ChildContent
+    </div>
+    <div class="modal-backdrop fade @Show" @onclick="HandleCloseAll"></div>
+}
+
+@code
+{
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback CloseAll { get; set; }
+
+    [Parameter]
+    public string CssClass { get; set; }
+
+    [Parameter]
+    public bool NoBackdrop { get; set; }
+
+    private bool _hidden = true;
+
+    private string Show => NoBackdrop ? "" : "show";
+
+    /// <summary>
+    /// Hides the modal.
+    /// </summary>
+    public void Close()
+    {
+        _hidden = true;
+    }
+
+    /// <summary>
+    /// Closes the modal if the escape key is pressed.
+    /// </summary>
+    /// <param name="args">The keyboard event arguments</param>
+    private void KeyPressed(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            HandleCloseAll();
+        }
+    }
+
+    /// <summary>
+    /// Hides the modal and invokes the CloseAll EventCallback.
+    /// </summary>
+    private async Task HandleCloseAll()
+    {
+        _hidden = true;
+        await CloseAll.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Unhides the modal.
+    /// </summary>
+    public void Open()
+    {
+        _hidden = false;
+    }
+}

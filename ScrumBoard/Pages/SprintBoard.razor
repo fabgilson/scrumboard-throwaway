@@ -1,0 +1,65 @@
+@attribute [Route(PageRoutes.ProjectSprintBoard)]
+@inherits BaseProjectScopedComponent
+
+@using ScrumBoard.Shared.SprintBoard
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+
+<StoryTaskDisplayPanel @ref="_storyTaskPanel" StoryUpdated="OnStoryUpdated"/>
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.SprintBoard"/>
+
+<div class="container-fluid" style="min-width: min-content;">
+    @if (Sprint != null) 
+    {
+        <div class="row align-items-end mb-2 page-header align-items-center">
+            <div class="col-auto">
+                <h1 class="m-0">Sprint Board - @Sprint.Name</h1>
+                
+            </div>
+            <div class="col-auto ps-1">
+                <SprintStageBadge class="fs-5" Stage="@Sprint.Stage"/>
+            </div>
+            <div class="col-auto">
+                <FilterButton FilterEnabled="FilterEnabled" ClearFilters="ClearFilters">
+                    <li>
+                        <span class="text-muted">
+                            Assignees
+                        </span>
+                        <InputMember id="input-assignee-filter" class="d-inline-block" AllUsers="_members" @bind-Value="_assigneeFilter" MaxUsers="_members.Count" IdPrefix="assignee"/>
+                    </li>
+                    <li>
+                        <span class="text-muted">
+                            Reviewers
+                        </span>
+                        <InputMember id="input-reviewer-filter" class="d-inline-block" AllUsers="_members" @bind-Value="_reviewerFilter" MaxUsers="_members.Count" IdPrefix="reviewer"/>
+                    </li>
+                </FilterButton>
+            </div>
+        </div>
+        @if (!_stories.Any())
+        {
+            <ErrorMessage>The current sprint does not contain any stories</ErrorMessage>
+        }
+        <CascadingValue Name="IsSprintReadOnly" Value="Sprint.Stage != SprintStage.Started">
+            @foreach (var story in _stories)
+            {
+                    
+                <SprintBoardStory 
+                    @key="story.Id"
+                    Story="story" 
+                    SelectStory="story =>_storyTaskPanel.SelectStory(story)" 
+                    SelectTask="task => _storyTaskPanel.SelectTask(task)" 
+                    TaskFilter="TaskFilter"
+                    InitiallyCollapsed="Sprint.Stage == SprintStage.Started && story.Stage is Stage.Done or Stage.Deferred"
+                />
+            }
+        </CascadingValue>
+    }
+    else 
+    {
+        <ErrorMessage>This project does not have an active sprint</ErrorMessage>
+    }
+</div>

@@ -1,0 +1,28 @@
+<div @attributes="_attributes">
+    <CascadingValue Value="@Total" Name="Total">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code 
+{
+    [Parameter]
+    public double Total { get; set; } = 100;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+
+    private Dictionary<string, object> _attributes = new();
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _attributes = new Dictionary<string, object>(AdditionalAttributes);
+
+        _attributes.TryGetValue("class", out var klass);
+        _attributes["class"] = $"{klass} progress";
+    }
+}

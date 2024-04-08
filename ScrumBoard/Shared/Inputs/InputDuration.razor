@@ -1,0 +1,58 @@
+<!--Renders input component that accepts only TimeSpan values-->
+
+@using Utils
+@inherits InputBase<TimeSpan>
+
+@if (Disabled)
+{
+    <div class="disabled @CssClass">
+        @CurrentValueAsString
+    </div>
+}
+else
+{
+    <input
+        @attributes=AdditionalAttributes 
+        class=@CssClass
+        spellcheck="false"
+        type="text"
+        @bind=CurrentValueAsString
+    />
+}
+
+@code
+{
+    [Parameter]
+    public bool Disabled { get; set; }
+    
+    /// <summary>
+    /// Takes the given input text and tries to parse it into a TimeSpan
+    /// </summary>
+    /// <param name="value">String content of input</param>
+    /// <param name="result">Out parameter for the result</param>
+    /// <param name="validationErrorMessage">Out parameter for validation error message</param>
+    /// <returns>true if parsing was successful, false otherwise</returns>
+    protected override bool TryParseValueFromString(string value, out TimeSpan result, out string validationErrorMessage)
+    {
+        TimeSpan? parsed = DurationUtils.TimeSpanFromDurationString(value);
+        if (parsed.HasValue) {
+            result = parsed.Value;
+            validationErrorMessage = null;
+            return true;
+        } else {
+            validationErrorMessage = "Invalid duration format";
+            result = TimeSpan.Zero;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Formats the given TimeSpan value as a string to display in the input component. 
+    /// </summary>
+    /// <param name="value">Given TimeSpan value to format as a string</param>
+    /// <returns>String value of the given TimeSpan value</returns>
+    protected override string FormatValueAsString(TimeSpan value)
+    {
+        return DurationUtils.DurationStringFrom(value, DurationFormatOptions.ZeroAsEmptyString);
+    }
+}

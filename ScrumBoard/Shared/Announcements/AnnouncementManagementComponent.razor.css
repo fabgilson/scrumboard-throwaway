@@ -1,0 +1,13 @@
+.accordion-button.primary:not(.collapsed) {
+    background-color: #a0eea0;
+    color: black;
+    font-weight: bold;
+}
+
+.accordion-button.collapsed.primary {
+    background-color: #b0eeb0;
+}
+
+.accordion-button.collapsed.info {
+    background-color: #fafaff;
+}

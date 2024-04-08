@@ -1,0 +1,74 @@
+@using SharedLensResources
+@using Microsoft.AspNetCore.Components
+<EditForm OnValidSubmit="OnValidSubmitAsync" EditContext="_editContext">
+    <DataAnnotationsValidator/>
+    <Fields>
+        <Field>
+            <FieldLabel>Username</FieldLabel>
+            <TextEdit @bind-Text="_newUserRequest.UserName" ElementId="username-input">
+                <FieldHelp>Unique username used to log in</FieldHelp>
+                <ValidationMessage For="() => _newUserRequest.UserName" />
+            </TextEdit>
+        </Field>
+
+        <Field>
+            <FieldLabel>Password</FieldLabel>
+            <TextEdit @bind-Text="_newUserRequest.Password" ElementId="password-input">
+                <FieldHelp>
+                    Initial password for new user account, user can change their
+                    password through this portal
+                </FieldHelp>
+                <ValidationMessage For="() => _newUserRequest.Password" />
+            </TextEdit>
+        </Field>
+
+        <Field>
+            <FieldLabel>Role</FieldLabel>
+            <Select TValue="GlobalLensRole" @bind-SelectedValue="_newUserRequest.Role">
+                @foreach (var value in Enum.GetValues<GlobalLensRole>())
+                {
+                    <SelectItem @key="value" Value="@value">@value</SelectItem>
+                }
+            </Select>
+            <FieldHelp>The Global Lens role for new user account</FieldHelp>
+            <ValidationMessage For="() => _newUserRequest.Role" />
+        </Field>
+    </Fields>
+
+    <Fields>
+        <Field>
+            <FieldLabel>Email address</FieldLabel>
+            <TextEdit @bind-Text="_newUserRequest.Email" ElementId="email-input">
+                <FieldHelp>Valid e-mail address for new user</FieldHelp>
+                <ValidationMessage For="() => _newUserRequest.Email" />
+            </TextEdit>
+        </Field>
+    </Fields>
+
+    <Fields>
+        <Field>
+            <FieldLabel>First name</FieldLabel>
+            <TextEdit @bind-Text="_newUserRequest.FirstName" ElementId="first-name-input">
+                <FieldHelp>First name of user</FieldHelp>
+                <ValidationMessage For="() => _newUserRequest.FirstName" />
+            </TextEdit>
+        </Field>
+
+        <Field>
+            <FieldLabel>Last name</FieldLabel>
+            <TextEdit @bind-Text="_newUserRequest.LastName" ElementId="last-name-input">
+                <FieldHelp>Last name of user</FieldHelp>
+                <ValidationMessage For="() => _newUserRequest.LastName" />
+            </TextEdit>
+        </Field>
+    </Fields>
+    
+    <Field>
+        <button class="btn btn-primary" type="submit" id="create-user-submit-button">Submit</button>
+    </Field>
+    <Microsoft.AspNetCore.Components.Forms.ValidationSummary/>
+    @if (!string.IsNullOrEmpty(_successMessage))
+    {
+        <Label TextColor="TextColor.Success">Account successfully created!</Label>
+    }
+</EditForm>

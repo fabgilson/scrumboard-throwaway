@@ -1,0 +1,52 @@
+﻿<!--Input component to select task complexity using a dropdown list-->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+
+<button 
+    @attributes=AdditionalAttributes 
+    class="@("btn border d-block " + (Disabled ? "" : "dropdown-toggle"))" 
+    type="button" 
+    id="complexity-menu-button" 
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+>
+    <div class="d-inline-block text-start pe-2" style="min-width: 5em;">
+        <div class="row gx-1">
+            <div class="col-auto">
+                <ComplexityIndicator Complexity="@Value"/>
+            </div>
+            <div class="col">
+                @Value
+            </div>
+        </div>
+    </div>
+</button>
+@if (!Disabled)
+{
+    <ul class="dropdown-menu" aria-labelledby="complexity-menu-button">
+        @foreach (Complexity complexity in Enum.GetValues(typeof(Complexity)))
+        {
+            <li>
+                <button type="button" class="dropdown-item" id="complexity-select-@complexity" @onclick="@(() => ValueChanged.InvokeAsync(complexity))">
+                    <ComplexityIndicator Complexity="@complexity"/>
+                    @complexity
+                </button>
+            </li>
+        }      
+    </ul>
+}
+
+@code {    
+    [Parameter]
+    public Complexity Value { get; set; }
+
+    [Parameter]
+    public EventCallback<Complexity> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+}

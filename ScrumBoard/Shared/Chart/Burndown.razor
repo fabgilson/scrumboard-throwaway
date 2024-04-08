@@ -1,0 +1,20 @@
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+
+<!--Displays a burndown chart using Chart.js, and renders its tooltips. -->
+
+@if (Sprint != null)
+{
+    <ProjectViewLoaded Type="ViewLoadedUsageEventType.BurndownChart" ResourceId="Sprint.Id"/>
+    <TooltipClippingParent>
+        <div @ref="_tooltipTarget" style="@TooltipTargetStyle"/>
+        <canvas @ref="_canvasReference" class="mt-5"></canvas>
+        <Tooltip Target="_tooltipTarget">
+            @if (_tooltipContent.HasValue)
+            {
+                var content = _tooltipContent.Value;
+                <MessageListTooltip Messages="content.Item1" ExcessNumber="content.Item2"/>
+            }
+        </Tooltip>
+    </TooltipClippingParent>
+}

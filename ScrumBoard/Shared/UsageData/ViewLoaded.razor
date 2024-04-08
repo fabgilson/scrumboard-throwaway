@@ -1,0 +1,27 @@
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Services
+@using ScrumBoard.Services.UsageData
+@inject IUsageDataService UsageDataService
+
+@code {
+
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+
+    private long? _prevSelfId;
+    
+    [Parameter]
+    public ViewLoadedUsageEventType Type { get; set; }
+
+    private ViewLoadedUsageEventType _prevType;
+
+    protected override void OnParametersSet()
+    {
+        if (Self is null) return;
+        if (_prevType == Type && Self.Id == _prevSelfId) return;
+        _prevType = Type;
+        _prevSelfId = Self.Id;
+        UsageDataService.AddUsageEvent(new ViewLoadedUsageEvent(Self.Id, Type));
+    }
+}

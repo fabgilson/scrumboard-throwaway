@@ -1,0 +1,45 @@
+<!-- Component for rendering the difference between two pieces of text -->
+@using ScrumBoard.Utils
+
+<span class="ps-1 text-secondary">
+    '@foreach (var segment in FromSegments)
+    {
+        <span class="@segment.Type.ToString().ToLower()">@segment.Content</span>
+    }'
+</span>
+<ArrowToken/>
+<span class="ps-1 text-secondary">
+    '@foreach (var segment in ToSegments)
+    {
+        <span class="@segment.Type.ToString().ToLower()">@segment.Content</span>
+    }'
+</span>
+
+
+@code {
+    [Parameter]
+    public string From { get; set; }
+    
+    [Parameter]
+    public string To { get; set; }
+
+    /// <summary>
+    /// Segments that will be shown on the from side
+    /// </summary>
+    private IEnumerable<EditSegment> FromSegments => _segments
+        .Where(segment => segment.Type is EditSegmentType.Removed or EditSegmentType.Unchanged);
+    
+    /// <summary>
+    /// Segments that will be shown on the to side
+    /// </summary>
+    private IEnumerable<EditSegment> ToSegments => _segments
+        .Where(segment => segment.Type is EditSegmentType.Added or EditSegmentType.Unchanged);
+
+    private List<EditSegment> _segments = new();
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _segments = EditDistance.LongestCommonSubsequence(From, To);
+    }
+}

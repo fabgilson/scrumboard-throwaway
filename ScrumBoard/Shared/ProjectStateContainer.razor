@@ -1,0 +1,13 @@
+@using ScrumBoard.LiveUpdating
+@if (ProjectId is null)
+{
+    @ChildContent
+}
+else if(_projectState is not null && _isAllowedToViewProject)
+{
+    <CascadingValue TValue="EntityUpdateHubConnectionWrapper" Name="LiveUpdateHubConnectionWrapper" Value="_liveUpdateHubConnectionWrapper">
+        <CascadingValue Name="ProjectState" Value="_projectState">
+            @ChildContent
+        </CascadingValue>
+    </CascadingValue>
+}

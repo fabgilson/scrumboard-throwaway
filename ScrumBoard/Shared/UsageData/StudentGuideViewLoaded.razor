@@ -1,0 +1,29 @@
+﻿@using ScrumBoard.Services.UsageData
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@inject IUsageDataService UsageDataService
+
+@code
+{
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+    private long? _prevSelfId;
+    
+    [Parameter]
+    public ViewLoadedUsageEventType Type { get; set; }
+    private ViewLoadedUsageEventType _prevType;
+    
+    [Parameter]
+    public string StudentGuideContentFileName { get; set; }
+    private string _prevContentFileName;
+
+    protected override void OnParametersSet()
+    {
+        if (Self is null || StudentGuideContentFileName is null) return;
+        if (_prevType == Type && Self.Id == _prevSelfId && StudentGuideContentFileName == _prevContentFileName) return;
+        _prevType = Type;
+        _prevSelfId = Self.Id;
+        _prevContentFileName = StudentGuideContentFileName;
+        UsageDataService.AddUsageEvent(new StudentGuideViewLoadedUsageEvent(Self.Id, Type, StudentGuideContentFileName));
+    }
+}

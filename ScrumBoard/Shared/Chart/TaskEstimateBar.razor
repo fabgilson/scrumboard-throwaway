@@ -1,0 +1,36 @@
+@using System
+@using ScrumBoard.Utils
+@using ScrumBoard.Shared.Widgets
+
+<!--Bootstrap progress bar based chart component. 
+    Renders a set of statistics as progress bar segments. 
+    Displays the total set in the progress bar and a legend for each colour in the chart. -->
+
+<div class="row mb-2">
+    @if (Title != null)
+    {
+        <h5>@Title</h5>
+    }
+    <div class="col-lg col-md" >
+        <ProgressBar Total="Total.TotalHours" class="rounded" style="height: 35px;">
+            @if (HasOverrun)
+            {
+                <ProgressSegment Value="EstimatedTime.TotalHours" Colour="#aaaaff">
+                    Originally estimated - @(DurationUtils.DurationStringFrom(EstimatedTime, DurationFormat))
+                </ProgressSegment>
+                <ProgressSegment Value="(TimeSpent - EstimatedTime).TotalHours" Colour="#ff1111">
+                    Excess effort logged - @(DurationUtils.DurationStringFrom(TimeSpent - EstimatedTime, DurationFormat))
+                </ProgressSegment>
+            }
+            else
+            {
+                <ProgressSegment Value="TimeSpent.TotalHours" Colour="#11aa11">
+                    Effort logged - @(DurationUtils.DurationStringFrom(TimeSpent, DurationFormat))
+                </ProgressSegment>
+                <ProgressSegment Value="(EstimatedTime - TimeSpent).TotalHours" Colour="#aaaaff">
+                    Estimate remaining - @(DurationUtils.DurationStringFrom(EstimatedTime - TimeSpent, DurationFormat))
+                </ProgressSegment>
+            }
+        </ProgressBar>
+    </div>
+</div>

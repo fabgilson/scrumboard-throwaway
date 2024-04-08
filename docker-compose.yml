@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+  identityprovider:
+    image: "identityprovider:${TAG:-latest}"
+    restart: always
+    container_name: "${APP_NAME:-identityprovider}-${CI_ENVIRONMENT_NAME:-development}"
+    ports:
+      - "${IDENTITY_PROVIDER_PORT:-16000}:6000"
+    environment:
+      - TZ=Pacific/Auckland
+      - Urls=http://0.0.0.0:6000
+      - Database__Host=${Database__Host:-mariadb-development}
+      - Database__Username=${Database__Username:-root}
+      - Database__Password=${Database__Password:-development-mariadb-password}
+      - Database__DatabaseName=${Database__DatabaseName:-identity-provider-dev-db}
+      - Database__Port=${Database__Port:-3306}
+      - Ldap__HostName=${Ldap__HostName:-canterbury.ac.nz}
+      - Ldap__HostPort=${Ldap__HostPort:-3269}
+      - Ldap__UseSsl=${Ldap__UseSsl:-true}
+      - Ldap__IgnoreCertificateVerification=${Ldap__IgnoreCertificateVerification:-false}
+      - Ldap__DomainName=${Ldap__DomainName:-canterbury.ac.nz}
+      - Ldap__UserQueryBase=${Ldap__UserQueryBase:-DC=canterbury,DC=ac,DC=nz}
+      - Ldap__DefaultAdminUserCodes=${Ldap__DefaultAdminUserCodes:-aag123}
+      - SigningKey=${SigningKey:-NotVerySecretSigningKeyForDevelopmentOnly}
+      - SeedSampleUserAccounts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - development_network
+  
+  scrumboard:
+    image: "scrumboard:${TAG:-latest}"
+    restart: always
+    container_name: "${APP_NAME:-scrumboard}-${CI_ENVIRONMENT_NAME:-development}"
+    ports:
+      - "${SCRUMBOARD_PORT:-15000}:5000"
+    environment:
+      - TZ=Pacific/Auckland
+      - Urls=http://0.0.0.0:5000
+      - AppBaseUrl
+      - IdentityProviderUrl
+      - UserCodesPermittedToReadCheckIns
+      - EnableFeedbackForms
+      - EnableSeedData
+      - EnableWebHooks
+      - Database__Host
+      - Database__Username
+      - Database__Password
+      - Database__DatabaseName
+      - Database__Port
+      - UsageDataDatabase__Host
+      - UsageDataDatabase__Username
+      - UsageDataDatabase__Password
+      - UsageDataDatabase__DatabaseName
+      - UsageDataDatabase__Port
+      - StudentGuide__Enabled
+      - StudentGuide__ContentPath=${StudentGuide__ContentPath:-StudentGuideContent}
+      - StudentGuide__GitlabZipPath
+      - StudentGuide__GitlabTagPath
+      - StudentGuide__GitlabAccessToken
+      - LiveUpdate__IgnoreSslValidation=${LiveUpdate__IgnoreSslValidation:-false}
+    volumes:
+      - ${HOME}/${APP_NAME:-scrumboard}-${CI_ENVIRONMENT_NAME:-development}:/ScrumBoard/${StudentGuide__ContentPath:-StudentGuideContent}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - development_network
+        
+  lenscoredashboard:
+    image: "lenscoredashboard:${TAG:-latest}"
+    restart: always
+    container_name: "${APP_NAME:-lenscoredashboard}-${CI_ENVIRONMENT_NAME:-development}"
+    ports:
+      - "${LENS_CORE_DASHBOARD_PORT:-17000}:7000"
+    environment:
+      - TZ=Pacific/Auckland
+      - Urls=http://0.0.0.0:7000
+      - AppBaseUrl
+      - IdentityProviderUrl=${IdentityProviderUrl:-http://identityprovider-development:6000}
+    networks:
+      - development_network
+        
+  mariadb:
+    image: mariadb
+    container_name: "mariadb-${CI_ENVIRONMENT_NAME:-development}"
+    restart: always
+    environment:
+      - TZ=Pacific/Auckland
+      - MYSQL_ROOT_PASSWORD=${MARIA_DB_PASSWORD:-development-mariadb-password}
+    ports:
+      - "${MARIADB_BIND_TO_HOST_PORT:-}:3306"
+    networks:
+      - development_network
+      
+networks:
+  development_network:
+    name: ${CI_ENVIRONMENT_NAME:-default}_network
+    driver: bridge

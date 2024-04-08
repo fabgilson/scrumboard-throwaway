@@ -1,0 +1,103 @@
+@using ScrumBoard.Services
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.UsageData
+
+@attribute [Route(PageRoutes.StudentGuide)]
+@inject IStudentGuideService StudentGuideService
+
+@if (_markdownSource is not null)
+{
+    <div class="mx-auto" style="max-width: 90em; background-color: #f8f9fa">
+        <div class="mx-auto py-3 px-4 min-vh-100 col" style="max-width: 80em">
+            @if (!_isShowingErrorMessage)
+            {
+                <div class="row" id="student-guide-search-input-container">
+                    Search: <input @oninput="Search" maxlength="50" id="student-guide-search-input"/>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_searchText))
+                {
+                    <div class="row p-2 mx-2" id="student-guide-search-results-container">
+                        @if (_hideSearchResults) { }
+                        else if (_searchResults is null) { <LoadingSpinner/> }
+                        else 
+                        {
+                            <div class="col" id="student-guide-found-results-container">
+                                @if (!_searchResults.Any())
+                                {
+                                    <div class="d-flex flex-row flex-wrap w-100 fst-italic">No results found</div>
+                                }
+                                @foreach (var group in _searchResults
+                                    .GroupBy(result => result.FileName)
+                                    .OrderByDescending(x => x.Max(xx => xx.TotalScore)).Take(5))
+                                {
+                                    <h4 class="student-guide-search-result-filename">@group.Key</h4>
+                                    @foreach (var searchResult in group.Take(5).OrderByDescending(x => x.TotalScore))
+                                    {
+                                        <a 
+                                            class="d-flex flex-row flex-wrap w-100 student-guide-search-result-line"
+                                            style="cursor: pointer"
+                                            @onclick="() => NavigateToSearchResult(PageRoutes.ToStudentGuidePage(searchResult.Url), searchResult.OriginalText)"
+                                        >
+                                            @{
+                                                const int padding = 15; // Maximum characters of padding on each side of match
+                                                var currentIndex = 0;
+                                                var matches = searchResult.Matches.OrderBy(m => m.Item1).ToList();
+                                                for (var i = 0; i < matches.Count; i++)
+                                                {
+                                                    var match = matches[i];
+                                                    if (match.Item1 > currentIndex)
+                                                    {
+                                                        var beforeMatch = searchResult.OriginalText.Substring(currentIndex, match.Item1 - currentIndex);
+                                                        if (beforeMatch.Length > padding)
+                                                        {
+                                                            beforeMatch = "..." + beforeMatch[^padding..];
+                                                        }
+                                                        <div style="white-space: pre">@beforeMatch</div>
+                                                    }
+
+                                                    var matchText = searchResult.OriginalText.Substring(match.Item1, match.Item2);
+                                                    <div style="white-space: pre" class="fw-bold">@matchText</div>
+
+                                                    currentIndex = match.Item1 + match.Item2;
+
+                                                    // Add padding after a match
+                                                    if (currentIndex < searchResult.OriginalText.Length)
+                                                    {
+                                                        // Check if there is another match contained within the padding.
+                                                        // If so, stop padding at the start of the next match
+                                                        var paddingEnd = i < matches.Count - 1 ? Math.Min(matches[i + 1].Item1, currentIndex + padding) : currentIndex + padding;
+                                                        var paddingText = searchResult.OriginalText.Substring(currentIndex, Math.Min(paddingEnd - currentIndex, searchResult.OriginalText.Length - currentIndex));
+                                                        <div style="white-space: pre">@paddingText</div>
+                                                        currentIndex += paddingText.Length;
+                                                    }
+                                                }
+
+                                                // Append the rest of the text after the last match
+                                                if (currentIndex < searchResult.OriginalText.Length)
+                                                {
+                                                    var afterLastMatch = searchResult.OriginalText[currentIndex..];
+                                                    if (afterLastMatch.Length > padding)
+                                                    {
+                                                        afterLastMatch = afterLastMatch[..padding] + "...";
+                                                    }
+                                                    <div style="white-space: pre">@afterLastMatch</div>
+                                                }
+                                            }
+                                        </a>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            <div class="row" id="student-guide-markdown-container">
+                <Markdown
+                    Source="@_markdownSource"
+                    SanitiseLinksForStudentGuideContent="!_isShowingErrorMessage"/>
+            </div>
+        </div>
+    </div>
+    <StudentGuideViewLoaded Type="ViewLoadedUsageEventType.StudentGuide" StudentGuideContentFileName="@(PageName ?? "")"/>
+}

@@ -1,0 +1,117 @@
+<!--Modal to confirm sprint status change from in progress to ready to review-->
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;">
+  <div class="modal-header">
+    <h5 class="modal-title" id="sprint-status-change-modal">
+      @_action Sprint
+    </h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    This sprint is currently <SprintStageBadge Stage="_currentSprintStage"/>.
+    @if (_action == SprintStatusAction.Finish)
+    {
+      <div class="mt-1">
+        This will mark the sprint as <SprintStageBadge Stage="SprintStage.ReadyToReview"/> and it will no longer be possible to log time against any tasks within the sprint. 
+        Any <StageBadge Stage="Stage.Deferred"/> stories will not be included in the review.
+      </div>
+    }
+    @if (_relevantStories.Any()) { 
+      <div class="mb-1 d-flex align-items-center">
+        @switch (_action)
+        {
+          case SprintStatusAction.Reopen:
+            <text>
+              <span class="me-1">@(_action)ing the sprint will move the following stories into</span>
+              <StageBadge Stage="Stage.Todo"/>:
+            </text>
+            break;
+          case SprintStatusAction.Finish:
+            <span class="mt-2">
+              The following stories are <StageBadge Stage="Stage.Todo"/>, they will be moved into <StageBadge Stage="Stage.Deferred"/>
+            </span>
+            break;
+          default:
+            throw new InvalidOperationException($"Unknown action: {_action}");  
+        }
+      </div>
+        <ul class="list-group my-2" style="max-height: 200px; overflow: auto;">
+          @foreach (UserStory story in _relevantStories)
+          {
+            <li class="list-group-item">
+              <StoryListItem Story="story">
+                <ChildContent>
+                    <div id="story-estimate" class="col-auto rounded-pill badge bg-secondary ">
+                      @(LanguageUtils.PluraliseNoun("point", story.Estimate))
+                    </div>
+                </ChildContent>               
+              </StoryListItem>
+            </li>
+          }
+        </ul>
+      } 
+    <div>
+    <p class="pt-2 m-0">Are you sure you want to proceed?</p>
+    </div>
+   
+  </div>
+  <div class="modal-footer">     
+    <ResultButton
+      Value="true"
+      id="close-modal"
+      class="btn btn-outline-secondary"
+    >
+      Cancel
+    </ResultButton>
+    <ResultButton
+      Value="false"
+      id="@($"confirm-{_action}-sprint")" 
+      class="@actionCssClass[_action]"
+    >
+      @_action Sprint
+    </ResultButton>
+  </div>     
+</ResultModal>
+
+@code {
+    private ResultModal<bool> _resultModal;
+
+    private SprintStage _currentSprintStage;
+
+    private SprintStatusAction _action;
+
+    private IEnumerable<UserStory> _relevantStories;
+
+    private Dictionary<SprintStatusAction, string> actionCssClass = new Dictionary<SprintStatusAction, string>
+    {
+      [SprintStatusAction.Finish] = "btn btn-success", 
+      [SprintStatusAction.Start]  = "btn btn-primary", 
+      [SprintStatusAction.Reopen] = "btn btn-primary"
+    };
+
+  /// <summary>
+    /// Updates current sprint stage and action. 
+    /// if given relevant stories is null, set relevantStories state to empty list.
+    /// Otherwise updates the relevant stories state. 
+    /// Displays the modal.
+    /// </summary>
+    /// <param name="currentSprintStage">SprintStage to update state to</param>
+    /// <param name="action">SprintStatusAction to update state to</param>
+    /// <param name="relevantStories">IEnumerable of UserStory that is null by default, that will be affected in some way by the sprint status change</param>
+    /// <returns></returns>
+    public Task<bool> Show(SprintStage currentSprintStage, SprintStatusAction action, IEnumerable<UserStory> relevantStories = null) {
+      _currentSprintStage = currentSprintStage;
+      _action = action;
+      if (relevantStories == null) {
+        _relevantStories = new List<UserStory>();
+      } 
+      else {
+      _relevantStories = relevantStories;
+      }
+      return _resultModal.Show();
+    }
+}

@@ -1,0 +1,52 @@
+<!--displays a series of statistics related to users. -->
+
+@using ScrumBoard.Models.Statistics
+@using ScrumBoard.Models.Messages
+@using ScrumBoard.Shared.Widgets
+
+<div>
+    <h5>@Title</h5>
+    <div class="row">
+        @if (Statistics != null && Statistics.Any())
+        {
+            @foreach (var statistic in Statistics)
+            {
+                <div class="col text-center">
+                    <span>@statistic.Description</span>
+                    @foreach (var token in statistic.GenerateMessage())
+                    {
+                        <span class=" d-flex justify-content-center">
+                            <DynamicComponent Type="token.Component" Parameters="GetParams(token)"/>
+                        </span>
+                    }
+                </div>
+            }
+            
+        }
+        else
+        {
+            <ErrorMessage>No users</ErrorMessage>
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public IEnumerable<IStatistic> Statistics { get; set; }
+
+    [Parameter] public string Title { get; set; }
+    
+    /// <summary>
+    /// Gets the dictionary of possible parameters to be used by dynamic component for each IMessageToken
+    /// returned by the GenerateMessage() function of each IStatitic. 
+    /// </summary>
+    /// <param name="token">Instance of IMessageToken</param>
+    /// <returns>Dictionary of possible parameters</returns>
+    private Dictionary<string, object> GetParams(IMessageToken token)
+    {
+        return new Dictionary<string, object>
+        {
+            ["Token"] = token,
+        };
+    }
+}

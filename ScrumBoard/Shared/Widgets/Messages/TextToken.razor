@@ -1,0 +1,10 @@
+@using ScrumBoard.Models.Messages
+
+<span id="text-token-text-content" class="ps-1 @Token.FontStyle.GetCss()">
+    @Token.Content
+</span>
+
+@code {
+    [Parameter]
+    public Models.Messages.TextToken Token { get; set; }
+}

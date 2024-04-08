@@ -1,0 +1,150 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.FormResponseComponents
+@using ScrumBoard.Models.Entities.Forms.Instances
+@using ScrumBoard.Models.Entities.Forms.Templates
+@using ScrumBoard.Models.Forms.Feedback.Response
+@inherits BaseProjectScopedComponent
+<!-- A user facing form generated from a FormTemplate. Is also used to preview how a form template would look for a normal user. -->
+
+<div class="clearfix row" id="form-response-container">
+    <h1 class="col">
+        @if (FormInstance is not null)
+        {
+            @FormInstance.Assignment.Name
+        }
+        else
+        {
+            @_formTemplate.Name
+        }
+        @if (IsPreview)
+        {
+            <button id="exit-preview-button" class="btn btn-outline-secondary my-2 mb-2 d-inline float-end" @onclick="OnClose">
+                Exit Preview
+            </button>
+        }
+    </h1>
+    @if (FormInstance is UserFormInstance userFormInstance)
+    {
+        @if (userFormInstance?.Pair is not null)
+        {
+            <div class="col col-auto">
+                <div class="row">
+                    <div class="col d-flex align-items-center">
+                        <span class="fw-bold" style="white-space: nowrap">This form applies to:</span>
+                    </div>
+                    <div class="col">
+                        <UserListItem User="userFormInstance.Pair" Size="small"></UserListItem>
+                    </div>
+                </div>
+            </div>
+        }
+    } else if (FormInstance is TeamFormInstance teamFormInstance)
+    {
+        <div class="col col-auto">
+            <div class="row">
+                <div class="col d-flex align-items-center">
+                    <span class="fw-bold" style="white-space: nowrap">This form applies to:</span>
+                </div>
+                <div class="col">
+                    @teamFormInstance.LinkedProject.Name
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (_model.Pages.Count > 1)
+{
+    <ProgressBar class="mb-2" Total="GetTotalQuestionsBefore(_model.Pages.Count)">
+        <ProgressSegment Value="GetTotalQuestionsBefore(_pageIndex)"/>
+    </ProgressBar>
+}
+<EditForm EditContext="_editContext">
+    <ObjectGraphDataAnnotationsValidator/>
+    @foreach (var blockQuestionForm in _model.Pages[_pageIndex].BlockWithQuestionForms)
+    {
+        long? key = blockQuestionForm.Block.Id == default ? null : blockQuestionForm.Block.Id;
+        <div class="card p-2 mb-3" @key="key">
+            @switch (blockQuestionForm.Block)
+            {
+                case TextBlock text:
+                {
+                    <FormBlockTextDisplay TextBlock="text" />
+                    break;
+                }
+                case TextQuestion textQuestion:
+                {
+                    <FormBlockTextQuestionResponse 
+                        FormInstanceId="FormInstance?.Id"
+                        TextQuestion="textQuestion" 
+                        TextAnswerForm="(TextAnswerForm) blockQuestionForm.QuestionResponseForm"
+                        IsReadOnly="IsReadOnly"
+                        ShouldChangesBeBroadcastToWholeProject="FormCanBeEditedByWholeProject"
+                    />
+                    break;
+                }
+                case MultiChoiceQuestion multiChoiceQuestion:
+                {
+                    <FormBlockMultiChoiceQuestionResponse
+                        FormInstanceId="FormInstance?.Id"
+                        MultiChoiceQuestion="multiChoiceQuestion"
+                        MultiChoiceAnswerForm="(MultiChoiceAnswerForm) blockQuestionForm.QuestionResponseForm"
+                        IsReadOnly="IsReadOnly"
+                        ShouldChangesBeBroadcastToWholeProject="FormCanBeEditedByWholeProject"
+                    />
+                    break;
+                }
+                default:
+                    throw new InvalidOperationException($"Unknown block type: {blockQuestionForm.Block}");
+            }
+        </div>
+    }
+</EditForm>
+
+<div class="row mb-2">
+    <div class="col-auto">
+        @if (_pageIndex > 0)
+        {
+            <button type="button" id="previous-page-button" class="btn btn-outline-primary" @onclick="() => _pageIndex--">
+                Previous
+            </button>
+        }
+    </div>
+    <div class="col ms-auto d-flex justify-content-end">
+        @if (!IsReadOnly)
+        {
+            <button type="button" id="validate-form-button" class="btn btn-outline-info" @onclick="RequestValidationOnCurrentPage">
+                Validate
+            </button>
+        }
+    </div>
+    <div class="col-auto">
+        @if (_pageIndex < _model.Pages.Count - 1)
+        {
+            <button type="button" id="next-page-button" class="btn btn-outline-primary" @onclick="() => _pageIndex++">
+                Next
+            </button>
+        }
+        else if (!IsReadOnly)
+        {
+            <button 
+                type="button" 
+                id="finish-response-button" 
+                disabled="@(IsPreview || (FormInstance is not null && FormInstance.Assignment.StartDate > DateTime.Now))" 
+                class="btn btn-primary" 
+                @onclick="SubmitAsync">
+                Finish
+            </button>
+        }
+    </div>
+</div>
+
+<ConfirmModal Title="Confirm Form Submission" @ref="_confirmModal">
+    <Body>
+    <div>
+        <div class="mb-2">You are about to submit this form. </div>
+        <div class="text-danger fw-bold mb-3">You won't be able to edit your replies after.</div> 
+        <div>Are you sure you wish to continue?</div> 
+    </div>
+    </Body>
+</ConfirmModal>

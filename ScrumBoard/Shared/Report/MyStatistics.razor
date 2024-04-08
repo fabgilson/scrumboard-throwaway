@@ -1,0 +1,65 @@
+<!--Displays statistics for a given user-->
+@inherits BaseProjectScopedComponent
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Services
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Statistics
+@using ScrumBoard.Repositories
+@using ScrumBoard.Shared.Chart
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.MyStatistics" ResourceId="Sprint?.Id ?? -1"/>
+@if (SelectedUser is null || ProjectState is null)
+{
+    <LoadingSpinner />
+}
+else if (!ReportTypeUtils.GetAllowedReportTypesForRole(ProjectState.ProjectRole).Contains(ReportType.MyStatistics))
+{
+    <div id="my-statistics-report-forbidden-error-message" class="container mt-2">
+        Sorry, you are not permitted to view this report.
+    </div>
+}
+else if (ProjectState.ProjectRole != ProjectRole.Leader && SelectedUser.Id != Self.Id)
+{
+    <div id="my-statistics-report-viewing-other-user-report-error-message" class="container mt-2">
+        Sorry, you are only permitted to view your own statistics report.
+    </div>
+}
+else
+{
+    <div class="container-fluid" id="my-statistics-report-container" @key="_renderKey">
+        <div class="row p-2 justify-content-center">
+            @foreach (var statistic in _statCardData)
+            {
+                <div class="col-auto">
+                    <StatCard Title="@statistic.Description" Statistic="statistic"/>
+                </div>
+            }
+        </div>
+        <div class="row p-2 justify-content-center">
+            <div class="col">
+                <ProjectStatsBar
+                    Title="Tags Worked"
+                    StatsBar="_tagsWorked"
+                    Type="ProjectStatsType.TagsWorked"/>
+            </div>
+        </div>
+        <div class="row p-2 justify-content-center">
+            <div class="col-12 mb-4 p-4 bg-light rounded">
+                <UserRankings Title="Time Spent Working with Team Member" Statistics="_usersPaired"/>
+            </div>
+            <div class="col-12 col-xxl-6 px-0">
+                <div class="me-xxl-2 mb-3 mb-xxl-0 p-4 bg-light rounded ">
+                    <UserRankings Title="Team member reviews of your tasks" Statistics="_usersReviewedBy"/>
+                </div>
+            </div>
+            <div class="col-12 col-xxl-6 px-0">
+                <div class="ms-xxl-2 p-4 bg-light rounded ">
+                    <UserRankings Title="Your reviews of team members' tasks" Statistics="_usersReviewed"/>
+                </div>
+            </div>
+        </div>
+    </div>
+}

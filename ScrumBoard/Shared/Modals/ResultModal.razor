@@ -1,0 +1,51 @@
+<!--Generic modal that takes modal content-->
+
+@typeparam TResult
+<ModalTrigger @ref="_modalTrigger">
+    <CascadingValue Name="ResultCallback" Value="SetResult">
+        <div class="modal-dialog" @attributes="@DialogAttributes">
+            <div class="modal-content">
+                @ChildContent
+            </div>
+        </div>
+    </CascadingValue>
+</ModalTrigger>
+
+@code 
+{
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private ModalTrigger _modalTrigger;
+
+    private TaskCompletionSource<TResult> _taskCompletionSource;
+
+    ///<summary>Modal dialog attributes e.g. css class, id</summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> DialogAttributes { get; set; }
+
+    /// <summary> Opens the modal and waits for a result to be set, when result is set the modal will be closed and a value returned</summary>
+    public virtual async Task<TResult> Show()
+    {        
+        _taskCompletionSource = new();
+        _modalTrigger.Show();
+        try {
+            return await _taskCompletionSource.Task;
+        } finally {
+            _modalTrigger.Hide();
+            _taskCompletionSource = null;
+        }
+    }
+
+    /// <summary> Notifies the system that the content of this modal has changed </summary>
+    public virtual void Refresh()
+    {
+        if (_taskCompletionSource == null) throw new InvalidOperationException("Cannot refresh while not showing modal");
+        _modalTrigger.Show();
+    }
+
+    /// <summary> Sets the result that will asynchronously returned from .Show()</summary>
+    public virtual void SetResult(TResult result) {
+        _taskCompletionSource.SetResult(result);
+    }
+}

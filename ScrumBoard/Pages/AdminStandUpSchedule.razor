@@ -1,0 +1,108 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Models.Entities
+@attribute [Route(PageRoutes.AdminStandUpSchedule)]
+
+@attribute [Authorize(Roles = "GlobalProjectAdmin,SystemAdmin")]
+
+@if (_pageIsLoading)
+{
+    <LoadingSpinner />
+}
+else
+{
+    <div id="admin-stand-up-schedule-container" class="container">
+        <div class="row">
+            <p class="text-center text-muted fs-5">
+                This page shows upcoming Daily Scrums scheduled from all projects. Daily Scrums can be filtered using the 
+                project selector below.
+            </p>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                Filter by project(s):
+                <SearchableDropDown
+                    T="Project"
+                    AllowMultipleSelect="true"
+                    ConvertItemToStringDelegate="project => project.Name"
+                    SearchDelegate="SearchForProjects"
+                    StartingPrompt="Select projects for which to enable flag"
+                    OnMultipleSelectionUpdated="OnProjectSelectionChanged"
+                    GenerateButtonTextDelegate="@(i => $"Only showing upcoming Daily Scrums for {i} project{(i != 1 ? "s" : "")}")"
+                    ButtonClickDoesNothing="true"
+                    ClearSelectionAfterActionPerformed="true"/>
+            </div>
+            <div class="col-auto my-auto">
+                <input 
+                    id="show-in-active-sprints-only-checkbox" 
+                    type="checkbox"
+                    value="_onlyShowStandUpsInActiveSprints" 
+                    @onchange="OnActiveSprintsCheckboxChangedAsync"
+                    checked
+                />
+                <label for="show-in-active-sprints-only-checkbox">
+                    Limit to active sprints
+                    <BasicHtmlTooltip>
+                        To avoid Daily Scrums showing from finished or future sprints, having this checked will limit the
+                        page to only show upcoming Daily Scrums in sprints that are <em>Started</em> or <em>Ready to review</em>
+                    </BasicHtmlTooltip>
+                </label>
+            </div>
+        </div>
+        
+        <div class="row">
+            @if (_upcomingIsLoading)
+            {
+                <LoadingSpinner/>
+            }
+            else if (_upcomingStandUps.Any())
+            {
+                <div class="row" id="upcoming-stand-ups-container">
+                    <div class="col">
+                        <table class="table" id="upcoming-stand-ups-table">
+                            <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Sprint Name</th>
+                                <th>Meeting Name</th>
+                                <th>Location</th>
+                                <th>Scheduled Start</th>
+                                <th>Starts in...</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var standUp in _upcomingStandUps)
+                            {
+                                <tr id="@($"upcoming-stand-up-row-{standUp.Id}")">
+                                    <td>@standUp.Sprint.Project.Name</td>
+                                    <td>@standUp.Sprint.Name</td>
+                                    <td>@standUp.Name</td>
+                                    <td>@standUp.Location</td>
+                                    <td>@standUp.ScheduledStart.ToString("g")</td>
+                                    <td>@DurationUtils.DurationStringFrom(standUp.ScheduledStart - Clock.Now, DurationFormatOptions.UseDaysAsLargestUnit)</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto mx-auto">
+                        <PageButtons
+                            TotalPages="_upcomingStandUps.TotalPages"
+                            CurrentPage="_upcomingStandUps.PageNumber"
+                            CurrentPageChanged="RefreshUpcomingStandUps"/>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col">
+                    <label class="m-auto">
+                        <i id="no-upcoming-stand-ups-label">No upcoming Daily Scrums scheduled.</i>
+                    </label>
+                </div>
+            }
+        </div>
+    </div>
+}

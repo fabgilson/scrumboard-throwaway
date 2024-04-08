@@ -1,0 +1,46 @@
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models
+@using ScrumBoard.Shared.Widgets
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.MarkingSummary" ResourceId="Sprint?.Id ?? -1"/>
+
+@if (Project.Sprints.Count == 0)
+{
+    <div class="row">
+        <ErrorMessage id="no-sprints-in-project-error-message">
+            No sprints found for the current project, at least one is required for stats to be generated.
+        </ErrorMessage>
+    </div>
+}
+else
+{
+    <div class="table-responsive-xl p-4 pt-2 mt-2">
+        <table class="table table-hover">
+            <thead>
+            <tr class="bg-light">
+                <td>
+                    <strong>Metric</strong>
+                </td>
+                @foreach (var weekStart in _weekStartDatesAscending)
+                {
+                    <td>
+                        <strong>Week @GetIsoWeekForDate(weekStart)</strong>
+                    </td>
+                }
+                <td>
+                    <strong>Total</strong>
+                </td>
+            </tr>
+            </thead>
+            <tbody>
+            <SprintSummaryTableRow Metric="MarkingTableMetric.Overhead" SelectedUser="SelectedUser" WeekStartDatesAscending="_weekStartDatesAscending" ShowTotal="true"></SprintSummaryTableRow>
+            <SprintSummaryTableRow Metric="MarkingTableMetric.StoryHours" SelectedUser="SelectedUser" WeekStartDatesAscending="_weekStartDatesAscending" ShowTotal="true"></SprintSummaryTableRow>
+            <SprintSummaryTableRow Metric="MarkingTableMetric.TestHours" SelectedUser="SelectedUser" WeekStartDatesAscending="_weekStartDatesAscending" ShowTotal="true"></SprintSummaryTableRow>
+            <SprintSummaryTableRow Metric="MarkingTableMetric.AvgLogDuration" SelectedUser="SelectedUser" WeekStartDatesAscending="_weekStartDatesAscending" ShowTotal="false"></SprintSummaryTableRow>
+            <SprintSummaryTableRow Metric="MarkingTableMetric.ShortestWorklogDuration" SelectedUser="SelectedUser" WeekStartDatesAscending="_weekStartDatesAscending" ShowTotal="false"></SprintSummaryTableRow>
+            </tbody>
+        </table>
+    </div> 
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+option csharp_namespace = "SharedLensResources";
+
+message ValidationError {
+  string ErrorText = 1;
+  repeated string FieldNames = 2;
+}
+
+message ValidationResponse {
+  bool IsSuccess = 1;
+  string Message = 2;
+  repeated ValidationError ValidationErrors = 3;
+}

@@ -1,0 +1,11 @@
+.custom-list li:last-child {
+    border-bottom: none!important;
+}
+
+::deep .avatar {
+    padding: 3px;
+    background-color: white;
+    max-width: 2rem;
+    max-height: 2rem;
+    border: 1px solid black;
+}

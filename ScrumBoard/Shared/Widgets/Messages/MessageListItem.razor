@@ -1,0 +1,29 @@
+@using Models.Messages
+
+<span class="align-middle">
+    @if (Message.Created != default)
+    {
+        <span id="message-list-item-created" class="fw-bold"> 
+            @Message.Created 
+        </span> 
+    }
+
+    @foreach (var token in Message.GenerateMessage())
+    {
+        <DynamicComponent Type="token.Component" Parameters="GetParams(token)"/>
+    }
+</span>
+
+@code
+{
+    [Parameter]
+    public IMessage Message { get; set; }
+
+    private Dictionary<string, object> GetParams(IMessageToken token)
+    {
+        return new Dictionary<string, object>
+        {
+            ["Token"] = token,
+        };
+    }
+}

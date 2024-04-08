@@ -1,0 +1,25 @@
+<div>
+    <div class="form-group" onchange="Search">
+        <input 
+            id="search-bar" 
+            placeholder="Search" 
+            type="text" 
+            class="form-control mb-2" 
+            @oninput="@Search" 
+            autocomplete="off"
+        />
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public EventCallback<string> DoSearch { get; set; }
+
+    private void Search(ChangeEventArgs args)
+    {
+        string keyword = args.Value.ToString();
+        DoSearch.InvokeAsync(keyword);
+    }
+}

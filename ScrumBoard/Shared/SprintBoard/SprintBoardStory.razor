@@ -1,0 +1,146 @@
+<!--Component for a story on the sprint board that contains columns-->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using Services
+@using Utils
+@using ScrumBoard.Repositories
+@using Models
+@inject IUserStoryTaskRepository UserStoryTaskRepository
+@inject IUserStoryRepository UserStoryRepository
+
+<div class="accordion story mb-2" id="stories-accordion-@Story.Id" style="min-width: fit-content">
+    <div class="accordion-item" >
+        <div id="headingOne">
+            @if(_filteredTasks != null)
+            {
+            <ProgressBar Total="_filteredTasks.Count" class="rounded-0 rounded-top" style="height: 5px;">
+                @foreach (var stage in Enum.GetValues<Stage>())
+                {
+                    <ProgressSegment class="@StageDetails.StageStyles[stage].GetCss()" Value="_filteredTasks.Count(task => task.Stage == stage)"/>
+                }
+            </ProgressBar>
+            }
+            <div 
+                id="story-details-@Story.Id" 
+                class="story-details" 
+            >
+                <div class="col-auto">
+                    <StoryListItem Story="Story">
+                        <ChildContent>
+                            <div id="story-task-count" class="col-auto badge bg-secondary">
+                                @LanguageUtils.PluraliseNoun("Task", _taskCount)
+                            </div>
+                            <button 
+                                id="view-story-details-@Story.Id" 
+                                type="button" 
+                                class="btn btn-sm btn-light text-primary" 
+                                @onclick="() => SelectStory.InvokeAsync(Story)"
+                            >
+                                View Story <span class="bi bi-arrow-right"/>
+                            </button>
+                        </ChildContent>
+                        <AccordionButton>
+                            <button 
+                                id="button-collapse-story-@Story.Id" 
+                                class="accordion-button @(_collapsed ? "collapsed" : "") shadow-none p-0 m-0"
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#collapseStory-@Story.Id" 
+                                aria-expanded="true" 
+                                aria-controls="collapseStory-@Story.Id"
+                                style="position: relative!important;"
+                            >                        
+                            </button>
+                        </AccordionButton>  
+                    </StoryListItem>
+                </div>
+            </div>           
+            
+        </div>
+        @if(_filteredTasks != null)
+        {
+            <div id="collapseStory-@Story.Id" class="accordion-collapse collapse @(_collapsed ? "" : "show")" aria-labelledby="headingOne">
+                <div class="accordion-body py-2">
+                    @if (_showConcurrencyError) {
+                        <div class="row text-center pb-1">                            
+                            <div class="text-success" style="font-size: small;">Tasks were modified by another user and have been refreshed</div>                        
+                        </div>
+                    }
+                    <div class="row flex-nowrap">
+                        @foreach (var stage in Enum.GetValues<Stage>())
+                        {
+                            <SprintBoardColumn 
+                                TaskClicked="SelectTask" 
+                                Story="Story" 
+                                ColumnStage="stage" 
+                                OnUpdate="Refresh"
+                                OnConcurrencyError="DisplayErrorAndRefresh" 
+                                Tasks="_filteredTasks"
+                            />                   
+                        }
+                    </div>
+                </div>
+            </div>
+        }        
+    </div>  
+</div>
+
+@code {
+
+    [Parameter]
+    public UserStory Story { get; set; }
+    
+    [Parameter]
+    public Predicate<UserStoryTask> TaskFilter { get; set; }
+
+    [Parameter]
+    public EventCallback<UserStory> SelectStory { get; set; }
+    
+    [Parameter]
+    public EventCallback<UserStoryTask> SelectTask { get; set; }
+
+    [Parameter]
+    public bool InitiallyCollapsed { get; set; }
+
+    private bool _collapsed;
+
+    private List<UserStoryTask> _filteredTasks;
+
+    private bool _showConcurrencyError = false;
+
+    private int _taskCount;
+    
+    protected override void OnInitialized()
+    {
+        _collapsed = InitiallyCollapsed;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Refresh();
+    }
+
+    /// <summary>
+    /// Gets filtered tasks from all tasks in the current story and updates the filtered task list.
+    /// </summary>
+    /// <returns>Task to be completed</returns>
+    private async Task Refresh()
+    {
+        var story = await UserStoryRepository.GetByIdAsync(Story.Id);
+        var allTasks = await UserStoryTaskRepository.GetByStory(story, UserStoryTaskIncludes.Users);
+        story.Tasks = allTasks;
+        Story = story;
+        _taskCount = allTasks.Count; // Prevents flickering of task count when modal opens
+        
+        _filteredTasks = allTasks.Where(task => TaskFilter(task)).ToList();
+        _showConcurrencyError = false;
+        StateHasChanged();
+    }
+
+    private async Task DisplayErrorAndRefresh()
+    {
+        await Refresh();
+        _showConcurrencyError = true;
+    }
+}

@@ -1,0 +1,21 @@
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div @key="_key" class="mx-auto show-message @(_isError ? "show-error-message" : "show-success-message")"> 
+        @_message
+    </div>
+}
+
+@code {
+
+    private int _key = 1;
+    private string _message;
+    private bool _isError;
+
+    public void TriggerMessageDisplay(string message, bool isError)
+    {
+        _message = message;
+        _isError = isError;
+        _key++;
+        StateHasChanged();
+    }
+}

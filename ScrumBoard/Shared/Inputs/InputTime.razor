@@ -1,0 +1,54 @@
+<!--Input component that only accepts Time values-->
+
+@using Utils
+@inherits InputBase<TimeOnly>
+
+@if (Disabled)
+{
+    <div class="disabled @CssClass">
+        @CurrentValueAsString
+    </div>
+}
+else
+{
+    <input
+        @attributes=AdditionalAttributes 
+        class=@CssClass
+        spellcheck="false"
+        type="text"
+        @bind=CurrentValueAsString
+    />
+}
+
+@code
+{
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private bool _valueIsValid = true;
+
+    /// <summary>
+    /// Takes the given input text and tries to parse it into a TimeOnly 
+    /// </summary>
+    /// <param name="value">String content of input</param>
+    /// <param name="result">Out parameter for the result</param>
+    /// <param name="validationErrorMessage">Out parameter for validation error message</param>
+    /// <returns>true if parsing was successful, false otherwise</returns>
+    protected override bool TryParseValueFromString(string value, out TimeOnly result, out string validationErrorMessage)
+    {
+        _valueIsValid = TimeOnly.TryParse(value, out var parsedTime);
+        validationErrorMessage = !_valueIsValid ? "Invalid time format" : null;
+        result = parsedTime;
+        return _valueIsValid;
+    }
+
+    /// <summary>
+    /// Formats the given TimeOnly value as a string to display in the input component. 
+    /// </summary>
+    /// <param name="value">Given TimeOnly value to format as a string</param>
+    /// <returns>String value of the given TimeOnly value</returns>
+    protected override string FormatValueAsString(TimeOnly value)
+    {
+        return _valueIsValid ? value.ToString() : "";
+    }
+}

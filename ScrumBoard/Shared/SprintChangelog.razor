@@ -1,0 +1,48 @@
+<!-- Component to display the (collapsable) changelog for a sprint -->
+
+@using Models
+@using ScrumBoard.Shared.Widgets.Messages
+
+<div class="list-group rounded-top-0">
+    <li class="list-group-item grey-input-group-background border-top-0 collapse-sprint-@Sprint.Id-changelog header" @ref="_root">
+        <div class="row">
+            <div class="col">
+                <h5>Changelog</h5>
+            </div>
+            <div class="col-auto">
+                <button 
+                    id="button-collapse-sprint-@Sprint.Id"
+                    type="button"
+                    class="show-hide-button collapsed btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="collapse"
+                    data-bs-target=".collapse-sprint-@Sprint.Id-changelog"
+                    aria-expanded="true"
+                    aria-controls="collapse-sprint-@Sprint.Id"
+                ><span class="bi bi-clock-history" aria-hidden="true"></span></button>
+            </div>
+        </div>
+    </li>
+</div>
+<div 
+    id="collapse-sprint-@Sprint.Id-changelog"
+    class="list-group rounded-0 rounded-bottom collapse changelog-list border-bottom collapse-sprint-@Sprint.Id-changelog" 
+    @oncollapseshown="OnExpanded"
+    @oncollapseshow="GenerateChangelogIfNeeded"
+>
+    @if (_changelog == null)
+    {
+        <div class="d-flex align-items-center justify-content-center p-3">
+            <div class="spinner-border spinner-border-sm me-1 text-muted" role="status" aria-hidden="true"></div>
+            <div class="ms-1 text-muted">Loading...</div>
+        </div>
+    }
+    else
+    {
+        @foreach (var changelogEntry in _changelog)
+        {
+            <li class="list-group-item selectable">
+                <MessageListItem Message="changelogEntry"/>
+            </li>
+        }
+    }
+</div> 

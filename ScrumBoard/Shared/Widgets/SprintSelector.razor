@@ -1,0 +1,79 @@
+<div class="col-auto mt-0">
+    <button
+        class="@ProjectSelectorCss"
+        type="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+    >
+        @if (SprintSelection.isWholeProject)
+        {
+            <span>Whole Project</span>
+        }
+        else
+        {
+            @if (SprintSelection.sprint != null) {
+                <div class="row gx-1 d-inline me-1">
+                    <span class="col-auto">
+                        @SprintSelection.sprint.Name
+                    </span>
+                    <span class="col ">
+                        <SprintStageBadge Stage="@SprintSelection.sprint.Stage"/>
+                    </span>
+                </div> 
+            } else {
+                <div class="row d-inline-block">
+                    <div class="col-auto me-1">
+                        Select Sprint
+                    </div>                            
+                </div>
+            }
+        }
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="sprint-menu-button">
+        @if (AvailableSprints.Any())
+        {
+            foreach (var sprint in AvailableSprints)
+            {
+                <li class="selectable">
+                    <button 
+                        type="button" 
+                        class="dropdown-item" 
+                        id="sprint-select-@sprint.Id" 
+                        @onclick="async () => await UpdateSelection(false, sprint)"
+                    >
+                        <div class="row gx-3">
+                            <div class="col">
+                                @sprint.Name
+                            </div>
+                            <div class="col d-flex justify-content-end">
+                                <SprintStageBadge Stage="@sprint.Stage"/>
+                            </div>
+                        </div> 
+                    </button>
+                </li>
+            }
+            @if (ShowWholeProjectSelection)
+            {
+                <li class="dropdown-divider"/>
+                <li class="selectable">
+                    <button 
+                        disabled="@WholeProjectOptionIsDisabledDelegate()" 
+                        type="button" 
+                        class="dropdown-item" 
+                        @onclick="async () => await UpdateSelection(true, null)"
+                    >
+                        Whole Project
+                    </button>
+                </li>
+            }
+        }
+        else
+        {
+            <li>
+                <a class="dropdown-item disabled">
+                    No sprints available
+                </a>
+            </li>
+        }
+    </ul>
+</div>

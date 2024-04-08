@@ -1,0 +1,21 @@
+<!-- Modal Trigger entity used to throw inner modal content up to the top ModalWrapper  -->
+@code 
+{
+    [CascadingParameter(Name = "ModalCallback")]
+    public Action<RenderFragment> ModalCallback { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    /// <summary>Passes ChildContent to the ModalWrapper parent</summary>
+    public virtual void Show()
+    {        
+        ModalCallback(ChildContent);
+    }
+
+    /// <summary>Passes null to the ModalWrapper parent</summary>
+    public virtual void Hide()
+    {
+        ModalCallback(null);
+    }
+}

@@ -1,0 +1,87 @@
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities.UsageData
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.WorklogEntryEditForm" ResourceId="IsNewWorklogEntry ? -1 : Entry.Id"/>
+@if (_editContext != null)
+{
+    <EditForm id="edit-worklog-entry-form" EditContext="_editContext" OnValidSubmit="OnFormSubmit" @attributes="AdditionalAttributes">
+        <DataAnnotationsValidator/>
+        @if (_saveError)
+        {
+            <div class="row mb-1" style="font-size:small;">
+                <div class="col">
+                    <span class="text-danger" id="worklog-concurrency-error">Worklog has been updated while you were editing. Please cancel and try again.</span>
+                </div>
+            </div>
+        }
+        <div class="row gx-2 align-items-end">
+            <div class="col">
+                <InputMarkdown 
+                    id="description-input" 
+                    type="text" 
+                    class="hide-valid form-control text-area-expand"
+                    placeholder="Enter description (Markdown supported)" 
+                    @bind-Value="Model.Description"
+                />
+                <ValidationMessage For="@(() => Model.Description)" id="description-validation-message"/>
+            </div>
+            <div class="row mt-1 gx-2">
+                <div class="col">
+                    <DateTimePicker
+                        DateLabel="Date finished"
+                        MinDateTime="@_sprint.StartDate.ToDateTime(new TimeOnly())"
+                        TimeLabel="Time finished"
+                        ValueChanged="dt => { if (dt != null) Model.Occurred = dt.Value; }"
+                        Value="Model.Occurred"/>
+                    <ValidationMessage For="@(() => Model.Occurred)" id="start-validation-message"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col d-flex align-items-center gx-2 mt-2">
+                    <span class="text-muted">
+                        Partner (optional):
+                    </span>
+                    <InputMember
+                        id="pair-select"
+                        IdPrefix="pair"
+                        AllUsers="GetValidPairUsers()"
+                        MaxUsers="1"
+                        @bind-Value="CurrentPairUsers"
+                        class="m-0"
+                    />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col d-flex align-items-center gx-2 mt-3">
+                    <GitlabCommitSelector 
+                        Credentials="Project.GitlabCredentials" 
+                        WorklogCommits="Model.LinkedCommits" 
+                        WorklogCommitsChanged="commits => UpdateCommits(commits.ToList())"
+                    />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col d-flex align-items-center gx-2 mt-3">
+                    <TaggedWorkInstanceInput @bind-TaggedWorkInstanceForms="Model.TaggedWorkInstanceForms" />
+                    <ValidationMessage For="@(() => Model.TaggedWorkInstanceForms)" id="tagged-work-instance-input-validation-message" />
+                </div>
+            </div>
+        </div>
+        <div class="row gx-2 mt-3 justify-content-end">
+            <div class="col-auto">
+                <button class="btn btn-outline-secondary" type="button" id="cancel-button" @onclick="OnWorklogClosed">
+                    Cancel
+                </button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit" id="save-button" disabled="@_isCurrentlySubmitting">
+                    @(IsNewWorklogEntry ? "Create" : "Save")
+                </button>
+            </div>
+        </div>
+        <ValidationSummary/>
+    </EditForm>
+}

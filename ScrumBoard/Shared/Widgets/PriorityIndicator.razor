@@ -1,0 +1,40 @@
+@using Models.Entities
+
+@{
+    var style = Priority == Priority.Critical ? "transform: translate(0, -0.025em);" : "";
+}
+<div class="d-inline-block" style="position: relative;">
+    <div 
+        class="bi position-absolute @PriorityClasses[Priority] @PriorityTextClasses[Priority]"
+        style="@style"
+        title="@Priority"
+        @attributes="AdditionalAttributes"
+    />
+    <div 
+        class="bi bi-circle @PriorityTextClasses[Priority] d-inline-block"
+    />
+</div>
+
+@code 
+{
+    [Parameter]
+    public Priority Priority { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    private static readonly Dictionary<Priority, string> PriorityTextClasses = new()
+    {
+        [Priority.Low]      = "text-primary",
+        [Priority.Normal]   = "",
+        [Priority.High]     = "text-warning",
+        [Priority.Critical] = "text-danger",
+    };
+
+    private static readonly Dictionary<Priority, string> PriorityClasses = new Dictionary<Priority, string>{
+        [Priority.Low]      = "bi-chevron-down",
+        [Priority.Normal]   = "bi-dash",
+        [Priority.High]     = "bi-chevron-up",
+        [Priority.Critical] = "bi-chevron-double-up",
+    };
+}

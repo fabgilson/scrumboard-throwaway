@@ -1,0 +1,43 @@
+@using ScrumBoard.Models
+
+<th class="user-select-none" style="cursor:pointer;" scope="col" @onclick="SortItems">
+    <div class="row">
+        <div class="col">
+            @ChildContent
+            @if (OrderByColumn == Column)
+            {
+                @if (Descending) {
+                    <i class="bi bi-chevron-down ms-2"></i>
+                } else {
+                    <i class="bi bi-chevron-up ms-2"></i>
+                } 
+            }                 
+        </div>
+    </div>    
+    
+</th>
+
+@code {
+    [Parameter]
+    public EventCallback<(TableColumn, bool)> OrderItems { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public bool Descending { get; set; } 
+
+    [Parameter]
+    public TableColumn Column { get; set; }
+
+    [Parameter]
+    public TableColumn OrderByColumn { get; set; }
+
+    private async Task SortItems() {
+        if (!Column.IsOrderable()) return;
+        Descending = !Descending;
+
+        await OrderItems.InvokeAsync((Column, Descending));
+    }
+
+}

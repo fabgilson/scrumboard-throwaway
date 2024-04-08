@@ -1,0 +1,19 @@
+.dropdown-menu {
+    max-width: 100vw;
+    width: fit-content; 
+}
+
+.dropdown-item {
+    white-space: normal;
+}
+
+.ellipse-overflow-text {
+    overflow: clip;
+    text-overflow: ellipsis;
+}
+
+.active-selection {
+    background-color: #9bd5ec;
+}
+  
+  

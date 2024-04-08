@@ -1,0 +1,29 @@
+.first-column {
+    position: sticky;
+    left: 0;
+}
+
+.first-row {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#filter-row {
+    position: sticky;
+    max-height: 100px;
+    z-index: 10;
+}
+
+#table-container {
+    max-height: calc(100svh - 80px);
+}
+
+#table-container tbody {
+    max-height: calc(100svh - 500px);
+}
+
+th {
+    min-width: 400px;
+}
+

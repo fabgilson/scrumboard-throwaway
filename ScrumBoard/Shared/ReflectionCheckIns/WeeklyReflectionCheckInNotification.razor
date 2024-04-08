@@ -1,0 +1,22 @@
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+@inherits BaseProjectScopedComponent
+
+
+@if (_completionStatus is CheckInCompletionStatus.Completed)
+{
+    <span class="text-success fw-bold">
+        Completed
+    </span>
+} 
+@if (_completionStatus is CheckInCompletionStatus.Incomplete)
+{   
+    <span class="text-info">
+        In progress
+    </span>
+}
+@if (_completionStatus is CheckInCompletionStatus.NotYetStarted)
+{
+    <span class="text-warning">
+        Not started
+    </span>
+}

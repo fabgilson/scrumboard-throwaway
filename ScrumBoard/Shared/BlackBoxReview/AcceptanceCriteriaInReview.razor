@@ -1,0 +1,103 @@
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.SaveStatus
+
+@inherits BaseProjectScopedComponent
+
+<div>
+    <div class="d-inline-block fw-bold">
+        AC@(AcceptanceCriteria.InStoryId)
+    </div>
+    <span style="white-space: pre-wrap">
+        @AcceptanceCriteria.Content
+    </span>
+</div>
+@if (Disabled)
+{
+    if (AcceptanceCriteria.Status != null)
+    {
+        <div class="row">
+            <div class="w-auto">
+                <AcceptanceCriteriaStatusBadge Status="AcceptanceCriteria.Status.Value"/>
+            </div>
+        </div>
+    }
+    <div class="row">
+        <div class="col">
+            @if (!string.IsNullOrWhiteSpace(AcceptanceCriteria.ReviewComments))
+            {
+                <span class="text-muted ms-1" style="white-space: pre-wrap">
+                    @(AcceptanceCriteria.ReviewComments)
+                </span>
+            }
+        </div>
+        <div class="col-auto">
+            <LiveUpdateNotifier TEntity="AcceptanceCriteria" EntityId="@AcceptanceCriteria.Id" />
+        </div>
+    </div>
+}
+else if (_editContext is not null)
+{
+    <EditForm EditContext="_editContext">
+        <DataAnnotationsValidator/>
+        <div class="row">
+            <div class="col">
+                <div class="btn-group mb-1" role="group" aria-label="Pass/Fail selector">
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="btn-pass-fail-@AcceptanceCriteria.Id"
+                        id="btn-pass-@AcceptanceCriteria.Id"
+                        autocomplete="off"
+                        checked="@(_form.Status == AcceptanceCriteriaStatus.Pass)"
+                        @onclick="async () => await SetAcceptanceCriteriaStatus(AcceptanceCriteriaStatus.Pass)">
+                    <label
+                        class="btn btn-sm btn-outline-success"
+                        for="btn-pass-@AcceptanceCriteria.Id"
+                        style="width: 3.75em">
+                        Pass
+                    </label>
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="btn-pass-fail-@AcceptanceCriteria.Id"
+                        id="btn-fail-@AcceptanceCriteria.Id"
+                        autocomplete="off"
+                        checked="@(_form.Status == AcceptanceCriteriaStatus.Fail)"
+                        @onclick="async () => await SetAcceptanceCriteriaStatus(AcceptanceCriteriaStatus.Fail)">
+                    <label
+                        class="btn btn-sm btn-outline-danger"
+                        for="btn-fail-@AcceptanceCriteria.Id"
+                        style="width: 3.75em">
+                        Fail
+                    </label>
+                </div>
+                <ValidationMessage id="@($"status-validation-{AcceptanceCriteria.Id}")" For="@(() => _form.Status)"/>
+            </div>
+            <div class="col-auto">
+                <SaveStatusIndicator id="save-status-indicator" @bind-Status="_saveStatus"/>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label class="text-muted">
+                    Comments
+                </label>
+            </div>
+            <div class="col-auto">
+                <LiveUpdateNotifier TEntity="AcceptanceCriteria" EntityId="@AcceptanceCriteria.Id" />
+            </div>
+        </div>
+        <textarea 
+            id="@($"comments-{AcceptanceCriteria.Id}")" 
+            class="form-control text-area-expand"
+            @onfocusin="async () => await BroadcastUpdateBegun<AcceptanceCriteria>(AcceptanceCriteria.Id)"
+            @onfocusout="async () => await BroadcastUpdateEnded<AcceptanceCriteria>(AcceptanceCriteria.Id)"
+            @bind="_form.ReviewComments"
+            @bind:event="oninput"
+            @bind:after="@OnReviewCommentsChange">
+        </textarea>
+        <ValidationMessage id="@($"comments-validation-{AcceptanceCriteria.Id}")" For="@(() => _form.ReviewComments)"/>
+    </EditForm>
+}

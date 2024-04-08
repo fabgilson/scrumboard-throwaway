@@ -1,0 +1,44 @@
+<!-- Modal for moving a story back out of done/deferred -->
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+
+<ResultModal TResult="bool" @ref="_resultModal">  
+  <div class="modal-header">
+    <h5 class="modal-title" id="tasks-not-done-modal">Update story</h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    This story is currently <StageBadge Stage="_currentStoryStage"/>.
+    <div>
+      <p class="py-2 m-0">Changing the status of this task will make this story <StageBadge Stage="Stage.InProgress"/>.</p>
+      <p class="m-0">Are you sure you want to proceed?</p>
+    </div>
+  </div>
+  <div class="modal-footer">     
+    <ResultButton
+      Value="true"
+      id="close-modal"
+      class="btn btn-outline-secondary">
+      Cancel
+    </ResultButton>
+    <ResultButton 
+      Value="false"
+      id="confirm-story-update" 
+      class="btn btn-success">
+      Confirm update
+    </ResultButton>
+  </div>     
+</ResultModal>
+
+@code {
+    private ResultModal<bool> _resultModal;
+
+    private Stage _currentStoryStage;
+
+    public Task<bool> Show(Stage currentStoryStage) {
+      _currentStoryStage = currentStoryStage;
+      return _resultModal.Show();
+    }
+
+}

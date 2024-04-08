@@ -1,0 +1,85 @@
+syntax = "proto3";
+option csharp_namespace = "SharedLensResources";
+
+import "google/protobuf/empty.proto";
+import "util/validation.proto";
+import "identityprovider/users.proto";
+
+message LensAuthenticateRequest {
+    string username = 1;
+    string password = 2;
+    bool keep_logged_in = 3;
+}
+
+message LensAuthenticationReply {
+    string message = 1;
+    string token = 2;
+    bool success = 3;
+    UserResponse user_response = 4;
+}
+
+message ClaimsIdentityDto {
+    string name = 1;
+    string authentication_type = 2;
+    bool is_authenticated = 3;
+    string name_claim_type = 4;
+    string role_claim_type = 5;
+    string label = 6;
+    repeated ClaimDto claims = 7;
+}
+
+message ClaimDto {
+    string issuer = 1;
+    string original_issuer = 2;
+    string type = 3;
+    string value = 4;
+    string value_type = 5;
+}
+
+message CreateNewLensAccountRequest {
+    string user_name = 1;
+    string password = 2;
+    string first_name = 3;
+    string last_name = 4;
+    string email = 5;
+    GlobalLensRole role = 6;
+}
+
+message CreateNewLensAccountResponse {
+    ValidationResponse validation = 1;
+    UserResponse user_response = 2;
+}
+
+message ChangeOwnPasswordRequest {
+    // Current password for user sending the request
+    string current_password = 1;
+    // New value of password, but be valid according to IdP password policy
+    string new_password = 2;
+    // New value of password again, must be identical to new_password value or request will fail
+    string new_password_confirm = 3;
+}
+
+message AdminForcePasswordChangeRequest {
+    // The ID of user whose password is being changed, must be a LENS user
+    int64 user_id = 1;
+    // New password value, must still be valid according to IdP password policy
+    string new_password = 2;
+}
+
+service LensAuthenticationService {
+    // Check the current authentication status of come RPC client (configured with a bearer token) against the IdP
+    rpc CheckAuthState (.google.protobuf.Empty) returns (ClaimsIdentityDto);
+    
+    // Authenticate with the LENS IdP with a username and password
+    rpc Authenticate (LensAuthenticateRequest) returns (LensAuthenticationReply);
+    
+    // Available to SystemAdmins only. At this time there is no way for users to sign-up, they must have accounts
+    // created for them by a LENS administrator.  
+    rpc CreateNewLensAccount (CreateNewLensAccountRequest) returns (CreateNewLensAccountResponse);
+    
+    // Available to SystemAdmins only, forces a password change for another user, other user must be a LENS user
+    rpc AdminForcePasswordChange (AdminForcePasswordChangeRequest) returns (ValidationResponse);
+    
+    // Available to all LENS users, allows someone to change their own password
+    rpc ChangeOwnPassword (ChangeOwnPasswordRequest) returns (ValidationResponse);
+}

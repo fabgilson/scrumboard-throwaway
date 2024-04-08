@@ -1,0 +1,156 @@
+@using ScrumBoard.Shared.Widgets
+<div class="accordion" id="announcementsHolder">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="createNewAnnouncementHeader">
+            <button class="accordion-button collapsed primary" type="button" data-bs-toggle="collapse" data-bs-target="#createAnnouncementCollapse" aria-expanded="true" aria-controls="createAnnouncementCollapse">
+                Create new announcement
+            </button>
+        </h2>
+        <div id="createAnnouncementCollapse" class="accordion-collapse collapsed collapse" aria-labelledby="createNewAnnouncementHeader">
+            <div class="accordion-body">
+                <EditAnnouncementForm @ref="CreateAnnouncementComponent" AfterValidSubmitCallback="RefreshHeaderAndLists"/>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="currentAnnouncementsHeader">
+            <button class="accordion-button collapsed info" type="button" data-bs-toggle="collapse" data-bs-target="#currentAnnouncementsCollapse" aria-expanded="true" aria-controls="currentAnnouncementsCollapse">
+                <span>
+                    Currently active announcements
+                    <i>@(_currentIsLoading ? "" : $"({_currentAnnouncements.TotalCount} total)")</i>
+                </span>
+            </button>
+        </h2>
+        <div id="currentAnnouncementsCollapse" class="accordion-collapse collapsed collapse" aria-labelledby="currentAnnouncementsHeader">
+            <div class="accordion-body">
+                @if (_currentIsLoading)
+                {
+                    <LoadingSpinner/>
+                }
+                else
+                {
+                    <div class="col">
+                        @foreach (var announcement in _currentAnnouncements)
+                        {
+                            <AnnouncementManagementDisplay Announcement="announcement" ArchiveAnnouncementCallback="async () => await ArchiveAnnouncement(announcement)"/>
+                        }
+                    </div>
+                }
+
+                @if (_currentAnnouncements.Any())
+                {
+                    <div class="row">
+                        <div class="col-auto">
+                            <PageButtons
+                                TotalPages="_currentAnnouncements.TotalPages"
+                                CurrentPage="_currentAnnouncements.PageNumber"
+                                CurrentPageChanged="RefreshCurrentAnnouncements"/>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col">
+                        <label class="m-auto">
+                            <i>No announcements currently active</i>
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="upcomingAnnouncementsHeader">
+            <button class="accordion-button collapsed info" type="button" data-bs-toggle="collapse" data-bs-target="#upcomingAnnouncementsCollapse" aria-expanded="true" aria-controls="upcomingAnnouncementsCollapse">
+                <span>
+                    Upcoming announcements
+                    <i>@(_upcomingIsLoading ? "" : $"({_upcomingAnnouncements.TotalCount} total)")</i>
+                </span>
+            </button>
+        </h2>
+        <div id="upcomingAnnouncementsCollapse" class="accordion-collapse collapsed collapse" aria-labelledby="upcomingAnnouncementsHeader">
+            <div class="accordion-body">
+                @if (_upcomingIsLoading)
+                {
+                    <LoadingSpinner/>
+                }
+                else
+                {
+                    <div class="col">
+                        @foreach (var announcement in _upcomingAnnouncements)
+                        {
+                            <AnnouncementManagementDisplay Announcement="announcement" ArchiveAnnouncementCallback="async () => await ArchiveAnnouncement(announcement)"/>
+                        }
+                    </div>
+                }
+
+                @if (_upcomingAnnouncements.Any())
+                {
+                    <div class="row">
+                        <div class="col-auto">
+                            <PageButtons
+                                TotalPages="_upcomingAnnouncements.TotalPages"
+                                CurrentPage="_upcomingAnnouncements.PageNumber"
+                                CurrentPageChanged="RefreshUpcomingAnnouncements"/>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col">
+                        <label class="m-auto">
+                            <i>No upcoming announcements</i>
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="expiredAnnouncementsHeader">
+            <button class="accordion-button collapsed info" type="button" data-bs-toggle="collapse" data-bs-target="#expiredAnnouncementsCollapse" aria-expanded="true" aria-controls="expiredAnnouncementsCollapse">
+                <span>
+                    Expired or manually archived announcements
+                    <i>@(_expiredOrArchivedIsLoading ? "" : $"({_expiredOrArchivedAnnouncements.TotalCount} total)")</i>
+                </span>
+            </button>
+        </h2>
+        <div id="expiredAnnouncementsCollapse" class="accordion-collapse collapsed collapse" aria-labelledby="expiredAnnouncementsHeader">
+            <div class="accordion-body">
+                @if (_expiredOrArchivedIsLoading)
+                {
+                    <LoadingSpinner/>
+                }
+                else
+                {
+                    <div class="col">
+                        @foreach (var announcement in _expiredOrArchivedAnnouncements)
+                        {
+                            <AnnouncementManagementDisplay Announcement="announcement" ArchiveAnnouncementCallback="async () => await ArchiveAnnouncement(announcement)"/>
+                        }
+                    </div>
+                }
+
+                @if (_expiredOrArchivedAnnouncements.Any())
+                {
+                    <div class="row">
+                        <div class="col-auto">
+                            <PageButtons
+                                TotalPages="_expiredOrArchivedAnnouncements.TotalPages"
+                                CurrentPage="_expiredOrArchivedAnnouncements.PageNumber"
+                                CurrentPageChanged="RefreshExpiredOrArchivedAnnouncements"/>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col">
+                        <label class="m-auto">
+                            <i>No expired or manually archived announcements</i>
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

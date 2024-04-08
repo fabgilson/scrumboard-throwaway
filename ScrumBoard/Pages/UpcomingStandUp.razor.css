@@ -1,0 +1,47 @@
+#taskCheckInCarouselIndicators {
+    display: flex;
+    flex-direction: column;
+}
+
+.carousel-inner {
+    order: 1;
+}
+
+.carousel-indicators {
+    order: 2;
+    position: relative;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+    margin: 1rem 15%;
+    list-style: none;
+}
+
+.carousel-control-prev, .carousel-control-next {
+    position: relative !important;
+    width: auto;
+}
+
+.carousel-control-prev-icon, .carousel-control-next-icon {
+    width: 4rem;
+    height: 4rem;
+}
+
+.text-grow {
+    animation: textGrow 0.5s;
+    transform-origin: bottom;
+}
+
+@keyframes textGrow {
+    from {
+        transform: scale(0.5);
+    }
+    to {
+        transform: scale(1);
+    }
+}

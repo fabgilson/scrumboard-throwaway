@@ -1,0 +1,86 @@
+syntax = "proto3";
+option csharp_namespace = "SharedLensResources";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+import "util/filtering.proto";
+import "util/validation.proto";
+import "util/pagination.proto";
+
+enum GlobalLensRole {
+  USER = 0;
+  SYSTEM_ADMIN = 1;
+}
+
+message UserResponse {
+  int64 id = 1;
+  string user_name = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string email = 5;
+  google.protobuf.Timestamp Created = 6;
+  google.protobuf.StringValue identity_source = 7;
+  GlobalLensRole lens_role = 8;
+}
+
+message UpdateUserRequest {
+  // The ID of the current user account to update. This cannot be changed.
+  int64 user_id = 1;
+  
+  // New (optional) value of username for account. If no value is given, no change will be made.
+  // For LENS ID accounts ONLY! Accounts managed by UC LDAP cannot have their usernames changed.
+  google.protobuf.StringValue new_user_name = 2;
+
+  // New (optional) value of first name for account. If no value is given, no change will be made.
+  google.protobuf.StringValue new_first_name = 3;
+  
+  // New (optional) value of last name for account. If no value is given, no change will be made.
+  google.protobuf.StringValue new_last_name = 4;
+
+  // New (optional) value of email address for account. If no value is given, no change will be made.
+  google.protobuf.StringValue new_email = 5;
+  
+  // New (optional) role for account. If no value is given, user retains their original role.
+  optional GlobalLensRole new_role = 6;
+}
+
+message GetUserByIdRequest {
+  int64 user_id = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message GetUserByUserNameRequest {
+  string user_name = 1;
+}
+
+message GetUsersByIdRequest {
+  repeated int64 user_ids = 1;
+}
+
+message MultipleUserResponse {
+  repeated UserResponse user_responses = 1;
+}
+
+message GetPaginatedUsersRequest {
+  PaginationRequestOptions pagination_request_options = 1;
+  optional BasicStringFilteringOptions filtering_options = 2;
+}
+
+message PaginatedUsersResponse {
+  repeated UserResponse user_responses = 1;
+  PaginationResponseOptions pagination_response_options = 2;
+}
+
+// This service is currently only accessible by LENS system administrators
+service LensUserService {
+  rpc GetUserById(GetUserByIdRequest) returns (UserResponse);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse);
+  rpc GetUserByUserName(GetUserByUserNameRequest) returns (UserResponse);
+  rpc GetUsersById(GetUsersByIdRequest) returns (MultipleUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (ValidationResponse);
+  rpc GetPaginatedUsers(GetPaginatedUsersRequest) returns (PaginatedUsersResponse);
+}

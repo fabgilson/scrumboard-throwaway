@@ -1,0 +1,48 @@
+@using ScrumBoard.Models.Entities
+<div id="story-list-item">
+    <div class="row align-items-center">
+        <div id="story-priority" class="col-auto ps-1 pe-0">
+            <PriorityIndicator Priority="Story.Priority"/>
+        </div>
+        <div id="story-name" class="col ps-1 text-truncate">
+            @Story.Name
+        </div>        
+        <div id="story-stage" class="col-auto pe-0">
+            <StageBadge Stage="Story.Stage"/>
+        </div>
+        <div class="col-auto">
+            @ChildContent
+        </div>
+        @if (AccordionButton != null)
+        {
+            <div class="col">
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        @AccordionButton
+                    </div>
+                </div>                
+            </div>
+        }        
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public UserStory Story { get; set; }   
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public RenderFragment AccordionButton { get; set; }
+
+    public string GetStoryName(string storyName) 
+    {
+        if (storyName.Length > 31) {
+            return storyName.Substring(0, 31).TrimEnd() + "...";
+        } else {
+            return storyName;
+        }
+    }
+}

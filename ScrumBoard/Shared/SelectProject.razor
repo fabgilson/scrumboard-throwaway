@@ -1,0 +1,57 @@
+<!-- A project selector component that is displayed when the select project menu is open in the navbar. -->
+
+@using ScrumBoard.Shared.Modals
+@using ScrumBoard.Extensions;
+@using ScrumBoard.Shared.Widgets
+
+<div id="inside-project-select-container">
+  <AuthorizeView Roles="GlobalProjectAdmin,SystemAdmin">
+    <li class="nav-item px-3 mb-2">
+        <h6>
+            <NavLink class="expand-menu new-project" style="cursor: pointer;" @onclick="ViewCreateProject">              
+                
+                <span class="bi bi-plus ms-1"></span>
+                <span class="">New Project</span> 
+            </NavLink>
+        </h6>
+    </li>
+  </AuthorizeView>
+  @foreach (var project in ActiveProjects)
+  {
+    <SelectProjectItem Project="project" OnSelect="StartChangingProject"/>
+  }
+  
+  @if (ArchivedProjects.Any())
+  {
+    <NavLink id="toggle-select-archive-project" class="nav-link " @onclick="() => _expandArchiveNav = !_expandArchiveNav">
+      @if(!_expandArchiveNav){<span class="bi bi-chevron-down pe-2"></span>}
+      else {<span class="bi bi-chevron-up pe-2"></span>}
+      Archived Projects (@(ArchivedProjects.Count))
+    </NavLink>
+    
+    if (_expandArchiveNav)
+    {
+      @foreach (var project in ArchivedProjects)
+      {
+        <SelectProjectItem Project="project" OnSelect="StartChangingProject"/>
+      }
+    }
+  }
+  
+  @if (ReviewingProjects.Any())
+  {
+    <div class="d-flex px-2 ms-2 align-items-center text-light me-2 rounded mt-3 mb-1" style="background-color: rgba(255,255,255,0.1);">
+      <div class="border-top w-100"/>
+      <div class="me-2 ms-2">
+        Reviewing
+      </div>
+      <div class="border-top w-100"/>
+    </div>
+    @foreach (var project in ReviewingProjects)
+    {
+      <SelectProjectItem Project="project" OnSelect="StartChangingProject"/>
+    }
+  }
+  
+  <SelectProjectModal @ref="_modal"></SelectProjectModal>
+</div>

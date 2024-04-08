@@ -1,0 +1,80 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+@inherits BaseProjectScopedComponent
+
+<div class="card">
+    <div class="card-body row">
+        <div class="col-12 col-xxl-6">
+            <div class="fs-4 text-center">Difficulty</div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Difficulty</th>
+                    <th scope="col">Count</th>
+                    <th scope="col" class="d-flex">
+                        <div class="text-center me-2">Time spent</div>
+                        <div class="my-auto">
+                            <BasicHtmlTooltip PlacementDirection="bottom" IsWiderTooltip="true">
+                                For each check-in you completed, we include the hours you worked on the task during 
+                                the check-in period (i.e. the week of the check-in), and link these hours to the 
+                                difficulty you selected during the check-in. 
+                                <br><br> 
+                                A worklog is said to belong to a check-in if the work was <strong>started</strong> 
+                                <em>(i.e. worklog.TimeFinished - worklog.Duration)</em> during the check-in period. 
+                                <br><br> 
+                                Please note these totals only include work done with a corresponding check-in, 
+                                so any work done during a week that wasn't 'checked-in' <strong>will not show up here</strong>.
+                            </BasicHtmlTooltip>
+                        </div>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">Very easy:</th>
+                    <td>@CountForDifficulty(CheckInTaskDifficulty.VeryEasy)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(CheckInTaskDifficulty.VeryEasy), _durationFormatOptions)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Easy:</th>
+                    <td>@CountForDifficulty(CheckInTaskDifficulty.Easy)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(CheckInTaskDifficulty.Easy), _durationFormatOptions)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Medium:</th>
+                    <td>@CountForDifficulty(CheckInTaskDifficulty.Medium)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(CheckInTaskDifficulty.Medium), _durationFormatOptions)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Hard:</th>
+                    <td>@CountForDifficulty(CheckInTaskDifficulty.Hard)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(CheckInTaskDifficulty.Hard), _durationFormatOptions)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Very hard:</th>
+                    <td>@CountForDifficulty(CheckInTaskDifficulty.VeryHard)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(CheckInTaskDifficulty.VeryHard), _durationFormatOptions)</td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th scope="row">Total:</th>
+                    <td>@CountForDifficulty(null)</td>
+                    <td>@DurationUtils.DurationStringFrom(TimeSpentForDifficulty(null), _durationFormatOptions)</td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="col-12 col-xxl-6 d-flex flex-column">
+            <div class="fs-4 text-center">Distribution by difficulty</div>
+            <div class="col align-self-stretch">
+                <TwoSeriesBarChart
+                    SeriesLabel="Time spent per difficulty (hours)"
+                    NamedSeries="new []{ _taskCountAsNamedSeries, _timeSpentAsNamedSeries }"
+                    style="height: 100%"
+                />
+            </div>
+        </div>
+    </div>
+</div>

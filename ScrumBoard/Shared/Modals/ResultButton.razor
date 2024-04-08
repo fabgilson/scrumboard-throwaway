@@ -1,0 +1,22 @@
+<!--Renders button that take a TResult value and passes it to the parent when it is clicked-->
+
+@typeparam TResult
+
+<button type="button" @attributes="Parameters" data-bs-dismiss="modal" @onclick="() => ResultCallback(Value)">
+    @ChildContent
+</button>  
+
+@code
+{
+    [CascadingParameter(Name = "ResultCallback")]
+    public Action<TResult> ResultCallback { get; set; }
+    
+    [Parameter]
+    public TResult Value { get; set; }
+    
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object> Parameters { get; set; } = default!;
+}

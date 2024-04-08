@@ -1,0 +1,31 @@
+@using ScrumBoard.Models.Messages
+
+
+@{
+    switch (TokenSize)
+    {
+        case TokenSize.VeryLarge:
+            <span class="fs-1">@ChildContent</span>
+            break;
+        case TokenSize.Large:
+            <span class="fs-3">@ChildContent</span>
+            break;
+        case TokenSize.Medium:
+            <span class="fs-5">@ChildContent</span>
+            break;
+        case TokenSize.Normal:
+            @ChildContent
+            break;
+        default:
+            @ChildContent
+            break;
+    }
+}
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    
+    [Parameter]
+    public TokenSize TokenSize { get; set; }
+}

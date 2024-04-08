@@ -1,0 +1,10 @@
+<!-- Wrapper component used to notify popper.js that it should clip a tooltip -->
+
+<div class="tooltip-clipping-parent">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

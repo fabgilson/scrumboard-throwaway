@@ -1,0 +1,61 @@
+@using ScrumBoard.Shared.Widgets
+@using System
+
+<!--Bootstrap progress bar based chart component. 
+    Renders a set of statistics as progress bar segments. 
+    Displays the total set in the progress bar and a legend for each colour in the chart. -->
+
+@if (StatsBar != null)
+{
+    <div class="row mb-2">
+        @if (Title != null)
+        {
+            <h5>@Title</h5>
+        }
+        <div class="col-lg col-md" style="padding-left: 0;">
+            <ProgressBar Total="StatsBar.Total" class="m-0 rounded" style="height: 35px;">
+                @if (StatsBar.Data != null)
+                {
+                    @foreach (var bar in StatsBar.Data)
+                    {
+                        <ProgressSegment
+                            Value="bar.Data"
+                            Colour="@_colors[bar.Id % _colors.Length]">
+                            @bar.Label - @Math.Round(bar.Data, 2) @GetPluralisedUnit((int)bar.Data)
+                        </ProgressSegment>
+                    }
+                }
+            </ProgressBar>
+        </div>
+        @if (!HideTotal)
+        {
+            <div class="col-lg-auto col-sm d-flex align-items-center justify-content-center bg-light rounded mt-3 mt-md-0">
+                <strong class="text-muted">@Math.Round(StatsBar.Total, 2) @GetPluralisedUnit((int)StatsBar.Total) </strong>
+            </div>
+        }
+    </div>
+
+    @if (!HideLegend)
+    {
+        <div class="row mt-2 p-2 bg-light rounded">
+            @if (StatsBar.Data != null)
+            {
+                @foreach (var bar in StatsBar.Data)
+                {
+                    <div class="mb-2 col-auto">
+                        <div class="row d-flex align-items-center">
+                            <div class="col-auto p-1 rounded-circle" style="background-color: @(_colors[bar.Id % _colors.Length]); width: 15px; height: 15px;"/>
+                            <div class="col">
+                                @bar.Label - @Math.Round(bar.Data, 2) @GetPluralisedUnit((int) bar.Data)
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+}
+else
+{
+    <LoadingSpinner/>
+}

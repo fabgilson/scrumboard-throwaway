@@ -1,0 +1,9 @@
+.added {
+    --bs-bg-opacity: 0.25;
+    background-color: rgba(var(--bs-success-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.removed {
+    --bs-bg-opacity: 0.25;
+    background-color: rgba(var(--bs-danger-rgb), var(--bs-bg-opacity)) !important;
+}

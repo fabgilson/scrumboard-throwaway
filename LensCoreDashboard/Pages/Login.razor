@@ -1,0 +1,51 @@
+@page "/login"
+
+<div class="container login-container">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>LENS Core Dashboard</h2> 
+        </div>        
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card shadow-sm" id="form-holder" style="border-radius:0.5rem;">
+                <div class="card-header">
+                    Sign in to continue
+                </div>
+                <div class=card-body>
+                    <EditForm id="login-form" Model="AuthenticateRequest" OnValidSubmit="AttemptLogin">
+                        @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group mb-4">
+                            <label for="username-input" class="mb-1">UC username:</label>
+                            <InputText id="username-input" placeholder="Enter UC username - e.g 'abc123'" class="form-control" @bind-Value="AuthenticateRequest.Username" />
+                            <ValidationMessage id="username-validation-message" For="@(() => AuthenticateRequest.Username)" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="password-input" class="mb-1">Password:</label>
+                            <InputText id="password-input" type="password" class="form-control" placeholder="Enter password" @bind-Value="AuthenticateRequest.Password" />
+                            <ValidationMessage id="password-validation-message" For="@(() => AuthenticateRequest.Password)" />
+                        </div>
+
+                        <div>
+                            <label for="password-input" class="mb-1">Stay signed in:</label>
+                            <input class="form-check-input" type="checkbox" id="remember-me-checkbox" @bind="@AuthenticateRequest.KeepLoggedIn" />
+                        </div>
+
+                        <div class="form-group mb-1">
+                            <label id="error-label" hidden=@HideError class="text-danger">Error: @_errorText</label>
+                        </div>
+
+                        <div class="row justify-content-end">
+                            <div class="col-auto">
+                                <button id="login-submit-button" type="submit" class="btn btn-primary">Submit</button>
+                            </div>                    
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>    
+</div>

@@ -1,0 +1,112 @@
+<!-- Component to display a sprint that is not created or started. I.e. not an active sprint. -->
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<div class="accordion-item border-0 list-group" @ref="_root">
+    <div class="accordion-header list-group-item grey-input-group-background rounded-top">
+        <div class="row">
+            <div class="col">
+                <div class="row align-items-center pb-2">
+                    <div class="col-auto">
+                        <h3 class="m-0">
+                            @Sprint.Name 
+                        </h3>
+                    </div>
+                    <div class="col-auto">
+                        <SprintStageBadge Stage="Sprint.Stage" Timestamp="Sprint.TimeStarted"/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                @if (_currentViewingSprint == null && (Sprint.Stage is SprintStage.ReadyToReview || RoleInCurrentProject is ProjectRole.Leader)) {
+                    <button
+                        id="btn-reopen-sprint"
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        @onclick="ReopenClicked"
+                    >
+                        Reopen
+                    </button>
+                }
+                @if (Sprint.Stage is SprintStage.Reviewed) {
+                    <button
+                        id="btn-close-sprint"
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        @onclick="CloseClicked"
+                    >
+                        Close
+                    </button>
+                }
+            </div>
+            <div class="col-auto">
+                <button 
+                    id="button-collapse-sprint-@Sprint.Id"
+                    type="button"
+                    class="show-hide-button collapsed btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-sprint-@Sprint.Id"
+                    aria-expanded="true"
+                    aria-controls="collapse-sprint-@Sprint.Id"
+                />
+            </div>
+        </div>
+        <div class="row justify-content-between">
+            <div class="col-auto">
+                @Sprint.StartDate - @Sprint.EndDate 
+            </div>
+            <div class="col-auto">
+                @if (_totalPoints.HasValue)
+                {
+                    <text>
+                        Total points:
+                        <span class="fw-bold point-estimate">
+                            @_totalPoints
+                        </span>
+                    </text>
+                }
+                @if (_totalEstimate.HasValue)
+                {
+                    <text>
+                        Total estimate:
+                        <span class="fw-bold time-estimate">
+                            @(DurationUtils.DurationStringFrom(_totalEstimate.Value))
+                        </span>
+                    </text>
+                }
+            </div>
+        </div>
+    </div>
+    <div 
+        id="collapse-sprint-@Sprint.Id"
+        class="list-group rounded-0 collapse sprint-list" 
+        @oncollapseshown="OnExpandStories"
+        @oncollapseshow="OnStartExpandStories"
+    >
+        @if(_sprintStories == null)
+        {
+            <div class="d-flex align-items-center justify-content-center p-3">
+                <div class="spinner-border spinner-border-sm me-1 text-muted" role="status" aria-hidden="true"></div>
+                <div class="ms-1 text-muted">Loading...</div>
+            </div>
+        }
+        else
+        {
+            @foreach (var story in _sprintStories)
+            {
+                <li class="list-group-item selectable" @onmouseup="async () => await ItemClicked(story)">
+                    <BacklogStoryListItem Story="story"/>
+                </li>
+            }
+            @if(!_sprintStories.Any())
+            {
+                <li class="list-group-item text-center">
+                    No stories in sprint
+                </li>
+            }
+        }
+    </div>
+    <SprintChangelog Sprint="Sprint"/>
+</div>

@@ -1,0 +1,44 @@
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Services
+@using ScrumBoard.Services.UsageData
+@inject IUsageDataService UsageDataService
+
+
+@code {
+
+    [CascadingParameter(Name = "Self")]
+    public User Self { get; set; }
+    
+    [CascadingParameter(Name = "ProjectState")]
+    public ProjectState ProjectState { get; set; }
+
+    private long? _prevSelfId;
+
+    private long? _prevProjectId;
+    
+    [Parameter]
+    public ViewLoadedUsageEventType Type { get; set; }
+
+    private ViewLoadedUsageEventType _prevType;
+    
+    [Parameter]
+    public long? ResourceId { get; set; }
+
+    private long? _prevResourceId;
+    
+    protected override void OnParametersSet()
+    {
+        var projectId = ProjectState?.ProjectId;
+
+        if (projectId == null || Self == null) return;
+        var selfId = Self.Id;
+        if (selfId == _prevSelfId && projectId == _prevProjectId && _prevType == Type && _prevResourceId == ResourceId) return;
+        _prevSelfId = selfId;
+        _prevProjectId = projectId;
+        _prevType = Type;
+        _prevResourceId = ResourceId;
+        
+        UsageDataService.AddUsageEvent(new ProjectViewLoadedUsageEvent(selfId, Type, projectId.Value, ResourceId));
+    }
+}

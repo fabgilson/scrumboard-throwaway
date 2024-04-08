@@ -1,0 +1,181 @@
+@using Models
+@using Services
+@typeparam TItem
+@implements IDisposable
+@implements ISortableList<TItem>
+@inject IJsInteropService JSInteropService;
+@inject ISortableService<TItem> SortableService;
+
+<div @ref="_listRoot" @attributes="@AdditionalAttributes">
+    @foreach (var item in _lazyItems)
+    {
+        <div @key="item" class="@ElementCss" @onmouseup="async () => await ItemMouseUp(item)">
+            @Template(item)
+        </div>
+    }
+</div>
+
+@code 
+{
+    private string _group;
+    /// <summary>
+    /// Key that represents which other sortable groups of the same type this list can share with. 
+    /// E.g. If A.Group="o" B.Group="o" C.Group="x", then A and B can exchange items, but C cannot share with either
+    /// Can only be set on init
+    /// </summary>
+    [Parameter]
+    public string Group { 
+        get => _group; 
+        set {
+            if (_group == value) return;
+            if (_hasMadeSortable) throw new NotImplementedException($"Tried to change group from {_group} to {value} after sortable list already made");
+            _group = value;
+        }
+    }
+
+    ///<summary>Template for converting a list element into a dom element</summary>
+    [Parameter]
+    public RenderFragment<TItem> Template { get; set; }
+
+    ///<summary>Items within this list</summary>
+    [Parameter]
+    public List<TItem> Items { get; set; }
+
+    ///<summary>Callback for when items are added/removed/rearranged</summary>
+    [Parameter]
+    public EventCallback<List<TItem>> ItemsChanged { get; set; }
+    
+    ///<summary>Callback for when an item is added from a different list</summary>
+    [Parameter]
+    public EventCallback<TItem> ItemAdded { get; set; }
+
+    ///<summary>Callback for when an item is clicked on (not dragged)</summary>
+    [Parameter]
+    public EventCallback<TItem> ItemClicked { get; set; }
+
+    ///<summary>Css classes to apply to each element</summary>
+    [Parameter]
+    public string ElementCss { get; set; }
+    
+    /// <summary>
+    /// Method used for comparing TItems for checking if a forced-redraw is required.
+    /// If none is provided then the default comparer will be used
+    /// </summary>
+    [Parameter]
+    public IEqualityComparer<TItem> Comparer { get; set; }
+
+    private bool _disabled;
+    
+    /// <summary> Whether this list can be modified </summary>
+    [Parameter]
+    public bool Disabled { 
+        get => _disabled; 
+        set {
+            if (value == _disabled) return;
+            if (_hasMadeSortable) throw new NotImplementedException($"Tried to change disabled from {_disabled} to {value} after sortable list already made");
+            _disabled = value;
+        }
+    }
+
+    private string _handle;
+    
+    /// <summary> 
+    /// Css selector of element within sortable item that can be dragged, if not provided then entire sortable item can be dragged 
+    /// </summary>
+    [Parameter]
+    public string Handle { 
+        get => _handle; 
+        set {
+            if (value == _handle) return;
+            if (_hasMadeSortable) throw new NotImplementedException($"Tried to change handle from {_handle} to {value} after sortable list already made");
+            _handle = value;
+        }
+    }
+
+    ///<summary>Leftover attributes e.g. css class, id</summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+
+    /// <summary> List of items in the order that sortableJS thinks they should be </summary>
+    private List<TItem> _expectedItems = new();
+
+    /// <summary> List of items from the last time that this list has been externally updated (not by sortableJS) </summary>
+    private List<TItem> _lazyItems = new();
+
+    private DotNetObjectReference<SortableList<TItem>> _objectReference;
+
+    private ElementReference _listRoot;
+
+    ///<summary>Unique (within TItem) key that identifies this SortableList</summary>
+    private int _key;
+
+    private bool _hasMadeSortable;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _lazyItems = _expectedItems = Items.ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool isFirstRender) 
+    {
+        if (isFirstRender) {
+            _key = SortableService.Register(this); 
+            _objectReference = DotNetObjectReference.Create(this);
+        }
+
+        if (!Disabled && !_hasMadeSortable) {
+            _hasMadeSortable = true;
+            await JSInteropService.MakeSortable(_objectReference, _listRoot, _key, _handle, SortableService.GetGroupKey(Group));
+        }
+    }
+
+    [JSInvokable("onEnd")]       
+    public async Task OnSortableEnd(SortableEventArgs args) 
+    {
+        await SortableService.HandleEvent(args);
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // If the items have been externally modified, then we need to syncronise the contents
+        _expectedItems = Items.ToList();
+        SortableService.SynchronizeGroup(Group);
+    }
+
+    public async Task TriggerItemsChanged(List<TItem> items) 
+    {
+        _expectedItems = items.ToList();    
+        await ItemsChanged.InvokeAsync(items);
+    } 
+
+    public Task TriggerItemAdded(TItem item) => ItemAdded.InvokeAsync(item);
+
+
+    public async Task ItemMouseUp(TItem item) 
+    {
+        await ItemClicked.InvokeAsync(item);
+    }
+
+    /// <summary> Synchronize the rendered content with what should actually be shown </summary>
+    public void Synchronize() 
+    {
+        _lazyItems = _expectedItems;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        if (_objectReference != null) { // May not have rendered at all
+            SortableService.Unregister(_key);
+            _objectReference.Dispose();
+        }
+    }
+}
+
+
+
+

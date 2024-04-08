@@ -1,0 +1,47 @@
+@using ScrumBoard.Utils
+<div class="row">
+    <div class="card p-2 my-2">
+        <div class="row">
+            <div class="col-auto">
+                <h3>#@Announcement.Id</h3>
+            </div>
+            <div class="col">
+                @if (_isEditing)
+                {
+                    <EditAnnouncementForm Announcement="Announcement" CancelCallback="() => _isEditing = false" AfterValidSubmitCallback="ForceAnnouncementRefresh"/>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-outline-primary" @onclick="() => _isEditing = true">
+                                <span class="bi bi-pencil"/>
+                                Edit
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button disabled="@Announcement.ManuallyArchived" type="button" class="btn btn-outline-danger" @onclick="ArchiveAnnouncementCallback">
+                                <span class="bi bi-archive"/>
+                                Archive
+                            </button>
+                        </div>
+                        <div class="col">
+                            <AnnouncementDisplay Announcement="Announcement"/>
+                        </div>
+                        <div class="col-auto mx-3 my-auto">
+                            <div class="row">
+                                Created @TimeAgoCreatedString by @Announcement.Creator.FirstName @Announcement.Creator.LastName
+                            </div>
+                            @if (Announcement.LastEdited.HasValue)
+                            {
+                                <div class="row">
+                                    Last edited @TimeAgoEditedString ago by @Announcement.LastEditor.FirstName @Announcement.LastEditor.LastName
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

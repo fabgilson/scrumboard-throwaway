@@ -1,0 +1,135 @@
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+@using ScrumBoard.Shared.Chart
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@using EnumsNET
+@inherits BaseProjectScopedComponent
+
+<div class="card px-0" id="stand-up-check-in-task-display-container">
+    @if (_task is null)
+    {
+        <LoadingSpinner />
+    }
+    else
+    {
+        <div class="row card-header align-items-center mx-0 @(CssClassForCompletionStatus)">
+            <div class="col px-0">
+                <h5 class="card-title mb-0" style="cursor: pointer" @onclick="async () => await _storyTaskDisplayPanel.SelectTask(_task)">
+                    @_task.Name
+                </h5>
+            </div>
+            <div class="col-auto d-flex">
+                <div class="form-check form-switch my-auto">
+                    <InputCheckbox @bind-Value="_showFullTaskInfo" class="form-check-input" id="show-full-info-switch"/>
+                    <label class="form-check-label" for="show-full-info-switch">Show stats</label>
+                </div>
+            </div>
+        </div>
+        
+        <ProgressBar Total="1" class="p-0 rounded-0 mb-1" style="height: 5px">
+            <ProgressSegment Value="1" class="@StageDetails.StageStyles[_task.Stage].GetCss()"/>
+        </ProgressBar>
+        <div class="card-body @(CssClassForCompletionStatus)">
+            @if (_showFullTaskInfo)
+            {
+                <div id="check-in-card-task-info-section">
+                    <div class="row mb-0 mb-lg-2">
+                        <div id="check-in-card-time-assigned-to-task-section" class="col-12 col-lg-5">
+                            <small>
+                                <p class="text-secondary mb-1">Assigned since:</p></small>
+                            <p class="text fw-bold mb-0">@TimeAndDateAssignedString</p>
+                            <p class="text-muted mb-0"><em>(@TimeSinceAssignedString)</em></p>
+                        </div>
+                        <div id="check-in-card-time-logged-on-task-section" class="col-12 col-lg-7">
+                            <p class="text-left text-secondary pb-1 mb-1">
+                                <strong>
+                                    <em>Total</em>
+                                </strong> time you have logged against task:
+                                <strong class="text-primary">@OverallTimeSpentOnTaskByUserString</strong>
+                                <span class="text-secondary">
+                                    (<strong><em>@TotalTimeSpentThisWeek</em></strong> this week)
+                                </span>
+                            </p>
+                            <p class="text-left text-secondary pb-1 mb-0">
+                                Estimated time to complete task:
+                                <strong class="text-primary">@CurrentTaskEstimateString</strong>
+                                @if (OriginalTaskEstimateString != CurrentTaskEstimateString)
+                                {
+                                    <span class="text-secondary"> (<strong><em>@OriginalTaskEstimateString</em></strong> estimated when task created)</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mb-2 pb-2 pt-lg-0 pt-2 mt-lg-0 mt-2 border-lg-top-0 border-bottom">
+                        <div class="col" id="check-in-task-estimate-bar">
+                            <TaskEstimateBar
+                                EstimatedTime="_task.Estimate"
+                                TimeSpent="_tagsWorkedByUserOverall.TotalTime"
+                                DurationFormat="SelectedDurationFormatOptions"/>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!Disabled && _taskCheckIn is not null)
+            {
+                <div id="check-in-task-input-section">
+                    <EditForm Model="_taskCheckIn">
+                        <DataAnnotationsValidator/>
+
+                        <div class="row">
+                            <div id="check-in-task-difficulty-field" class="col-6 form-group">
+                                <span class="text-info text-center w-100 d-block">Personally, I found this task</span>
+                                <div class="w-100 d-flex justify-content-center">
+                                    <InputSelection
+                                        DropDownMenuId="check-in-difficulty-drop-down"
+                                        TResult="CheckInTaskDifficulty"
+                                        @bind-Value="_taskCheckIn.CheckInTaskDifficulty"
+                                        @bind-Value:after="Save"
+                                        Options="Enum.GetValues<CheckInTaskDifficulty>().Except(new[] { CheckInTaskDifficulty.None }).ToList()"
+                                        style="overflow-x: clip; width: auto; white-space: normal">
+                                        <Template Context="difficulty">
+                                            @(difficulty == CheckInTaskDifficulty.None ? "Choose difficulty" : difficulty.AsString(EnumFormat.Description))
+                                        </Template>
+                                    </InputSelection>
+                                    <ValidationMessage For="@(() => _taskCheckIn.CheckInTaskDifficulty)"/>
+                                </div>
+
+                            </div>
+
+                            <div id="check-in-task-reflection-status-field" class="col-6 form-group">
+                                <span class="text-info text-center w-100 d-block">This status of this task is</span>
+                                <div class="w-100 d-flex justify-content-center">
+                                    <InputSelection
+                                        DropDownMenuId="check-in-status-drop-down"
+                                        TResult="CheckInTaskStatus"
+                                        @bind-Value="_taskCheckIn.CheckInTaskStatus"
+                                        @bind-Value:after="Save"
+                                        Options="Enum.GetValues<CheckInTaskStatus>().Except(new[] { CheckInTaskStatus.None }).ToList()"
+                                        style="overflow-x: clip; width: auto; white-space: normal">
+                                        <Template Context="status">
+                                            @(status == CheckInTaskStatus.None ? "Choose status" : status.AsString(EnumFormat.Description))
+                                        </Template>
+                                    </InputSelection>
+                                    <ValidationMessage For="@(() => _taskCheckIn.CheckInTaskStatus)"/>
+                                </div>
+                            </div>
+                        </div>
+
+                    </EditForm>
+                </div>
+            }
+
+        </div>
+        <div class="card-footer py-1 @(CssClassForCompletionStatus)">
+            <div class="row align-items-center">
+                <div class="col">
+                    <small class="text">In story <strong><em>@_task.UserStory.Name</em></strong></small>
+                </div>
+            </div>
+        </div>   
+    }
+</div>
+
+<StoryTaskDisplayPanel @ref="_storyTaskDisplayPanel" StoryUpdated="LoadStats"/>

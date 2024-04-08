@@ -1,0 +1,114 @@
+@attribute [Route(PageRoutes.ProjectBacklog)]
+@inherits BaseProjectScopedComponent
+
+@using Models.Entities
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.Widgets
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.Backlog"/>
+<StoryTaskDisplayPanel @ref="_storyTaskPanel" StoryUpdated="OnStoryUpdated"/>
+<div class="container"> 
+    @if (Project != null) {   
+        <div class="row mb-4 page-header">        
+            <h1>@Project.Name Backlog</h1>        
+        </div>             
+
+        <div class="row">  
+            <diV class="col">
+                @if (_sprintSaveError) {            
+                    <div class="row mb-1" style="font-size:small;">
+                        <div class="col">
+                            <span class="text-danger" id="backlog-sprint-concurrency-error">Sprint was updated before you made changes. Backlog has been refreshed.</span>
+                        </div>           
+                    </div>                   
+                } 
+                <div class="row g-2 mb-2">         
+                        
+                    @if (_isEditingSprint)
+                    {
+                        <EditSprint
+                            @ref="_editSprintComponent"
+                            Sprint="_sprintEditing"
+                            OnCancel="OnEditingCancelled"
+                            OnSave="OnSprintSave"
+                            StoryClicked="story => _storyTaskPanel.SelectStory(story)"
+                        ></EditSprint>
+                    } 
+                    else if (_currentViewingSprint != null)
+                    {
+                        <CurrentSprintView
+                            EditSprint="StartEditingSprint" 
+                            Sprint="_currentViewingSprint" 
+                            StoryClicked="story => _storyTaskPanel.SelectStory(story)"
+                            EndSprint="EndCurrentSprint" 
+                            StartSprint="StartCurrentSprint"
+                            PreviousSprintClosed="PreviousSprintClosed"
+                        />
+                    }
+                    else if (!IsReadOnly)
+                    {
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" @onclick="StartCreatingSprint">
+                                Create Sprint
+                            </button>
+                        </div>            
+                    }   
+
+                    <div class="mt-4">
+                        <div class="list-group">
+                            <li class="list-group-item grey-input-group-background rounded-top border-bottom-0">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h3 class="mb-0">
+                                            Backlog
+                                        </h3>
+                                    </div>
+                                    @if (!IsReadOnly)
+                                    {
+                                        <div class="col-auto">
+                                            <button class="col-auto btn btn-primary btn-sm" type="button" @onclick="StartCreatingStory" id="add-story">
+                                                <i class="bi bi-plus-lg align-middle"/>
+                                                <span>Create Story</span>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </li>
+                            <SortableList
+                                @key="Project.Id"
+                                TItem="UserStory"
+                                @bind-Items="_backlog"
+                                Group="backlog"
+                                class="list-group rounded-0 rounded-bottom backlog-list"
+                                ElementCss="list-group-item selectable"
+                                ItemClicked="story => _storyTaskPanel.SelectStory(story)"
+                                Disabled="IsReadOnly">
+                                <Template Context="item">
+                                    <BacklogStoryListItem Story="item"/>
+                                </Template>
+                            </SortableList>
+                        </div>
+                    </div>
+
+                    <CascadingValue Value="_currentViewingSprint">
+                        @foreach (var sprint in Project.Sprints) 
+                        {
+                            if (sprint.Id == _currentViewingSprint?.Id) continue;
+                            <div class="col-12">
+                                <ArchivedSprintView 
+                                    Sprint="sprint" 
+                                    StoryClicked="story => _storyTaskPanel.SelectStory(story)" 
+                                    ReopenSprint="ReopenSprint"
+                                    CloseSprint="CloseSprint"
+                                />
+                            </div>
+                        }
+                    </CascadingValue>
+                </div>                  
+            </diV>
+        </div>
+    }
+</div>
+<CloseSprintModal @ref="_closeSprintModal"/>
+<SprintStatusChangeModal @ref="_statusChangeModal"/>

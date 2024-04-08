@@ -1,0 +1,249 @@
+@attribute [Route(PageRoutes.WeeklyReflectionCheckIn)]
+@using ScrumBoard.Shared.ProjectFeatureFlags
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.SaveStatus
+@using ScrumBoard.Pages
+@using ScrumBoard.Models.Entities.FeatureFlags
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models
+@inherits BaseProjectScopedComponent
+
+@if (_checkIn is not null && _tasksWorkedOnByUser is not null)
+{
+    <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckIn">
+        <ProjectViewLoaded 
+            Type="ViewLoadedUsageEventType.PerformWeeklyReflectionsPage" 
+            ResourceId="_checkIn.Id == default ? -1 : _checkIn.Id" 
+        />
+        <div class="container px-4">
+            <div class="row justify-content-center">
+                <div class="row mb-3 mt-2">
+                    <div class="col col-lg-auto order-1 order-lg-1 justify-content-start d-flex">
+                        <button
+                            class="btn btn-outline-info"
+                            disabled="@(SelectedWeekIsEarliestPossible || _saveStatus is FormSaveStatus.Saving)"
+                            @onclick="() => ChangeWeek(-1)"
+                            id="go-to-previous-week-button"
+                        >
+                            Go to previous week
+                        </button>
+                    </div>
+                    <div class="col-12 col-lg my-auto justify-content-center d-flex flex-column order-3 order-lg-2 mt-2 mt-lg-0">
+                        <h5 class="text-center my-0" id="current-week-display">
+                            @FirstDayOfWeek.ToString("dddd dd MMM") - @LastDayOfWeek.ToString("dddd dd MMM")
+                            (ISO week @_checkIn.IsoWeekNumber, @_checkIn.Year)
+                        </h5>
+                        @if (SelectedWeekIsMostCurrent)
+                        {
+                            <span class="text-center text-info fst-italic">Current week</span>
+                        }
+                    </div>
+                    <div class="col col-lg-auto order-2 order-lg-3 justify-content-end d-flex">
+                        <button
+                            class="btn btn-outline-info"
+                            disabled="@(SelectedWeekIsMostCurrent || _saveStatus is FormSaveStatus.Saving)"
+                            @onclick="() => ChangeWeek(1)"
+                            id="go-to-next-week-button"
+                        >
+                            Go to next week
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    @if (_checkIn.CompletionStatus is CheckInCompletionStatus.NotYetStarted)
+                    {
+                        <button
+                            id="begin-button"
+                            type="button"
+                            class="btn btn-outline-secondary ms-3"
+                            @onclick="MarkAsDraft"
+                        >
+                            Begin reflection
+                        </button>
+                    }
+                </div>
+    
+                <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionTaskCheckIns">
+                    <div class="row align-items-center mx-auto justify-content-center mb-1">
+                        <span class="text-center w-auto fs-3">My tasks</span>
+                    </div>
+                    <div class="row align-items-center mx-auto justify-content-center">
+                        <p class="text-body text-muted text-center mb-1" style="width: fit-content">
+                            Below you will see the tasks you have been involved in for the currently selected week.
+                            <BasicHtmlTooltip>
+                                Tasks will show here if you have logged non-review work against them during the week,
+                                or (for the most current week) if the task is assigned to you and not
+                                <StageBadge Stage="Stage.Done"/> or <StageBadge Stage="Stage.Deferred"/>.
+                            </BasicHtmlTooltip>
+                        </p>
+                    </div>
+    
+                    @if (!_tasksWorkedOnByUser.Any())
+                    {
+                        <div class="col-12 mb-4 d-flex justify-content-center">
+                            <span class="text-center fst-italic text-info">
+                                You don't appear to have @(SelectedWeekIsMostCurrent ? "any active tasks at the moment" : "worked on any tasks this week").
+                                Check the above tooltip to see how these tasks are identified.
+                            </span>
+                        </div>
+                    }
+                    @foreach (var task in _tasksWorkedOnByUser)
+                    {
+                        <div class="col-12 col-xl-6 mb-4">
+                            <ReflectionCheckInTaskDisplay
+                                @key="task.Id"
+                                TaskId="task.Id"
+                                Year="_checkIn.Year"
+                                IsoWeekNumber="_checkIn.IsoWeekNumber"
+                                WeeklyCheckInId="_checkIn.Id"
+                                Disabled="_checkIn.Id == default"/>
+                        </div>
+                    }
+                </ProjectFeatureFlagRequiredComponent>
+            </div>
+    
+            <div class="col-12">
+                <EditForm Model="_checkIn" @ref="_editForm" >
+                    <DataAnnotationsValidator/>
+                    
+                    <div class="col-12 mb-3">
+                        <div class="row">
+                            <label for="did-well-input-area" class="form-label">
+                                <h5 class="fw-bold">What I did well this week</h5>
+                                Reflect on your contributions and learning moments this week across all areas, including project work, 
+                                team collaboration, and personal development. <br/>
+                                <em class="text-muted">
+                                    What achievements are you proud of? Highlight specific interactions or tasks where you felt you excelled 
+                                    and explore why they were successful. Consider skills you've improved or knowledge you've gained that 
+                                    contributed to your achievements.
+                                </em>
+                            </label>
+                            <textarea 
+                                id="did-well-input-area" 
+                                class="form-control"
+                                style="height: 150px"
+                                @bind="_checkIn.WhatIDidWell" 
+                                @bind:event="oninput"
+                                @bind:after="StartSaveCountdown"
+                                disabled="@(_checkIn.Id == default)"
+                            ></textarea>
+                            <div class="col-12 col-md">
+                                <ValidationMessage For="@(() => _checkIn.WhatIDidWell)" id="did-well-validation-message"/>
+                            </div>
+                            <div class="col-12 col-md-auto text-start text-md-end d-flex justify-content-end">
+                                <div id="word-count">Word count: @((_checkIn.WhatIDidWell ?? "").Split(" ").Count(x => !string.IsNullOrWhiteSpace(x)))</div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="col-12 mb-3">
+                        <div class="row">
+                            <label for="did-not-do-well-input-area" class="form-label">
+                                <h5 class="fw-bold">What I did not do so well this week</h5>
+                                Think deeply about areas for improvement, not just in task execution, but in how you engage with your team, 
+                                manage your time, and approach challenges. <br/>
+                                <em class="text-muted">
+                                    Was there a missed opportunity for leadership, collaboration, or learning? Reflect on specific instances
+                                    where your performance didn't meet your expectations and analyze the underlying reasons. This is not about 
+                                    self-criticism, but understanding and growth.
+                                </em>
+                            </label>
+                            <textarea 
+                                id="did-not-do-well-input-area" 
+                                class="form-control"
+                                style="height: 150px"
+                                @bind="_checkIn.WhatIDidNotDoWell" 
+                                @bind:event="oninput"
+                                @bind:after="StartSaveCountdown"
+                                disabled="@(_checkIn.Id == default)"
+                            ></textarea>
+                            <div class="col-12 col-md">
+                                <ValidationMessage For="@(() => _checkIn.WhatIDidNotDoWell)" id="did-not-do-well-validation-message"/>
+                            </div>
+                            <div class="col-12 col-md-auto text-start text-md-end d-flex justify-content-end">
+                                <div id="word-count">Word count: @((_checkIn.WhatIDidNotDoWell ?? "").Split(" ").Count(x => !string.IsNullOrWhiteSpace(x)))</div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="col-12 mb-3">
+                        <div class="row">
+                            <label for="will-do-differently-input-area" class="form-label">
+                                <h5 class="fw-bold">What I will do differently in future</h5>
+                                Based on this week's reflections, identify concrete actions you can take to improve. Specify changes in how you'll 
+                                approach tasks, interact with your team, or manage your time. <br/>
+                                <em class="text-muted">
+                                    Are there new strategies you want to adopt or adjustments to your current approach? Setting clear, 
+                                    actionable goals will help you apply your reflections towards meaningful progress.
+                                </em>
+                            </label>
+                            <textarea 
+                                id="will-do-differently-input-area" 
+                                class="form-control"
+                                style="height: 150px"
+                                @bind="_checkIn.WhatIWillDoDifferently" 
+                                @bind:event="oninput"
+                                @bind:after="StartSaveCountdown"
+                                disabled="@(_checkIn.Id == default)"
+                            ></textarea>
+                            <div class="col-12 col-md">
+                                <ValidationMessage For="@(() => _checkIn.WhatIWillDoDifferently)" id="will-do-differently-validation-message"/>
+                            </div>
+                            <div class="col-12 col-md-auto text-start text-md-end d-flex justify-content-end">
+                                <div id="word-count">Word count: @((_checkIn.WhatIWillDoDifferently ?? "").Split(" ").Count(x => !string.IsNullOrWhiteSpace(x)))</div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="col-12 mb-3">
+                        <div class="row">
+                            <label for="anything-else-input-area" class="form-label"><em>(Optional)</em> Anything else you want to let the teaching team know</label>
+                            <textarea 
+                                id="anything-else-input-area" 
+                                class="form-control"
+                                @bind="_checkIn.AnythingElse" 
+                                @bind:event="oninput"
+                                @bind:after="StartSaveCountdown"
+                                disabled="@(_checkIn.Id == default)"
+                            ></textarea>
+                            <div class="col-12 col-md-6">
+                                <ValidationMessage For="@(() => _checkIn.AnythingElse)" id="anything-else-validation-message"/>
+                            </div>
+                            <div class="col-12 col-md-6 text-start text-md-end d-flex justify-content-end">
+                                <div id="word-count">Word count: @((_checkIn.AnythingElse ?? "").Split(" ").Count(x => !string.IsNullOrWhiteSpace(x)))</div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="col-12 d-flex justify-content-end">
+                        <SaveStatusIndicator class="my-auto" id="text-form-response-save-status-indicator" @bind-Status="_saveStatus"/>
+                        @if (_checkIn.CompletionStatus is CheckInCompletionStatus.Completed)
+                        {
+                            <Badge Style="@BadgeStyle.Primary" class="px-3 h-fit-content py-2 my-auto">Finished</Badge>
+                            <button 
+                                id="mark-draft-button" 
+                                class="btn btn-outline-info mx-3" 
+                                @onclick="MarkAsDraft"
+                                disabled="@(_saveStatus is FormSaveStatus.Saving)"
+                            >Mark as draft</button>
+                        }
+                        else if (_checkIn.CompletionStatus is CheckInCompletionStatus.Incomplete)
+                        {
+                            <Badge Style="@BadgeStyle.Info" class="px-3 h-fit-content py-2 my-auto">Draft</Badge>
+                            <button 
+                                id="mark-finished-button" 
+                                class="btn btn-outline-primary ms-3" 
+                                @onclick="MarkAsFinished"
+                                disabled="@(_saveStatus is FormSaveStatus.Saving)"
+                            >Mark as finished</button>
+                        } 
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </ProjectFeatureFlagRequiredComponent>
+}

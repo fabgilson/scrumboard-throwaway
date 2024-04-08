@@ -1,0 +1,114 @@
+@attribute [Route(PageRoutes.FillForms)]
+@inherits BaseProjectScopedComponent
+
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities.Forms.Instances
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.FormsPage"/>
+<div class="container">
+    <div>
+        @if (_allForms.Any())
+        {
+            <div class="row">
+                <div class="col">
+                    <h1 class="mb-4">
+                        Available Forms
+                    </h1>
+                </div>
+                @if (RoleInCurrentProject is ProjectRole.Leader)
+                {
+                    <div class="col-auto">
+                        <NavLink class="btn btn-outline-info" href="@PageRoutes.ToViewAssignedProjectForms(Project.Id)">
+                            View all forms assigned to @Project.Name
+                        </NavLink>
+                    </div>
+                }
+            </div>
+        }
+        <div>
+            @if (_allForms.Any())
+            {
+                <div class="row fw-bold pb-2 border-bottom">
+                    <div class="col">
+                        Status
+                    </div>
+                    <div class="col">
+                        Name
+                    </div>
+                    <div class="col">
+                        Start Date
+                    </div>
+                    <div class="col">
+                        Due Date
+                    </div>
+                    <div class="col">
+                        Pair User
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col w-100 mt-5">
+                    <div class="row">
+                        <p class="text-center fs-3">No available forms found</p>
+                    </div>
+                    <div class="row">
+                        <p class="text-center text-muted fs-5">
+                            This page shows all upcoming forms that have been assigned for you to complete, as well as those forms that you have already completed. No forms have been assigned to you yet.
+                        </p>
+                    </div>
+                </div>
+            }
+            @foreach (var formInstance in _allForms)
+            {
+                <a
+                    id="form-instance-@formInstance.Id"
+                    class="row py-3 border-bottom form-instance-row"
+                    href="@PageRoutes.ToFillSingleForm(Project.Id, formInstance.Id)"
+                    style="pointer-events: @(CanEditForm(formInstance) ? "" : "none");">
+                    <div class="col">
+                        @if (formInstance.Assignment.StartDate > DateTime.Now)
+                        {
+                            <FormStageBadge Stage="FormStatus.Upcoming"></FormStageBadge>
+                        }
+                        else
+                        {
+                            <FormStageBadge Stage="@formInstance.Status"></FormStageBadge>
+                        }
+                    </div>
+                    <div class="col">
+                        @formInstance.Assignment.Name
+                    </div>
+                    <div class="col">
+                        @formInstance.Assignment.StartDate
+                    </div>
+                    <div
+                        id="form-instance-end-date-@formInstance.Id"
+                        class="@(DateTime.Now > formInstance.Assignment.EndDate && formInstance.Status != FormStatus.Submitted ? "col text-danger fw-bold" : "col")">
+                        @formInstance.Assignment.EndDate
+                    </div>
+                    <div class="col">
+                        @if (formInstance is UserFormInstance userFormInstance)
+                        {
+                            @if (userFormInstance.Pair is not null)
+                            {
+                                <UserListItem User="userFormInstance.Pair" Size="small"/>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><em>Individual Form</em></span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted"><em>Team Form</em></span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</div>

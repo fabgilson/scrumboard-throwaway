@@ -1,0 +1,35 @@
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models
+<Badge Style="@DifficultyStyles[Difficulty]" @attributes="@AllOtherAttributes">
+    <span class="mx-auto fs-5 text-capitalize">@DifficultyText[Difficulty]</span>
+</Badge>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public CheckInTaskDifficulty Difficulty { get; set; } = CheckInTaskDifficulty.None;
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AllOtherAttributes { get; set; }
+    
+    private static readonly Dictionary<CheckInTaskDifficulty, string> DifficultyText = new()
+    {
+        [CheckInTaskDifficulty.None] = "not set",
+        [CheckInTaskDifficulty.VeryEasy] = "very easy",
+        [CheckInTaskDifficulty.Easy] = "easy",
+        [CheckInTaskDifficulty.Medium] = "medium",
+        [CheckInTaskDifficulty.Hard] = "hard",
+        [CheckInTaskDifficulty.VeryHard] = "very hard",
+    };
+    
+    private static readonly Dictionary<CheckInTaskDifficulty, BadgeStyle> DifficultyStyles = new()
+    {
+        [CheckInTaskDifficulty.None] = BadgeStyle.Disabled,
+        [CheckInTaskDifficulty.VeryEasy] = BadgeStyle.NeutralOne,
+        [CheckInTaskDifficulty.Easy] = BadgeStyle.NeutralTwo,
+        [CheckInTaskDifficulty.Medium] = BadgeStyle.NeutralThree,
+        [CheckInTaskDifficulty.Hard] = BadgeStyle.NeutralFour,
+        [CheckInTaskDifficulty.VeryHard] = BadgeStyle.NeutralFive,
+    };
+}

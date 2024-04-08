@@ -1,0 +1,58 @@
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+<div class="badge border d-inline-flex align-items-center w-100 bg-opacity-75 rounded-0 border-0 @BackgroundColorClass">
+    <div class="row g-0 w-100">
+        <div class="col-12 text-capitalize fs-6 text-wrap">@StatusTextShort</div>
+        <div class="fst-italic mt-1 text-wrap">@StatusTextLong</div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public CheckInTaskStatus Status { get; set; } = CheckInTaskStatus.None;
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AllOtherAttributes { get; set; }
+    
+    private string BackgroundColorClass => Status is CheckInTaskStatus.Completed or CheckInTaskStatus.CompletedPendingReview
+        ? "bg-success"
+        : "bg-secondary";
+    
+    private string StatusTextShort
+    {
+        get
+        {
+            switch (Status)
+            {
+                case CheckInTaskStatus.None:
+                    return "";
+                    
+                case CheckInTaskStatus.Completed:
+                case CheckInTaskStatus.CompletedPendingReview:
+                    return "Completed";
+                    
+                case CheckInTaskStatus.UnfinishedContinueWorking:
+                case CheckInTaskStatus.UnfinishedAskForHelp:
+                case CheckInTaskStatus.UnfinishedBreakDownToSmallerTasks:
+                case CheckInTaskStatus.UnfinishedGiveAwayTask:
+                    return "Incomplete";
+                    
+                default:
+                    return "";
+            }
+        }
+    }
+
+    private string StatusTextLong => Status switch
+    {
+        CheckInTaskStatus.None => "",
+        CheckInTaskStatus.Completed => "All changes have been merged",
+        CheckInTaskStatus.CompletedPendingReview => "Awaiting review",
+        CheckInTaskStatus.UnfinishedContinueWorking => "Will keep working on it",
+        CheckInTaskStatus.UnfinishedAskForHelp => "Will ask for help",
+        CheckInTaskStatus.UnfinishedBreakDownToSmallerTasks => "Should be broken down",
+        CheckInTaskStatus.UnfinishedGiveAwayTask => "Will give to someone else",
+        _ => ""
+    };
+
+}

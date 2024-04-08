@@ -1,0 +1,42 @@
+<!-- Modal for confirming an action -->
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;">
+    <div class="modal-header">
+        <h5 class="modal-title" id="confirm-modal-header">
+            @Title
+        </h5>
+        <ResultButton id="close-modal-button"  Value="false" class="btn-close" aria-label="Close"/>
+    </div>
+    <div class="modal-body">
+        @Body
+    </div>
+    <div class="modal-footer">
+        <ResultButton 
+            Value="false" 
+            id="cancel-modal-button" 
+            class="btn btn-outline-secondary">
+            Cancel
+        </ResultButton>
+        <ResultButton
+            Value="true"
+            id="confirm-modal-button"
+            class="btn btn-primary">
+            Confirm
+        </ResultButton>
+    </div>
+</ResultModal>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+    
+    [Parameter]
+    public RenderFragment Body { get; set; }
+    
+    private ResultModal<bool> _resultModal;
+
+    public virtual Task<bool> Show()
+    {
+        return _resultModal.Show();
+    }
+}

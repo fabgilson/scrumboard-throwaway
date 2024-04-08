@@ -1,0 +1,7 @@
+@using ScrumBoard.Models.Entities.Forms.Templates
+<Markdown Source="@TextBlock.Content"/>
+
+@code {
+    [Parameter]
+    public TextBlock TextBlock { get; set; }
+}

@@ -1,0 +1,32 @@
+﻿@attribute [Route(PageRoutes.ViewAssignedProjectForms)]
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+@if (Project is not null && RoleInCurrentProject is ProjectRole.Leader)
+{
+    <h3>Viewing all forms run assigned to: <strong>@Project.Name</strong></h3>
+    
+    foreach (var formTemplate in _assignmentsForProject.Select(x => x.FormTemplate).DistinctBy(f => f.Id))
+    {
+        <div class="card">
+            <div class="card-header">Form template: @formTemplate.Name</div>
+            <div class="card-body">
+                <div class="col">
+                    @foreach (var assignment in _assignmentsForProject.Where(x => x.FormTemplateId == formTemplate.Id))
+                    {
+                        <div class="row">
+                            <div class="col">
+                                @assignment.Name
+                            </div>
+                            <div class="col-auto">
+                                <NavLink class="btn btn-outline-primary" href="@PageRoutes.ToViewFormResponses(assignment.Id, Project.Id)">
+                                    View Submissions
+                                </NavLink>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

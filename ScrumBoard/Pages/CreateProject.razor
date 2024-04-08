@@ -1,0 +1,57 @@
+@using ScrumBoard.Shared.Widgets
+@attribute [Route(PageRoutes.CreateProject)]
+@attribute [Authorize(Roles = "SystemAdmin,GlobalProjectAdmin")]
+
+<div class="container" style="max-width: 650px;">
+    <div>
+        <h1>Create a new project</h1>
+    </div>
+    <div>
+        <EditForm id="create-project-form" Model="_model" OnValidSubmit="OnCreate">
+                @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+                <DataAnnotationsValidator />
+
+                <div class="form-group mb-2">
+                    <label class="text-muted" for="name-input">Name</label>
+                    <InputText id="name-input" placeholder="Enter a project name" class="form-control" @bind-Value="_model.Name" />
+                    <ValidationMessage For="@(() => _model.Name)" id="name-validation-message"/>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label class="text-muted" for="description-input">Description</label>
+                    <InputTextArea id="description-input" type="text" class="form-control text-area-expand" placeholder="Enter Decription" @bind-Value="_model.Description" />
+                    <ValidationMessage For="@(() => _model.Description)" id="description-validation-message" />
+                </div>
+
+                <div class="row">
+                    <div class="col form-group mb-2">
+                        <label class="text-muted" for="start-date-input">Start Date</label>
+                        <InputDate id="start-date-input" class="form-control" min="@_now.ToString("yyyy-MM-dd")" placeholder="Enter start date" @bind-Value="_model.StartDate" />
+                        <ValidationMessage For="@(() => _model.StartDate)" id="start-date-validation-message"/>
+                    </div>
+
+                    <div class="col form-group">
+                        <label class="text-muted" for="end-date-input">End Date</label>
+                        <InputDate id="end-date-input" class="form-control" min="@_model.StartDate.AddDays(1).ToString("yyyy-MM-dd")" placeholder="Enter end date" @bind-Value="_model.EndDate" />
+                        <ValidationMessage For="@(() => _model.EndDate)" id="end-date-validation-message"/>
+                    </div>           
+                </div> 
+
+               
+                <br>
+                <div>
+                    <label class="text-muted" for="members">Add Members</label>
+                    <SearchBar DoSearch="SearchUsers"></SearchBar>
+                    <SelectUsers Users="@_allUsers" SelectedUsers="@_currentUsers" UserSelected="@((tuple) => UpdateSelectedUsers(tuple.Item1, tuple.Item2))"></SelectUsers>
+                </div>
+                <div class="row justify-content-end mt-4 gx-2">
+                    <div class="col-auto">                        
+                        <button type="button" class="btn btn-outline-secondary" @onclick="@CancelCreate">Cancel</button>                           
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                    </div>
+                </div>
+        </EditForm>      
+    </div>
+</div>

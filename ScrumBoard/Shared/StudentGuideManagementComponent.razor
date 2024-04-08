@@ -1,0 +1,238 @@
+@using SharedLensResources
+@using ScrumBoard.Services
+@using ScrumBoard.Utils
+@using ScrumBoard.Models
+@using ScrumBoard.Shared.Widgets
+@attribute [Authorize(Roles=nameof(GlobalLensRole.SystemAdmin))] 
+
+@inject IStudentGuideService StudentGuideService
+@inject IConfigurationService ConfigurationService
+
+<div class="accordion" id="studentGuideManagementHolder">
+    <div class="accordion-item">
+        <h4 class="accordion-header" id="configHeader">
+            <button
+                class="accordion-button collapsed"
+                data-bs-toggle="collapse"
+                data-bs-target="#configCollapse"
+                aria-expanded="false"
+                aria-controls="configHeader">
+                <span>
+                    View Student Guide configuration settings
+                </span>
+                @if (_isConfigurationError)
+                {
+                    <span class="bg-danger p-2 ms-3 text-dark">
+                        Configuration problems detected
+                    </span>
+                }
+            </button>
+        </h4>
+        <div
+            class="accordion-collapse collapsed collapse"
+            id="configCollapse"
+            aria-labelledby="configHeader"
+            data-bs-parent="#studentGuideManagementHolder">
+            <div class="accordion-body">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Variable</th>
+                        <th scope="col">Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if (_basicValidationReport is not null)
+                    {
+                        <tr class="@CssClassForConfigurationRow(nameof(IConfigurationService.StudentGuideContentPath))">
+                            <th scope="row">Content directory</th>
+                            <td>
+                                @TextValueForConfigurationRow(
+                                    ConfigurationService.StudentGuideContentPath,
+                                    nameof(IConfigurationService.StudentGuideContentPath)
+                                )
+                            </td>
+                        </tr>
+                        <tr class="@CssClassForConfigurationRow(nameof(IConfigurationService.StudentGuideGitlabAccessToken))">
+                            <th scope="row">GitLab access token for Student Guide repository</th>
+                            <td>
+                                @if (!string.IsNullOrEmpty(ConfigurationService.StudentGuideGitlabAccessToken))
+                                {
+                                    <strong><em>(Has been set)</em></strong>
+                                }
+                                else
+                                {
+                                    <strong>No value set!</strong>
+                                }
+                            </td>
+                        </tr>
+                        <tr class="@CssClassForConfigurationRow(nameof(IConfigurationService.StudentGuideGitlabTagPath))">
+                            <th scope="row">URL for fetching tags from GitLab API</th>
+                            <td>
+                                @TextValueForConfigurationRow(
+                                    ConfigurationService.StudentGuideGitlabTagPath,
+                                    nameof(IConfigurationService.StudentGuideGitlabTagPath)
+                                )
+                            </td>
+                        </tr>
+                        <tr class="@CssClassForConfigurationRow(nameof(IConfigurationService.StudentGuideGitlabZipPath))">
+                            <th scope="row">URL for fetching zip archive from GitLab API</th>
+                            <td>
+                                @TextValueForConfigurationRow(
+                                    ConfigurationService.StudentGuideGitlabZipPath,
+                                    nameof(IConfigurationService.StudentGuideGitlabZipPath)
+                                )
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mt-3">
+    @if (_updateCheck is not null)
+    {
+        if (_updateCheck.Value.CurrentVersion is null)
+        {
+            if (!_isUpdateAvailable)
+            {
+                <span>
+                    No local version found, and no remote version found.
+                    Please ensure that the student guide repository has at least one tagged commit
+                    and that this application is correctly configured to access the repository.
+                </span>
+            }
+            else
+            {
+                <span>No local version found, but a new remote version is available.</span>
+            }
+        }
+        else
+        {
+            <span>
+                Current version: <strong>@_updateCheck?.CurrentVersion?.Version</strong><br/>
+                Last updated: <strong>@GenerateLastUpdatedMessage()</strong>
+            </span>
+        }
+
+        <div>
+            <button class="btn btn-outline-info mb-2" @onclick="CheckForUpdateAsync">
+                Check for updates
+            </button>
+        </div>
+
+        if (_isUpdateAvailable)
+        {
+            <div class="col ">
+                <div class="row g-0">
+                    <div>Available remote version: <strong>@_updateCheck!.Value.NewlyAvailableVersion?.Version</strong></div>
+                </div>
+                <div class="row g-0">
+                    <button class="btn btn-outline-primary w-auto" @onclick="UpdateStudentGuideContentAsync">
+                        Update student guide content from GitLab
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <span>No new version found.</span>
+        }
+        
+        <InlineMessageNotification @ref="_inlineMessageComponent"/>
+    }
+</div>
+
+@code {
+
+    private bool _isUpdateAvailable;
+    private StudentGuideUpdateCheck? _updateCheck;
+
+    private bool _errorEncounteredOnUpdate;
+    private InlineMessageNotification _inlineMessageComponent;
+
+    private bool _isConfigurationError;
+
+    private BasicValidationReport _basicValidationReport;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        await CheckForUpdateAsync();
+    }
+
+    private string CssClassForConfigurationRow(string configurationPropertyName) => 
+        _basicValidationReport.ValidationErrors.Any(x => x.MemberName == configurationPropertyName) 
+            ? "table-danger text-danger fw-bolder" 
+            : "";
+
+    private string TextValueForConfigurationRow(string expectedStringValue, string configPropertyName)
+    {
+        var errors = _basicValidationReport.ValidationErrors
+            .Where(x => x.MemberName == configPropertyName)
+            .ToArray();
+
+        if (errors.Any()) return string.Join('\n', errors.Select(x => x.ErrorText));
+        return expectedStringValue ?? "(No value found)";
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        _basicValidationReport = await StudentGuideService.ValidateConfigurationAsync();
+        
+        if (_basicValidationReport.Success)
+        {
+            _updateCheck = await StudentGuideService.CheckForUpdateAsync();
+            _isUpdateAvailable = _updateCheck is not null && _updateCheck.Value.UpdateAvailable;
+        }
+        else
+        {
+            _isConfigurationError = true;
+        }
+
+        StateHasChanged();
+    }
+    
+    private async Task UpdateStudentGuideContentAsync()
+    {
+        try
+        {
+            await StudentGuideService.UpdateStudentGuideAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            _errorEncounteredOnUpdate = true;
+            _inlineMessageComponent.TriggerMessageDisplay(
+                "No remote updates found, either someone else has clicked this button since you " +
+                "loaded this page, or the remote Student Guide version has been rolled back.",
+            true
+            );
+        }
+        catch
+        {
+            _errorEncounteredOnUpdate = true;
+            _inlineMessageComponent.TriggerMessageDisplay(
+                "Unexpected error encountered when trying to update Student Guide content, please " +
+                "try again later.",
+                true
+            );
+        }
+        
+        _inlineMessageComponent.TriggerMessageDisplay("Updated successfully!", false);
+        await CheckForUpdateAsync();
+    }
+    
+    private string GenerateLastUpdatedMessage()
+    {
+        var lastUpdate = _updateCheck?.CurrentVersion?.LastUpdated;
+        if (lastUpdate is null) return "never";
+        return DurationUtils.DurationStringFrom(DateTime.Now - lastUpdate.Value,
+            DurationFormatOptions.FormatForLongString
+            | DurationFormatOptions.TakeTwoHighestUnitsOnly
+            | DurationFormatOptions.UseDaysAsLargestUnit 
+        ) + " ago";
+    }
+
+}

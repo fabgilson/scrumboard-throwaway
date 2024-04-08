@@ -1,0 +1,196 @@
+@attribute [Route(PageRoutes.ProjectHome)]
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@inherits BaseProjectScopedComponent
+
+@if (Project != null)
+{
+    <CascadingValue Value="Project">
+        @if (_projectEditMode)
+        {
+            <ProjectEditView CancelEditEvent="ToggleEditView"></ProjectEditView>
+        }
+        else
+        {
+            <ProjectViewLoaded Type="ViewLoadedUsageEventType.ProjectHomepage"/>
+            <div class="container">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col page-header">
+                        <h1 class="page-break">@Project.Name</h1>
+                    </div>   
+                    @if (_sprintSaveError) {           
+                        <div class="col" style="font-size:small;">
+                            <span class="text-danger" id="project-view-sprint-concurrency-error">Project was updated before you made changes. Page has been refreshed.</span>
+                        </div>                 
+                    } 
+                    <div class="col-auto">
+                        <div class="row g-2">
+                            @if (Self.GetProjectRole(Project) == ProjectRole.Leader) {
+                                if (Project.GetReviewingSprint() != null)
+                                {
+                                    <div class="col-auto">
+                                        <button id="cancel-sprint-review" type="button" class="btn btn-outline-danger" @onclick="() => CancelReview(Project.GetReviewingSprint())">
+                                            Cancel Review
+                                        </button>
+                                    </div>
+                                }
+                                <div class="col-auto">
+                                    <button id="manage-sprint-reviewers" type="button" class="btn btn-outline-primary" @onclick="async () => await ManageSprintReviewers()">
+                                        Manage Sprint Reviewers
+                                    </button>
+                                </div>
+                                <div class="col-auto">
+                                    <button id="edit-project" type="button" class="btn btn-outline-primary" @onclick="ToggleEditView">
+                                        <span class="bi bi-pencil"/>
+                                        Edit Project
+                                    </button>
+                                </div>         
+                            } 
+                            <div class="col-auto">
+                                <a href="@PageRoutes.ToProjectChangeLog(ProjectState.ProjectId)" class="btn btn-outline-secondary">
+                                    <span class="bi bi-clock-history" aria-hidden="true"></span>      
+                                    Changelog
+                                </a>                            
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-2">
+                    <div class="col">
+                        <Markdown Source="@Project.Description"/>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 col-lg" style="min-width: 0px;">
+                        <div class="row">
+                            @if (_story == null && _task == null) {
+                                <div class="col mb-3" id="project-recent-activity">                                    
+                                    <h5 class="p-0 mb-2">Recent Activity</h5>
+                                    @if (!_recentWorklogs.Any()) {
+                                        <div class="card mb-2" style="width:100%">
+                                            <div class="card-body">
+                                                <div class="card-text">                                                    
+                                                    <span class="text-secondary" id="no-recent-activity">No recent activity</span>
+                                                </div>                                                                                     
+                                            </div>                                            
+                                        </div>
+                                    }                   
+                                    <div class="d-flex align-items-center flex-column">                      
+                                        @foreach (WorklogEntry entry in _recentWorklogs) {
+                                            <div class="card mb-2 recent-worklog" style="width:100%;border-radius:0.4rem;" id="recent-worklog-@entry.Id">
+                                                <div class="card-body">
+                                                    <div class="card-title">
+                                                        <UserAvatar class="avatar me-1" User="entry.User"/>
+                                                        <span><span class="fw-bold">@entry.User.GetFullName()</span> added new worklog</span>
+                                                    </div>
+                                                    <div class="card-text text-secondary px-5">                                                                                                     
+                                                        <Markdown Source="@entry.Description" NoFormat/>      
+                                                        <div class="fw-bold mt-2 row gx-2">                                                            
+                                                            <div class="col-auto">
+                                                                <span class="badge bg-secondary rounded-pill">@DurationUtils.DurationStringFrom(entry.GetTotalTimeSpent())</span>
+                                                            </div>  
+                                                            <div class="col">                                                            
+                                                                <InputTag TTag="WorklogTag" Value="entry.GetWorkedTags().ToList()" LimitShown Disabled />
+                                                            </div>  
+                                                            <div class="col-auto mt-2 mt-sm-0">
+                                                                @entry.Occurred
+                                                            </div> 
+                                                        </div>                                                        
+                                                    </div>                                          
+                                                </div>                                            
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            @if (_story != null) {
+                                <div class="col-lg col-xsm-auto mb-4" style="min-width: 0px">
+                                    <div class="card p-2">
+                                        <FullStory 
+                                            Story="_story" 
+                                            @bind-IsEditing="_isEditingStory"
+                                            IsEditingTask="_isEditingTask && _task?.UserStory == _story"
+                                            OnViewTaskDetails="OnViewTaskDetails"
+                                            OnClose="CloseStoryView"
+                                            OnSave="RefreshSprintStories"
+                                            RefreshStory="RefreshStory"
+                                        />
+                                    </div>
+                                </div>
+                            }
+                            @if (_task != null) {
+                                <div class="col-lg col-xsm-auto mb-5" style="min-width: 0px;">
+                                    <div class="card p-2" >
+                                        <TaskEditForm 
+                                            Task="_task"
+                                            OnClose="() => _task = null"
+                                            OnUpdate="async () => await TaskUpdated()"
+                                            OnStorySelect="SelectStory"
+                                            StoryLinkDisabled="_story != null"
+                                            OnEditStatusChanged="isEditingTask => _isEditingTask = isEditingTask"
+                                        />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    @if (ShowSidebar) {
+
+                    <div class="col-12 col-lg-5" style="min-width: 0">
+                        <ProjectMemberListView/>
+                        <ul class="list-group mb-5">
+                            @if(_sprint == null) {
+                                <li class="list-group-item grey-input-group-background">
+                                    No sprints in progress
+                                </li>
+                            }
+                            else
+                            {
+
+                                <li class="list-group-item grey-input-group-background border-bottom-0 ">
+                                    <div class="row justify-content-end gx-4 align-items-center">                                        
+                                        <div class="col-12 col-sm fw-bold" style="overflow-wrap: anywhere">
+                                            @_sprint.Name
+                                        </div>                             
+                                    </div>
+                                    @if (_sprint.Stage == SprintStage.Created)
+                                    {   
+                                        <div class="row ">
+                                            <div class="col">
+                                                <div class="text-danger fw-bold" style="font-size: small;">Sprint has not started</div>
+                                            </div>                                                
+                                        </div>                                            
+                                    }
+                                </li>                          
+                                <ul class="list-group rounded-0 rounded-bottom custom-list border-bottom" style="max-height: 22rem;overflow-y:auto">
+                                    @foreach (var story in _sprint.Stories)
+                                    {
+                                        <li class="list-group-item selectable" @onclick="() => SelectStory(story)">
+                                            <StoryListItem Story="story"/>
+                                        </li>
+                                    }
+                                    @if(!_sprint.Stories.Any())
+                                    {
+                                        <li class="list-group-item text-center">
+                                            No stories in sprint
+                                        </li>
+                                    }
+                                </ul>                               
+                            }
+                        </ul>
+                    </div>
+                    }
+                </div>
+            </div>
+        }
+    </CascadingValue>
+}
+
+<StartSprintReviewModal @ref="_startSprintReviewModal"></StartSprintReviewModal>
+<CancelSprintReviewModal @ref="_cancelSprintReviewModal"></CancelSprintReviewModal>
+<ManageReviewersModal @ref="_manageReviewersModal"></ManageReviewersModal>

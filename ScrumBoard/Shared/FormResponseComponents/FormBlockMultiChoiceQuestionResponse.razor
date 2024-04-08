@@ -1,0 +1,62 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.SaveStatus
+@using ScrumBoard.Models.Entities.Forms.Instances
+@inherits BaseProjectScopedComponent
+
+<Markdown Source="@MultiChoiceQuestion.Prompt" />
+
+@if (_multiChoiceAnswerId is not null)
+{
+    <LiveUpdateNotifier TEntity="MultiChoiceAnswer" EntityId="_multiChoiceAnswerId.Value"/>
+}
+
+<SaveStatusIndicator id="multi-choice-form-response-save-status-indicator" @bind-Status="_saveStatus"/>
+@if (MultiChoiceQuestion.AllowMultiple)
+{
+    foreach (var option in MultiChoiceQuestion.Options)
+    {
+        var selectionForm = MultiChoiceAnswerForm.SelectionForms[option];
+        <div class="form-check">
+            <InputCheckbox
+                disabled="@IsReadOnly" 
+                class="form-check-input" 
+                @bind-Value="selectionForm.Selected"
+                @bind-Value:after="SaveSelection"
+            />
+            <label class="form-check-label">
+                @option.Content
+            </label>
+        </div>
+    }
+    <ValidationMessage For="() => MultiChoiceAnswerForm.SelectionForms"/>
+}
+else
+{
+    <InputRadioGroup 
+        Name="@(MultiChoiceQuestion?.Id.ToString() ?? "")"
+        @bind-Value="MultiChoiceAnswerForm.SingleIndex"
+        @bind-Value:after="SaveSelection"
+    >
+        @foreach (var (option, index) in MultiChoiceQuestion.Options.Select((option, index) => (option, index)))
+        {
+            <div class="form-check">
+                <InputRadio 
+                    id="@($"multi-choice-option-{option.Id}")"
+                    disabled="@IsReadOnly" 
+                    class="form-check-input" 
+                    Value="index"
+                />
+                <label class="form-check-label">
+                    @option.Content
+                </label>
+            </div>
+        }
+    </InputRadioGroup>
+    <ValidationMessage For="() => MultiChoiceAnswerForm.SelectionForms"/>
+}
+@if (!string.IsNullOrEmpty(_saveErrorText))
+{
+    <div class="col-12">    
+        <span id="save-error-text" class="text-danger">@_saveErrorText</span>
+    </div>
+}

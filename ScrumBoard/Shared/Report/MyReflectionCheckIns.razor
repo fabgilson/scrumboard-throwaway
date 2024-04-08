@@ -1,0 +1,32 @@
+@using ScrumBoard.Shared.ProjectFeatureFlags
+@using ScrumBoard.Shared.ReflectionCheckIns
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.FeatureFlags
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckIn">
+    <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckInReportPage">
+        <ProjectViewLoaded Type="ViewLoadedUsageEventType.MyWeeklyReflectionCheckIns" ResourceId="Sprint?.Id ?? -1"/>
+        <div class="col slightly-bigger-container px-3 mt-2" id="weekly-check-in-report-container">
+            <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionTaskCheckIns">
+                <div class="row">
+                    <ReflectionCheckInSummaryDisplay
+                        SelectedUser="SelectedUser"
+                        CheckIns="CheckIns?.ToList() ?? []"/>
+                </div>
+            </ProjectFeatureFlagRequiredComponent>
+
+            @foreach (var (isoWeek, year, checkIn) in GetIsoWeeksYearsAndCheckInsForPeriod().OrderByDescending(x => x.Year).ThenByDescending(x => x.IsoWeekNumber))
+            {
+                <WeeklyReflectionReadonlyDisplay
+                    CheckIn="checkIn"
+                    Year="year"
+                    IsoWeek="isoWeek"
+                    EnableChangelog="RoleInCurrentProject is ProjectRole.Leader"
+                />
+            }
+        </div>
+    </ProjectFeatureFlagRequiredComponent>
+</ProjectFeatureFlagRequiredComponent>

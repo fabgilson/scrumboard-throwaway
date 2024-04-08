@@ -1,0 +1,60 @@
+@using Models.Entities
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models
+@using Widgets
+
+<SizeAdjustable TokenSize="Token.TokenSize">
+    @{
+    switch (Token.Value) {
+    case Stage stage:
+        <StageBadge class="ms-1" Stage="stage"/>
+        break;
+    case SprintStage stage:
+        <SprintStageBadge class="ms-1" Stage="stage"/>
+        break;
+    case Priority priority:
+        <Badge class="ms-1" Style="BadgeStyle.Light">
+            <PriorityIndicator Priority="priority"/>
+            <span class="ms-1">
+                @priority
+            </span>
+        </Badge>
+        break;
+    case Complexity complexity:
+        <Badge class="ms-1" Style="BadgeStyle.Light">
+            <ComplexityIndicator Complexity="complexity"/>
+            <span class="ms-1">
+                @complexity
+            </span>
+        </Badge>
+        break;
+    case OverheadSession session:
+        <Badge class="ms-1" Style="BadgeStyle.Light">
+            @session.Name
+        </Badge>
+        break;
+    case AcceptanceCriteriaStatus status:
+        <AcceptanceCriteriaStatusBadge class="ms-1" Status="status"/>
+        break;
+    case ICollection<UserStoryTaskTag> tags:
+        <InputTag TTag="UserStoryTaskTag" Value="tags.ToList()" LimitShown Disabled class="ms-1 d-inline"/>
+        break;
+    case ICollection<WorklogTag> tags:
+        <InputTag TTag="WorklogTag" Value="tags.ToList()" LimitShown Disabled class="ms-1 d-inline"/>
+        break;
+    case ITag tag:
+        <InputTag TTag="ITag" Value="new List<ITag>() { tag }" Disabled class="ms-1 d-inline"/>
+        break;
+    default:
+        <span id="value-token-text-content" class="ps-1 text-secondary">
+            @Token.Content
+        </span>
+        break;
+    }
+    }
+</SizeAdjustable>
+
+@code {
+    [Parameter]
+    public Models.Messages.ValueToken Token { get; set; }
+}

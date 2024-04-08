@@ -1,0 +1,11 @@
+<!--Contains worklog table component for given Project-->
+
+@inherits BaseProjectScopedComponent
+
+@if (Project != null) {
+    <div class="row mt-3">
+        <div class="col">
+            <WorklogTable IsMarkingTable="false"></WorklogTable>
+        </div>
+    </div>  
+}  

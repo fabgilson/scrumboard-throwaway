@@ -1,0 +1,76 @@
+<!-- Edit form component for reviewing a sprint. --> 
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.Changelog
+@using ScrumBoard.Models.Forms
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Extensions
+
+@inherits BaseProjectScopedComponent
+
+@if (!string.IsNullOrEmpty(_noSuchSprintErrorText))
+{
+    <div id="no-such-sprint-error-text" class="text-danger">
+        @_noSuchSprintErrorText
+    </div>
+} 
+else if (_stories != null)
+{
+    <div>
+        <div class="row">
+            <div class="col">
+                <ProgressBar class="mb-2" Total="_stories.Count">
+                    <ProgressSegment Value="_currentStoryIndex"/>
+                </ProgressBar>
+            </div>
+            <div class="col-auto">
+                <button id="submit-sprint-review" class="btn btn-outline-primary" @onclick="FinishReview">
+                    Finish Review
+                </button>
+            </div>
+        </div>
+        
+        @foreach (var indexedStory in _stories.Select((story, i) => new {Index=i, UserStory=story}))
+        {
+            <div 
+                id="@($"story-in-review-container-{indexedStory.Index}")"
+                style="display: @(_stories[_currentStoryIndex].Id == indexedStory.UserStory.Id ? "block" : "none")"
+            >
+                <StoryInReview
+                    id="@($"story-in-review-{indexedStory.UserStory.Id}")"
+                    @key="indexedStory.UserStory.Id"
+                    StoryId="indexedStory.UserStory.Id"
+                    @ref="RegisterStoryInReviewComponent"
+                >
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            @if (indexedStory.Index > 0)
+                            {
+                                <button id="previous-story-button" class="btn btn-outline-primary" @onclick="() => _currentStoryIndex--">
+                                    Previous
+                                </button>
+                            }
+                        </div>
+                        <div>
+                            @if (indexedStory.Index < _stories.Count - 1)
+                            {
+                                <button id="next-story-button" class="btn btn-outline-primary" @onclick="() => _currentStoryIndex++">
+                                    Next
+                                </button>
+                            }
+                            else
+                            {
+                                <button id="finish-review-button" class="btn btn-primary" @onclick="FinishReview">
+                                    Finish
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </StoryInReview>
+            </div>
+        }
+        
+        <SubmitSprintReviewModal @ref="_submitSprintReviewModal" />
+        <SprintReviewFinishedByAnotherUserModal @ref="_reviewFinishedWhileEditingModal" /> 
+    </div>
+}

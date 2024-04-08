@@ -1,0 +1,62 @@
+<!--Displays project statistics-->
+
+@inherits BaseProjectScopedComponent
+
+@using ScrumBoard.Shared.Chart
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+
+@if (Self is null || ProjectState is null)
+{
+    <LoadingSpinner />
+}
+else if (ProjectState.ProjectRole != ProjectRole.Leader)
+{
+    <div id="project-statistics-report-forbidden-error-message" class="container mt-2">
+        Sorry, you are not permitted to view this report type.
+    </div>
+}
+else
+{
+    <div id="project-statistics-report-container" class="container-fluid">    
+        @if (Sprint is not null || _viewWholeProject)
+        {
+            <div class="row p-3">
+                <ProjectStatsBar
+                    Title="Total Story Time Logged"
+                    StatsBar="_timeData"
+                    Type="ProjectStatsType.TimeLogged"
+                />
+            </div>
+            <div class="row p-3">
+                <ProjectStatsBar
+                    Title="Stories Worked On"
+                    StatsBar="_storyData"
+                    Type="ProjectStatsType.StoriesWorked"
+                />
+            </div>
+            <div class="row p-3">
+                <ProjectStatsBar
+                    Title="Stories Reviewed"
+                    StatsBar="_reviewData"
+                    Type="ProjectStatsType.StoriesWithTaskReviewed"
+                />
+            </div>
+            <div class="row p-3">
+                <ProjectStatsBar
+                    Title="Tasks Worked"
+                    StatsBar="_taskData"
+                    Type="ProjectStatsType.TasksWorked"
+                />
+            </div>
+        }
+        else
+        {
+            <ErrorMessage>No stats to display, select a sprint in the selector to view its statistics</ErrorMessage>
+        }
+    </div>
+}
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.ProjectStatistics" ResourceId="Sprint?.Id ?? -1"/>

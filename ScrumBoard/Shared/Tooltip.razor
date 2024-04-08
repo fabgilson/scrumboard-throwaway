@@ -1,0 +1,30 @@
+<!-- A generic component to display a tooltip -->
+
+@using Services
+@inject IJsInteropService JSInteropService
+
+<div @ref="_tooltipElem" class="custom-tooltip">
+    @ChildContent
+</div>
+
+@code
+{
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public ElementReference Target { get; set; }
+    
+    private ElementReference _tooltipElem;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!EqualityComparer<ElementReference>.Default.Equals(Target, 
+                                             default(ElementReference)))
+        {
+                await JSInteropService.UpdateTooltip(_tooltipElem, Target);
+        }
+        
+    }
+}

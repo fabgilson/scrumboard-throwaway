@@ -1,0 +1,14 @@
+<div class="container-fluid" @attributes="@AdditionalAttributes">
+    <div class="text-center border rounded-3 mt-3 p-5 text-muted">
+        <em>@ChildContent</em>
+    </div>
+</div>
+
+@code {
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AdditionalAttributes {  get; set; }
+    
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

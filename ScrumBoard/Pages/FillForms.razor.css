@@ -1,0 +1,12 @@
+a { 
+    color: inherit; 
+    text-decoration: none;
+}
+
+a:hover {
+    background-color: lightgrey;
+}
+
+hr {
+    margin: inherit;
+}

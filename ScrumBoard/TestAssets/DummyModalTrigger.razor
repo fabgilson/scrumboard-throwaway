@@ -1,0 +1,25 @@
+<!-- A dummy component only used in tests (but must be located in the Scrumboard project). 
+    Used to replace a modal trigger component when rendering -->
+
+@using ScrumBoard.Shared.Modals
+@inherits ModalTrigger
+
+@if(_showing) {
+    <div class="modal show">
+        @ChildContent
+    </div>
+}
+
+@code {
+    private bool _showing;
+
+    public override void Show() {
+        _showing = true;
+        StateHasChanged();
+    }
+
+    public override void Hide() {
+        _showing = false;
+        StateHasChanged();
+    }
+}

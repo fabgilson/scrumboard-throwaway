@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>SharedLensResources</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.21.12" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.51.0" />
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.51.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.51.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="3.6.0" />
+    <PackageReference Include="System.ServiceModel.Http" Version="4.10.0" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="6.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="..\Protos\identityprovider\authentication.proto" GrpcServices="Both" AdditionalImportDirs="..\Protos\" Link="Protos\identityprovider\authentication.proto" />
+    <Protobuf Include="..\Protos\identityprovider\users.proto" GrpcServices="Both" AdditionalImportDirs="..\Protos\" Link="Protos\identityprovider\users.proto" />
+
+    <Protobuf Include="..\Protos\util\pagination.proto" GrpcServices="Both" AdditionalImportDirs="..\Protos\" Link="Protos\util\pagination.proto" />
+    <Protobuf Include="..\Protos\util\filtering.proto" GrpcServices="Both" AdditionalImportDirs="..\Protos\" Link="Protos\util\filtering.proto" />
+    <Protobuf Include="..\Protos\util\validation.proto" GrpcServices="Both" AdditionalImportDirs="..\Protos\" Link="Protos\util\validation.proto" />
+  </ItemGroup>
+</Project>

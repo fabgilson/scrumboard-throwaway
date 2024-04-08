@@ -1,0 +1,11 @@
+.announcements-container {
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    max-height: 150px;
+    z-index: 1049; /* 1 than z-index of modal backdrop */
+}
+
+.not-last-announcement {
+    border-bottom: white 1px solid;
+}

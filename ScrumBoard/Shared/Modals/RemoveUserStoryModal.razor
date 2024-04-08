@@ -1,0 +1,95 @@
+<!--Modal to remove a user story-->
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Utils
+@using ScrumBoard.Shared.Widgets
+
+<ResultModal TResult="bool" @ref="_resultModal">  
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Remove User Story</h5>
+        <ResultButton Value="false" class="btn-close" aria-label="Close"/>
+    </div>
+    <div class="modal-body">
+        <div>
+            @if (_canRemoveStories)
+            {
+                <text>
+                    These stories are about to be removed from
+                </text>
+            }
+            else
+            {
+                <text>
+                    You do not have permission to remove these stories from
+                </text>
+            }
+            <span class="fw-bold">@_sprint.Name</span>
+            <ul class="list-group my-2" style="max-height: 200px; overflow: auto;">
+                @foreach (var story in _stories)
+                {
+                    <li class="list-group-item">
+                        <StoryListItem Story="story">
+                            <div id="story-estimate" class="col-auto rounded-pill badge bg-secondary ">
+                                @(LanguageUtils.PluraliseNoun("point", story.Estimate))
+                            </div>
+                        </StoryListItem>
+                    </li>
+                }
+            </ul>
+            @if (_canRemoveStories)
+            {
+                <text>This will delete any existing worklog entries on each of these stories.</text>
+            }
+        </div>
+        @if (_canRemoveStories)
+        {
+            <p class="pt-2 m-0">Are you sure you want to proceed?</p>
+        }
+    </div>
+    <div class="modal-footer">     
+        <ResultButton
+            Value="true"
+            id="close-modal"
+            class="btn btn-outline-secondary"
+        >
+            Close
+        </ResultButton>
+        @if (_canRemoveStories)
+        {
+            <ResultButton
+                Value="false"
+                id="remove-user-story"
+                class="btn btn-danger"
+            >
+                Remove @(_stories.Count == 1 ? "Story" : "Stories")
+            </ResultButton>
+        }
+    </div> 
+</ResultModal>
+
+@code {
+    private ResultModal<bool> _resultModal;
+
+    private Sprint _sprint;
+    
+    private ICollection<UserStory> _stories;
+
+    private bool _canRemoveStories;
+
+    
+    /// <summary>
+    /// Updates the state of the sprint, stories and if stories can be removed from the sprint, displays the modal. 
+    /// </summary>
+    /// <param name="sprint">Sprint to update state to</param>
+    /// <param name="stories">List of stories to update collection to</param>
+    /// <param name="canRemoveStories">boolean if stories can be removed to update to</param>
+    /// <returns>Task of bool that is true if selection is cancelled, false otherwise</returns>
+    public virtual async Task<bool> Show(Sprint sprint, ICollection<UserStory> stories, bool canRemoveStories)
+    {
+        _sprint = sprint;
+        _stories = stories;
+        _canRemoveStories = canRemoveStories;
+        StateHasChanged();
+        return await _resultModal.Show();
+    }
+}

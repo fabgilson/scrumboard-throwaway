@@ -1,0 +1,22 @@
+@using Models.Entities
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models
+
+<Badge @attributes="AdditionalAttributes" Style="SprintStageDetails.StageStyles[Stage]">
+    @SprintStageDetails.StageDescriptions[Stage]
+    @if (Timestamp != null && Stage == SprintStage.Started) {
+        <span style="margin-left: 5px;">- Started On: @Timestamp</span>
+    }
+</Badge>
+
+@code
+{
+    [Parameter]
+    public SprintStage Stage { get; set; }
+
+    [Parameter]
+    public DateTime? Timestamp { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+}

@@ -1,0 +1,32 @@
+@inherits BaseProjectScopedComponent
+@using ScrumBoard.Extensions
+@typeparam TEntity
+
+@switch (_lastState)
+{
+    case LiveUpdateState.None:
+        break;
+    case LiveUpdateState.EditingStarted:
+        <div id="editing-started-display" class="badge d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-info me-2" role="status" aria-hidden="true"></div>
+            <div class="text-info">
+                @_lastEditingUser.GetFullName() is editing
+            </div>
+        </div>
+        break;
+    case LiveUpdateState.EditingStopped:
+        break;
+    case LiveUpdateState.EntityUpdated:
+        <div id="entity-updated-display" class="badge d-flex align-items-center">
+            <div class="text-success">
+                Updated by @_lastEditingUser.GetFullName() 
+                <LiveTimeText 
+                    TargetTime="_lastEditOccurred" 
+                    DateTimeFormatFunc="LastEditedDateTimeFormatFunc" 
+                />
+            </div>
+        </div>
+        break;
+    default:
+        throw new ArgumentOutOfRangeException();
+}

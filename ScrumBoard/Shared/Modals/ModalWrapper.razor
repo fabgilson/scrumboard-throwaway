@@ -1,0 +1,32 @@
+<!--Modal wrapper component-->
+
+<CascadingValue Value="ModalCallback" Name="ModalCallback">
+    @ChildContent
+</CascadingValue>
+@if(_modalContent != null) {
+    <div class="global-modal modal fade show" id="confirm-removal" tabindex="-1" aria-labelledby="removeConfirmModal" aria-hidden="true" style="display: block;">
+        <!-- Modal header, body and footer inserted dynamically -->
+        @_modalContent             
+    </div>
+    <div class="global-modal modal-backdrop fade show"></div>    
+}
+
+@code 
+{
+    // Callback from ModalTrigger that contains the _modalContent to display
+    public Action<RenderFragment> ModalCallback;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    protected RenderFragment _modalContent;
+
+    protected override void OnInitialized()
+    {
+        ModalCallback = (frag) => {            
+            _modalContent = frag;
+            StateHasChanged();
+        };
+        base.OnInitialized();
+    }
+}

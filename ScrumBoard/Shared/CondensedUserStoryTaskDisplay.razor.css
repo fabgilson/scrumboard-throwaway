@@ -1,0 +1,22 @@
+.section {
+    margin: 0;
+    align-items: center;
+    font-size: small;
+}
+
+.task-name {
+    font-size: 15px;
+    word-break: break-word;
+}
+
+.estimate-warning-border {
+    border: 2px solid #ff3e38!important;
+}
+
+.estimate-hover-text {
+    display: none;
+}
+
+#estimate-container:hover .estimate-hover-text {
+    display: block;
+}

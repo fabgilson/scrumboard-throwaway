@@ -1,0 +1,54 @@
+@using ScrumBoard.Shared.Widgets
+@if (_worklogTags != null && TaggedWorkInstanceForms != null)
+{
+    <div class="row w-100">
+        <div class="col-6">
+            <div class="text text-info">Your worklog instances:</div>
+            <div id="tagged-worklog-instance-container">
+                @if (!TaggedWorkInstanceForms.Any())
+                {
+                    <div class="text text-muted fst-italic">None yet created.</div>
+                }
+                @foreach (var item in TaggedWorkInstanceForms)
+                {
+                    <div>
+                        <Badge Style="@(GetTagById(item.WorklogTagId).Style)">@(GetTagById(item.WorklogTagId).Name)</Badge>
+                        Duration: @item.Duration
+                        <button id="@($"removeTaggedWorkInstanceButton{item.WorklogTagId}")" class="btn btn-danger" type="button" @onclick="() => RemoveItem(item)">Remove</button>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="col-6">
+            <EditForm id="taggedWorkInstanceInputEditForm" OnValidSubmit="AddItem" Model="_newTaggedWorkInstanceForm">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label for="taggedWorkInstanceWorklogTagSelector" class="form-label">Worklog tag</label>
+                    <select id="taggedWorkInstanceWorklogTagSelector" class="form-select" @onchange="e => _newTaggedWorkInstanceForm.WorklogTagId = Convert.ToInt32(e.Value)">
+                        <option selected="@(_newTaggedWorkInstanceForm.WorklogTagId == 0)" value="0">Choose a tag...</option>
+                        @foreach (var tag in RemainingWorklogTags)
+                        {
+                            <option selected="@(_newTaggedWorkInstanceForm.WorklogTagId == tag.Id)" value="@tag.Id">@tag.Name</option>
+                        }
+                    </select>
+                    <ValidationMessage id="taggedWorkInstanceWorklogTagSelectorValidationMessage" For="() => _newTaggedWorkInstanceForm.WorklogTagId"/>
+                </div>
+
+                <div class="form-group">
+                    <label for="taggedWordInstanceDurationInput" class="text">Duration</label>
+                    <InputDuration 
+                        id="taggedWordInstanceDurationInput" 
+                        class="form-control" 
+                        placeholder="e.g. 1h 10m"
+                        @bind-Value="_newTaggedWorkInstanceForm.Duration" 
+                        DisplayName="Time spent"
+                    />
+                    <ValidationMessage id="taggedWordInstanceDurationInputValidationMessage" For="() => _newTaggedWorkInstanceForm.Duration"/>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Add work instance</button>
+            </EditForm>
+        </div>
+    </div>
+}

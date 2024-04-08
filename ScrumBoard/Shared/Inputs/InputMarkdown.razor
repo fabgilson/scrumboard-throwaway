@@ -1,0 +1,61 @@
+@inherits InputTextArea
+
+<nav class="mb-2">
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <button 
+            class="nav-link active" 
+            id="nav-write-tab-@_guid" 
+            data-bs-toggle="tab" 
+            data-bs-target="#nav-write-@_guid" 
+            type="button" 
+            role="tab" 
+            aria-controls="nav-write-@_guid" 
+            aria-selected="true"
+        >
+            Write
+        </button>
+        <button 
+            class="nav-link" 
+            id="nav-preview-tab-@_guid" 
+            data-bs-toggle="tab" 
+            data-bs-target="#nav-preview-@_guid" 
+            type="button" 
+            role="tab" 
+            aria-controls="nav-preview-@_guid" 
+            aria-selected="false"
+        >
+            Preview
+        </button>                       
+    </div>
+</nav>
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="nav-write-@_guid" role="tabpanel" aria-labelledby="nav-write-tab-@_guid">
+
+        <textarea 
+            @attributes="@AdditionalAttributes" 
+            class="@CssClass" 
+            @bind="@CurrentValueAsString" 
+            @bind:event="@(UpdateOnInput ? "oninput" : "onchange")" 
+        ></textarea>
+    </div>
+    <div class="tab-pane fade card p-2" id="nav-preview-@_guid" role="tabpanel" aria-labelledby="nav-preview-tab-@_guid">
+        <Markdown Source="@Value"/>
+    </div>
+</div>
+
+@code {
+    
+    // If there are multiple InputMarkdowns on the same page, only the first one will switch between
+    // the 'Preview' and 'Write' tabs, regardless of which component has its buttons clicked. Therefore,
+    // we append a guid to the boostrap data targets to fix this.
+    private readonly Guid _guid = Guid.NewGuid();
+    
+    /// <summary>
+    /// If set to true, return value will update whenever any change is made to the input field.
+    /// More responsive, but more resource usage - only use when necessary.
+    /// </summary>
+    [Parameter]
+    public bool UpdateOnInput { get; set; }
+    
+
+}

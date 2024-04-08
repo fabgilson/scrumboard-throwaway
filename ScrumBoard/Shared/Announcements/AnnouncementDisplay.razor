@@ -1,0 +1,12 @@
+<div class="announcement-display">
+    <div class="announcement-context-box">
+        <i class="bi bi-megaphone-fill"></i>
+        <Markdown Source="@Announcement.Content" />
+    </div>
+    @if(Announcement.CanBeHidden) 
+    {
+        <div class="announcement-hide-box" data-toggle="tooltip" data-placement="bottom" title="Hide announcement">
+            <i class="bi bi-x-circle" style="cursor:pointer" @onclick=Hide id="announcement-hide-button"></i>
+        </div>
+    }
+</div>

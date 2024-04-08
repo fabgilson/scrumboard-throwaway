@@ -1,0 +1,69 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities
+
+<div class="row">
+    <div class="col">
+        Enable for project(s):
+    </div>
+    <div class="col">
+        <SearchableDropDown 
+            T="Project" 
+            AllowMultipleSelect="true"
+            ConvertItemToStringDelegate="project => project.Name"
+            SearchDelegate="SearchForProjects"
+            StartingPrompt="Select projects for which to enable flag"
+            OnMultipleSelectionUpdated="projects => _newAssociatedProjects = projects"
+            GenerateButtonTextDelegate="@(i => $"Click to enable feature flag for {i} project{(i != 1 ? "s" : "")}")"
+            OnPerformAction="AddFeatureFlagToSelectedProjects"
+            ClearSelectionAfterActionPerformed="true"
+        />
+    </div>
+</div>
+<div class="row border-top pt-3 mt-3">
+    @if (_isLoading)
+    {
+        <LoadingSpinner />
+    }
+    else
+    {
+        @if (!_associatedProjects.Any())
+        {
+            <div class="col" id="no-associated-projects-container">
+                <label class="m-auto">
+                    <i>No projects found with this feature flag active</i>
+                </label>
+            </div>
+        }
+        else
+        {
+            <div class="col" id="associated-projects-container">
+                @foreach (var project in _associatedProjects)
+                {
+                    <div class="row mb-2" data-value="@project.Name">
+                        <div class="col-2">
+                            ID: @project.Id
+                        </div>
+                        <div class="col ml-3">
+                            <strong>@project.Name</strong>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" id="disable-feature-flag-button" class="btn btn-outline-danger" @onclick="async () => await RemoveFeatureFlagFromProject(project)">
+                                <span class="bi bi-x-square"/>
+                                Remove feature flag from project
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        
+            <div class="row">
+                <div class="col-auto">
+                    <PageButtons
+                        TotalPages="_associatedProjects.TotalPages"
+                        CurrentPage="_associatedProjects.PageNumber"
+                        CurrentPageChanged="RefreshAssociatedProjects"/>
+                </div>
+            </div>
+        }
+    }
+</div>

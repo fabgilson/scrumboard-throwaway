@@ -1,0 +1,68 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Repositories
+@using ScrumBoard.Services
+@using ScrumBoard.Shared.Inputs
+
+<div class="mx-0 row justify-content-start h-100">
+    <div class="col ps-2 pe-0 mb-1">
+        <div class="section row" style="line-height: 1em;">
+            <div class="col pb-1 px-0">
+                <span class="task-name"><strong>@TaskModel.Name</strong></span>
+            </div>
+        </div>
+        @if (!HideComplexity && !HideComplexity)
+        {
+            <div class="section row justify-content-between">
+                @if (!HidePriority)
+                {
+                    <div id="card-priority" class="col-auto ps-0 pe-2 text-nowrap">
+                        <PriorityIndicator Priority="@TaskModel.Priority"/> @TaskModel.Priority Priority
+                    </div>
+                }
+
+                @if (!HideComplexity)
+                {
+                    <div id="card-complexity" class="col ps-0 pe-2 text-nowrap">
+                        <ComplexityIndicator Complexity="@TaskModel.Complexity"/> @TaskModel.Complexity Complexity
+                    </div>
+                }
+            </div>
+        }
+        @if (!HideTaskTags)
+        {
+            <div class="section">
+                <div id="card-tags">
+                    <InputTag TTag="UserStoryTaskTag" Value="TaskModel.Tags.ToList()" LimitShown Disabled/>
+                </div>
+            </div>
+        }
+    </div>
+    @if (!HideEstimates)
+    {
+        <div class="col-auto ps-1 pe-2">
+            <div class="section row mt-0">
+                <div 
+                    id="estimate-container"
+                    class="@($"col-auto pill rounded px-0 {(_timeLogged > TaskModel.Estimate ? "estimate-warning-border" : "border")}")" 
+                    style="min-width: 5em"
+                >
+                    <div id="time-remaining" class="d-block row-auto w-100 text-center mx-0">
+                        @DurationUtils.DurationStringFrom(_timeLogged, DurationFormatOptions.IgnoreSecondsInOutput)
+                    </div>
+                    <div class="row text-center mx-auto justify-content-center text-muted small estimate-hover-text">
+                        Actual
+                    </div>
+                    <div id="time-estimated" class="d-block row w-100 border-top text-center mx-0">
+                        @DurationUtils.DurationStringFrom(TaskModel.Estimate, DurationFormatOptions.IgnoreSecondsInOutput)
+                    </div>
+                    <div class="row text-center mx-auto justify-content-center text-muted small estimate-hover-text">
+                        Estimated
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

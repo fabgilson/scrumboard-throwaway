@@ -1,0 +1,35 @@
+::deep h6 {
+    margin-bottom: 0;
+}
+
+::deep h6 a {
+    cursor: pointer;
+    color: white;
+    border-radius: 4px;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    line-height: 1.4rem;
+    text-decoration: none;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+}
+
+::deep h6 a:hover {
+    color: white;
+}
+
+::deep .new-project {
+    border: 1px solid #0d6efd;   
+    background-color: #0d6efd;
+    color: white;
+    
+}
+
+::deep .new-project:hover {
+    background-color: #3686fd;
+    color: white;
+}
+
+.display-content {
+    visibility: hidden;
+}

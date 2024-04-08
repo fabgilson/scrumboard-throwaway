@@ -1,0 +1,55 @@
+﻿@using ScrumBoard.Models.Entities.Forms.Templates
+@using ScrumBoard.Services
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models.Entities.Forms.Instances
+@switch (Question)
+{
+    case null:
+    {
+        <LoadingSpinner />
+        break;
+    }
+    case TextQuestion when _answer is TextAnswer textAnswer:
+    {
+        <p>@textAnswer.Answer</p>
+        break;
+    }
+    case TextQuestion:
+    {
+        <em class="text-muted">Not answered</em>
+        break;
+    }
+    case MultiChoiceQuestion when _answer is MultiChoiceAnswer { SelectedOptions.Count: > 0 } multiChoiceAnswer:
+    {
+        foreach (var selectedOption in multiChoiceAnswer.SelectedOptions)
+        {
+            <span>@selectedOption.MultichoiceOption.Content</span>
+        }
+        break;
+    }
+    case MultiChoiceQuestion:
+    {
+        <em class="text-muted">No answer selected</em>
+        break;
+    }
+}
+
+@code {
+    
+    [Parameter, EditorRequired]
+    public long FormInstanceId { get; set; }
+
+    [Parameter, EditorRequired]
+    public Question Question { get; set; }
+    
+    [Inject]
+    protected IFormInstanceService FormInstanceService { get; set; }
+
+    private Answer _answer;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        _answer = await FormInstanceService.GetAnswerByFormInstanceAndQuestionIdAsync(FormInstanceId, Question.Id);
+    }
+}

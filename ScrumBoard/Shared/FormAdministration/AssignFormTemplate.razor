@@ -1,0 +1,172 @@
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities.Forms
+@using ScrumBoard.Models.Entities
+<div class="row">
+    <div class="col">
+        <h2>
+            Distributing Form: '@(FormTemplate.Name)'
+        </h2>
+    </div>
+</div>
+<EditForm id="assign-form-template-form" EditContext="_editContext" OnValidSubmit="ShowConfirmation">
+    <DataAnnotationsValidator />
+    <div class="card p-2">
+        <div class="text-muted mb-2">
+            Assignment Type
+        </div>
+        <div class="container">
+            <InputRadioGroup id="pairwise-individual-radio-group" @bind-Value="_model.AssignmentType">
+                <div class="row">
+                    <div class="form-check col-auto">
+                        <InputRadio id="individual-radio" class="form-check-input" Value="AssignmentType.Individual"/>
+                        <label class="form-check-label me-1" for="individual-radio">
+                            Individual
+                        </label>
+                        <BasicHtmlTooltip>One form is created per user</BasicHtmlTooltip>
+                    </div>
+                    <div class="form-check col-auto">
+                        <InputRadio id="pairwise-radio" class="form-check-input" Value="AssignmentType.Pairwise"/>
+                        <label class="form-check-label me-1" for="pairwise-radio">
+                            Pairwise
+                        </label>
+                        <BasicHtmlTooltip>In each selected project, for each user, a form is created relating to every other user in the project.</BasicHtmlTooltip>
+                    </div>
+                    <div class="form-check col">
+                        <InputRadio id="team-radio" class="form-check-input" Value="AssignmentType.Team"/>
+                        <label class="form-check-label me-1" for="team-radio">
+                            Inter-team
+                        </label>
+                        <BasicHtmlTooltip>One form per team, each form linked to another team.</BasicHtmlTooltip>
+                    </div>
+                </div>
+            </InputRadioGroup>
+        </div>
+        <hr>
+        <div class="mb-2">
+            @if (_model.AssignmentType is AssignmentType.Individual or AssignmentType.Pairwise)
+            {
+                <div class="text-muted">
+                    Projects
+                </div>
+                <SearchableDropDown
+                    T="Project"
+                    AllowMultipleSelect="true"
+                    CollapseAfterSingleItemSelected="false"
+                    ConvertItemToStringDelegate="project => project.Name"
+                    SearchDelegate="SearchForProjects"
+                    StartingPrompt="Select projects for which to enable flag"
+                    OnMultipleSelectionUpdated="OnProjectSelectionChanged"
+                    GenerateButtonTextDelegate="@((i) => $"{LanguageUtils.PluraliseNoun("Project", i)} Selected")"
+                    ButtonClickDoesNothing="true"
+                    ClearSelectionAfterActionPerformed="false"
+                    LargeSelectedEntries="true"/>
+                <ValidationMessage id="assigned-form-selected-projects-validation-message" For="@(() => _model.SelectedSingleProjects)"/>
+            }
+            else
+            {
+                <div class="text-muted mb-1">
+                    Project Pairs (Reviewer <i class="bi bi-arrow-right"></i> Reviewee)
+                </div>
+                <LinkedProjectSelector
+                    OnSelectionUpdated="OnLinkedProjectSelectionChanged"
+                />
+                <ValidationMessage id="assigned-form-selected-project-pairs-validation-message" For="@(() => _model.SelectedLinkedProjects)"/>
+            }
+        </div>
+        <hr>
+        <div class="text-muted">
+            Run Name
+            <BasicHtmlTooltip>
+                Each time you distribute this form, we track that particular distribution as a 'Run'. 
+                Runs are commonly named after the sprint they correspond to, e.g 'Sprint 2 Self-Reflection'
+            </BasicHtmlTooltip>
+        </div>
+        <div class="mb-2">
+            <InputText id="assigned-form-name-input" class="form-control" @bind-Value="_model.Name"/>
+            <ValidationMessage id="assigned-form-name-validation-message" For="@(() => _model.Name)"/>
+        </div>
+        @if (_model.AssignmentType is AssignmentType.Individual or AssignmentType.Pairwise)
+        {
+            <hr>
+            <div>
+                <div class="text-muted">
+                    Roles:
+                </div>
+                @foreach (ProjectRole role in Enum.GetValues(typeof(ProjectRole)))
+                {
+                    <button
+                        type="button"
+                        id="@(role.ToString().ToLower())-button"
+                        class="btn @(_model.SelectedRoles[role] ? "btn-success" : "btn-secondary")"
+                        style="margin: 0.1rem"
+                        @onclick="() => OnRoleSelectionChanged(role)">
+                        @(Enum.GetName(typeof(ProjectRole), role))
+                        <span class="bi bi-check" style="visibility: @(_model.SelectedRoles[role] ? "visible" : "hidden")"></span>
+                    </button>
+                }
+                <ValidationMessage id="assigned-form-selected-roles-validation-message" For="@(() => _model.SelectedRoles)"/>
+            </div>
+        }
+        <hr>
+        <div>
+            <InputCheckbox id="allow-saving-before-date-checkbox" @bind-Value="_model.AllowSavingBeforeStartDate"/>
+            <label class="form-check-label ms-1 me-1 text-black" for="allow-saving-before-date-checkbox">
+                Allow forms to be viewed and filled (but not submitted) before the start date
+            </label>
+            <BasicHtmlTooltip>The start date will be set to the current time if not specified.</BasicHtmlTooltip>
+        </div>
+        <hr>
+        <div class="mb-2">
+            <button
+                id="enable-start-date-button"
+                type="button"
+                class="btn btn-secondary"
+                style="margin: 0.1rem"
+                @onclick="() => ToggleStartDate()">
+                @(_model.StartDateEnabled ? "Remove Start Date" : "Add Start Date")
+            </button>
+        </div>
+        <div>
+            @if (_model.StartDateEnabled)
+            {
+                <div class="mb-2">
+                    <DateTimePicker
+                        id="start-date-picker"
+                        DateLabel="Start date"
+                        TimeLabel="Start time"
+                        @bind-Value="_model.StartDate"/>
+                    <ValidationMessage For="@(() => _model.StartDate)" id="assign-form-template-start-date-validation-message"/>
+                </div>
+            }
+            <div>
+                <DateTimePicker
+                    DateLabel="End date"
+                    TimeLabel="End time"
+                    @bind-Value="_model.EndDate"/>
+                <ValidationMessage For="@(() => _model.EndDate)" id="assign-form-template-end-date-validation-message"/>
+            </div>
+        </div>
+        <div class="mt-2 g-2">
+            <div class="col d-flex flex-row-reverse align-items-center mb-2">
+                <button id="save-btn" type="submit" class="btn btn-primary">
+                    Assign
+                </button>
+                <button id="cancel-btn" type="button" class="btn btn-outline-secondary me-2" @onclick="OnCancel">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+
+<ConfirmModal Title="Confirm Assignment" @ref="_confirmModal">
+    <Body>
+    <div>
+        You are about to send out @LanguageUtils.PluraliseNoun("form", _instanceCount), across @LanguageUtils.PluraliseNoun("project", _projectCount). Are you sure you wish to continue?
+    </div>
+    </Body>
+</ConfirmModal>
+<div></div>

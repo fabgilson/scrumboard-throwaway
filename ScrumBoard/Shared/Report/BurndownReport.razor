@@ -1,0 +1,23 @@
+<!--Contains burndown chart with given Sprint if sprint is not null, otherwise displays an error message-->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Chart
+@using ScrumBoard.Shared.Widgets
+
+<div class="row">   
+    <div class="col">
+        @if (Sprint != null)
+        {
+            <Burndown Sprint="Sprint"/>
+        }
+        else
+        {
+            <ErrorMessage>No sprint selected</ErrorMessage>
+        }
+    </div>        
+</div> 
+
+@code {
+    [CascadingParameter(Name = "Sprint")]
+    public Sprint Sprint { get; set; }
+}

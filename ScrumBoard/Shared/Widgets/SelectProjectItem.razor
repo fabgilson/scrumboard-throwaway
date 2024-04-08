@@ -1,0 +1,50 @@
+@using Models.Entities
+@using Extensions
+
+<li class="nav-item px-3 mb-1" style="font-size:0.9rem;max-width:100%;overflow:hidden;">
+    <div class="project-item py-1" @onclick="@(() => OnSelect.InvokeAsync(Project))" id="project-item-@Project.Id">
+      <h6 
+        class="mb-1 ms-2 text-truncate" 
+        style="display:block; color: white;"
+        data-toggle="tooltip"
+        title="@Project.Name"
+        data-project-id="@Project.Id"
+      >
+          @Project.Name
+      </h6>
+      <div class="ms-2">
+        @{int _maxUsers;var users = Project.GetWorkingMembers();int userCount = users.Count();}
+        @if (userCount == (_maxUsersDisplayed+1))
+        {
+          _maxUsers = _maxUsersDisplayed+1;
+        } else {
+          _maxUsers = _maxUsersDisplayed;
+        }  
+        @foreach (var user in users.Take(_maxUsers))         
+        {
+          <div id="project-select-user-@user.Id" class="text user-image-container">   
+            <UserAvatar class="user-image" User="user"/>
+          </div>
+        }
+        @if (userCount > (_maxUsersDisplayed+1)) 
+        {
+          <div id="more-users" class="user-image-container">      
+              <div class="btn bg-light rounded-circle user-image p-0">
+                +@(userCount-_maxUsersDisplayed)
+              </div>
+          </div>
+        } 
+      </div>   
+    </div>   
+</li>
+
+@code
+{
+    private static readonly int _maxUsersDisplayed = 7;  
+
+    [Parameter]
+    public Project Project { get; set;}
+
+    [Parameter]
+    public EventCallback<Project> OnSelect { get; set;}
+}

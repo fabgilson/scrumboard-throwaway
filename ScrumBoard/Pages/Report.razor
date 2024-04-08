@@ -1,0 +1,123 @@
+@attribute [Route(PageRoutes.ProjectReport)]
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.FeatureFlags
+@using ScrumBoard.Models.Statistics
+@using ScrumBoard.Shared.ProjectFeatureFlags
+@using ScrumBoard.Shared.Report
+@using ScrumBoard.Shared.Widgets
+@inherits BaseProjectScopedComponent
+
+@if (Project is not null)
+{
+    <div class="container-fluid">
+        <div class="row align-items-end page-header">
+            <div class="col-auto">
+                <h1 class="m-0">Report</h1>
+            </div>
+            <SprintSelector
+                @bind-SprintSelection="_sprintSelection"
+                AvailableSprints="AvailableSprints"
+                WholeProjectOptionIsDisabledDelegate="() => ReportType is ReportType.BurnDown"/>
+            <div class="col-auto">
+                <span class="text-muted">
+                    Type
+                </span>
+                <button
+                    class="btn border dropdown-toggle d-block"
+                    type="button"
+                    id="report-menu-button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="@ReportTypeDetails.ReportTypeIcons[ReportType]"/><span>@ReportTypeDetails.ReportTypeDescriptions[ReportType]</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="report-menu-button">
+                    @if (RoleInCurrentProject is not null)
+                    {
+                        foreach (var reportType in ReportTypeUtils.GetAllowedReportTypesForRole(RoleInCurrentProject.Value))
+                        {
+                            if (reportType is ReportType.MyWeeklyReflections)
+                            {
+                                <ProjectFeatureFlagRequiredComponent RequiredFeatureFlag="FeatureFlagDefinition.WeeklyReflectionCheckInReportPage">
+                                    <li>
+                                        <a id="select-report-type-@reportType" class="dropdown-item selectable" @onclick="() => ReportChanged(reportType)">
+                                            <i class="@ReportTypeDetails.ReportTypeIcons[reportType]"/><span>@ReportTypeDetails.ReportTypeDescriptions[reportType]</span>
+                                        </a>
+                                    </li>
+                                </ProjectFeatureFlagRequiredComponent>
+                            }
+                            else
+                            {
+                                <li>
+                                    <a id="select-report-type-@reportType" class="dropdown-item selectable" @onclick="() => ReportChanged(reportType)">
+                                        <i class="@ReportTypeDetails.ReportTypeIcons[reportType]"/><span>@ReportTypeDetails.ReportTypeDescriptions[reportType]</span>
+                                    </a>
+                                </li>
+                            }
+                        }
+                    }
+                </ul>
+            </div>
+            @if ((ReportType is ReportType.MyStatistics or ReportType.MarkingStats or ReportType.MyWeeklyReflections && RoleInCurrentProject == ProjectRole.Leader))
+            {
+                <div class="col-auto">
+                    <span class="text-muted">
+                        User
+                    </span>
+                    <button
+                        class="btn border dropdown-toggle d-block"
+                        type="button"
+                        id="report-user-select-button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span id="current-selected-user">@(_selectedUser == null ? Self.GetFullName() : _selectedUser.GetFullName())</span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="report-user-select-button">
+                        @foreach (var user in Project.GetWorkingMembers())
+                        {
+                            <li>
+                                <a id="select-report-user-@user.Id" class="dropdown-item selectable" @onclick="async () => await HandleUserChanged(user)">
+                                    <span>@user.GetFullName()</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+        @if (ProjectState is not null && Project is not null)
+        {
+            <CascadingValue Value="_sprintSelection.sprint" Name="Sprint">
+                <CascadingValue Value="Self" Name="Self">
+                    @switch (ReportType)
+                    {
+                        case ReportType.BurnDown:
+                            <BurndownReport/>
+                            break;
+                        case ReportType.FlowDiagram:
+                            <FlowDiagramReport/>
+                            break;
+                        case ReportType.WorkLog:
+                            <WorklogReport/>
+                            break;
+                        case ReportType.ProjectStatistics:
+                            <ProjectStatistics/>
+                            break;
+                        case ReportType.MyStatistics:
+                            <MyStatistics SelectedUser="@_selectedUser" @ref="_myStats" />
+                            break;
+                        case ReportType.MyWeeklyReflections:
+                            <MyReflectionCheckIns SelectedUser="@_selectedUser" @ref="_myWeeklMyReflectionCheckIns" />
+                            break;
+                        case ReportType.MarkingStats:
+                            <MarkingStats SelectedUser="@_selectedUser" @ref="_markingStats"/>
+                            break;
+                        default:
+                            <span>Not Found</span>
+                            break;
+                    }
+                </CascadingValue>
+            </CascadingValue>
+        }
+    </div>
+}

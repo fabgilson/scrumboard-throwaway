@@ -1,0 +1,23 @@
+<div id="user-display-container" class="container p-2 rounded-3 me-1">
+    <div id="click-container" @onclick="() => _showGravatarInfo = !_showGravatarInfo">
+        <div class="row align-items-center">
+            <div class="col-4">
+                <div id="current-user-display" class="avatar-container">
+                    <UserAvatar class="current-user-avatar" User="Self"/>
+                </div>
+            </div>
+            <div class="col text-truncate name-container">
+                <span class="text-white " style="font-size: 0.8rem;">@Self.FirstName</span>
+            </div>
+        </div>
+    </div>
+    @if (_showGravatarInfo)
+    {
+        <div id="gravatar-hint" class="p-1 rounded-3 shadow m-1" data-bs-theme="dark">
+            You can update your profile picture by linking your email address with a 
+            <a href="https://en.gravatar.com/" class="text-light" target="_blank">Gravatar</a> 
+            account
+        </div>
+        
+    }
+</div>

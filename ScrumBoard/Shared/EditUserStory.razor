@@ -1,0 +1,131 @@
+<!-- Edit form component for creating or editing a user story. -->
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Forms
+@inherits BaseProjectScopedForm
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.UserStoryEditForm" ResourceId="_isNewStory ? -1 : Story.Id"/>
+<EditForm id="edit-user-story-form" EditContext="editContext" OnValidSubmit="SubmitForm" style="min-height: 450px;" class="d-flex flex-column">
+    @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+    <ObjectGraphDataAnnotationsValidator />
+    <div class="row">
+        <div class="col">
+            <h2>@(_isNewStory ? "Create" : "Update") User Story</h2>
+        </div>
+    </div>
+    <div class="row gx-2">
+        <div class="col-6 flex-fill mb-2">
+            <label class="text-muted">Name</label>
+            <InputText id="name-input" class="form-control" @bind-Value="Model.Name" />
+            <ValidationMessage For="@(() => Model.Name)" id="name-validation-message"/>
+        </div>
+        <div class="col mb-2">
+            <div class="row gx-2" style="min-width: 15em">
+                <div class="col-auto">
+                    <label class="text-muted">Point Estimate</label>
+                    <div class="dropdown">
+                    <button 
+                        class="btn border dropdown-toggle d-block" 
+                        type="button" 
+                        id="estimate-menu-button" 
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+                        <div class="d-inline-block text-end pe-2" style="min-width: 4em;">
+                            @(Model.EstimateOptional == null ? "Choose" : Model.EstimateOptional)
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="estimate-menu-button">
+                        @foreach (var points in UserStoryForm.PointValues)
+                        {
+                            <li>
+                                <a class="dropdown-item" id="estimate-select-@points" @onclick="@(() => Model.EstimateOptional = points)">
+                                    @points
+                                </a>
+                            </li>
+                        }      
+                    </ul>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <label class="text-muted">Priority</label>
+                    <InputPriority @bind-Value="Model.Priority"/>
+                </div>
+                    <ValidationMessage For="@(() => Model.EstimateOptional)" id="estimate-validation-message"/>
+                    <ValidationMessage For="@(() => Model.Priority)" id="priority-validation-message"/>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">            
+            <label class="text-muted">Description</label>
+            <InputMarkdown placeholder="Enter description (Markdown supported)" id="description-input" class="form-control text-area-expand" @bind-Value="Model.Description" />
+            <ValidationMessage For="@(() => Model.Description)" id="description-validation-message"/>
+        </div>
+    </div>
+    @{
+        int count = 0;
+    }
+    @foreach (var criteria in Model.AcceptanceCriterias)
+    {
+        var currentIndex = count++;
+        <div class="mt-2 acceptance-criteria" @key=criteria>
+            <div class="input-group">
+                <span class="input-group-text">
+                    AC
+                    <span class="text-start" style="@($"width: {MaxAcceptanceCriteriaIdWidth}ch")">
+                        @(currentIndex + 1)
+                    </span>
+                </span>
+                <InputTextArea 
+                    disabled="@_cannotEdit"
+                    rows="1"
+                    placeholder="Acceptance criteria" 
+                    class="@("form-control text-area-expand acceptance-criteria-form" + (_newACMade ? "" : " autofocus"))" 
+                    @bind-Value="criteria.Content"
+                />
+                @if (!_cannotEdit) {
+                    <button class="btn btn-outline-danger btn-delete-acceptance-criteria" type="button" @onclick="@(_ => RemoveAcceptanceCriteria(currentIndex))">
+                        <div class="bi bi-backspace-fill"/>
+                    </button>
+                }
+            </div>
+            <ValidationMessage For="@(() => criteria.Content)"/>
+        </div>
+    }
+    <ValidationMessage For="@(() => Model.AcceptanceCriterias)" id="acceptance-criteria-validation-message"/>
+    <div class="row justify-content-end my-2">
+        <div class="col-auto">
+            @if (!_cannotEdit) {
+                <button class="btn btn-outline-primary" type="button" @onclick="AddAcceptanceCriteria" id="add-acceptance-criteria">
+                    <div class="bi bi-plus-lg"/>
+                </button>
+            }
+        </div>
+    </div>
+    <div class="row justify-content-end gx-2 mt-auto">
+        @if (_cannotEdit) 
+        {
+            <div id="story-locked-message" class="col-auto text-secondary" style="line-height: 35px;">
+                This story is <StageBadge Stage="@Story.Stage"/>, some fields can no longer be edited
+            </div>
+        } else if (_saveError) {            
+            <div class="col-auto" style="line-height: 35px;">
+                <span class="text-danger" id="story-concurrency-error">Story has been updated while you were editing. Please cancel and try again.</span>
+            </div>                   
+        }   
+        <div class="col-auto">
+            <button class="btn btn-outline-secondary" type="button" id="cancel-button" @onclick="OnCancel">
+                Cancel
+            </button>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" type="submit" disabled="@_isCurrentlySubmitting">
+                @(_isNewStory ? "Create" : "Save")
+            </button>
+        </div>
+    </div>
+   
+</EditForm>

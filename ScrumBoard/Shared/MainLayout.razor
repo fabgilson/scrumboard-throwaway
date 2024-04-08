@@ -1,0 +1,78 @@
+<!-- Main application layout page where the sidebar and body context are placed. 
+    Also where modals are rendered to ensure they are above every other element. -->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Modals
+@using ScrumBoard.Shared.Announcements
+@inherits LayoutComponentBase
+@using ScrumBoard.Extensions
+@using ScrumBoard.Repositories
+@using Microsoft.Extensions.Logging
+@using ScrumBoard.Services.StateStorage
+@inject IScrumBoardStateStorageService StateStorageService
+@inject NavigationManager NavigationManager
+@inject IUserRepository UserRepositoryImpl
+@inject ILogger<MainLayout> Logger
+
+<AuthorizeView> 
+    <Authorized>
+        @if (Self is null) {
+            <p>Logging in...</p>
+        }
+        else 
+        {
+            <CascadingValue Value="Self" Name="Self">
+                <ProjectStateContainer ProjectId="ProjectId">
+                    <ModalWrapper>
+                        <div class="page">
+                            <div class="sidebar">
+                                <NavMenu/>
+                            </div>
+
+                            <div class="main clean-scroll-bar" style="scroll-behavior: smooth;">
+                                <AnnouncementContainer>
+                                    <div class="content">
+                                        @Body
+                                    </div>
+                                </AnnouncementContainer>
+                            </div>
+                        </div>
+                    </ModalWrapper>
+                </ProjectStateContainer>
+            </CascadingValue>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <Login/>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    public User Self;
+    
+    public long? ProjectId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+
+        var userId = authState.GetCurrentUserId();
+        if (!userId.HasValue) {
+            // We should be on the login page
+            return;
+        }
+
+        Self = await UserRepositoryImpl.GetByIdAsync(userId.Value, UserIncludes.Project);
+
+        if (Self is null) {
+            Logger.LogWarning("Arrived at state where authorised, but without a user account. Logging user out");
+            await StateStorageService.RemoveBearerTokenAsync();
+            NavigationManager.NavigateTo("", true);
+        }
+
+        var projectIdRouteParamValue = (Body?.Target as RouteView)?.RouteData.RouteValues.GetValueOrDefault("ProjectId");
+        ProjectId = projectIdRouteParamValue is not null ? Convert.ToInt64(projectIdRouteParamValue) : null;
+    }
+}

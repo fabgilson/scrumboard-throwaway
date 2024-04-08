@@ -1,0 +1,221 @@
+<div class="dropdown">
+    <button 
+        class="btn btn-outline-primary dropdown-toggle" 
+        type="button" 
+        id="worklog-commits-button" 
+        data-bs-toggle="dropdown" 
+        aria-expanded="false" 
+        data-bs-auto-close="false"
+    >
+        View Commits
+    </button>
+
+
+    <ul @ref="_dropdown" id="commits-dropdown" class="dropdown-menu p-0 rounded-3 shadow overflow-hidden" aria-labelledby="worklog-commits-button" style="width: 30rem;">
+        @if (_viewingCommits)
+        {
+            <li class="sticky-top bg-white p-1 border-bottom text-center" style="width: 100%; height: 100%;">
+                <div class="row p-2">
+                    <span class="col justify-content-center align-items-center d-flex" style="margin-left: 49px;">Linked Commits</span>
+                    <div class="col-auto">
+                        <button class="btn-close btn-sm" type="button" @onclick="CloseSelector"></button>
+                    </div>
+                </div>
+
+                @{
+                    var _placeholder = '\uf52a';
+                }
+                @if (Credentials != null)
+                {
+                    <input id="worklog-commit-search" @bind="_worklogCommitSearchQuery" @bind:event="oninput" class="form-control icon-placeholder my-1" placeholder="@_placeholder Search Linked Commits"/>
+                }
+            </li>
+            @if (FilteredWorklogCommits.Any())
+            {
+                <div style="overflow-y: auto; overflow-x: hidden; max-height: 400px;">
+                    @foreach(var commit in FilteredWorklogCommits)
+                    {
+                        <li class="worklog-commit list-group-item">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-md-9 col-10">
+                                    <CommitDetails Commit="commit"/>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="() => RemoveCommit(commit)"><i class="bi bi-x"/></button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </div>
+            }
+            else 
+            {
+                <li class="text-center p-3">
+                    <em>@(Credentials != null ? "No commits" : "No Gitlab credentials set")</em>
+                </li>
+            }
+            @if (Credentials != null)
+            {
+                <div id="find-commit-section" class="sticky-top fixed-bottom border-top bg-white" style="padding: 10px;">
+                    <div class="p-2">
+                        <div class="row d-flex justify-content-center">
+                            <div class="col-auto">
+                                <div class="btn-group dropend">
+                                    <button type="button" class="btn btn-sm p-0 rounded text-primary" style="line-height: 1" id="commit-hash-info-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="bi bi-info fs-5"/>
+                                    </button>
+                                    <div class="dropdown-menu px-2" style="width: 25rem;">
+                                        <div>
+                                            <span class="text-muted text-sm">
+                                                Every commit has a unique 40 character long hash. The first 8 characters may be used instead. These hashes can be found on Gitlab as shown below: 
+                                            </span>
+                                            <div>
+                                                <img src="images/gitlab/example_commit_hash.png" alt="example commit hash"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <input id="hash-input" class="form-control" placeholder="Enter commit hash (e.g. 120f31e3)" @bind="_commitHash"/>
+                                @if (_showErrorMessage)
+                                {
+                                    <span id="hash-error-message" class="small text-danger">@_errorMessage</span>
+                                }
+                            </div>
+                            <div class="col col-sm-auto">
+                                <button id="add-hash-button" type="button" class="btn btn-primary" @onclick="AddCommit">Add</button>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col d-flex justify-content-center">
+                                <button id="link-commits-button" class="btn btn-outline-primary" type="button" disabled="@(Credentials == null)" @onclick="async () => await GetBranches()">
+                                    <strong>Browse Branches</strong>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        
+        @if (!_viewingCommits && _selectedBranch == null)
+        {
+            <li class="sticky-top bg-white p-1 border-bottom" style="height: 100%; width: 100%;">
+                <div class="row p-2">
+                    <span class="col-auto p-0">
+                        <button id="back-to-worklog-commits-button" type="button" class="btn btn-sm text-primary" @onclick="() => _viewingCommits = true">Back</button>
+                    </span>
+                    <span class="col p-0 justify-content-center align-items-center d-flex">Select Branch</span>
+                    
+                    <div class="col-auto">
+                        <button class="btn-close btn-sm" type="button" @onclick="CloseSelector" data-bs-toggle="dropdown" data-bs-target="#commits-dropdown"></button>
+                    </div>
+                </div>
+
+                @{
+                    var _placeholder = '\uf52a';
+                }   
+
+                <div class="p-1">
+                    <input id="branch-search" @bind="_branchSearchQuery" @bind:event="oninput" class="form-control icon-placeholder my-1" placeholder="@_placeholder Search Branches"/>
+                </div>
+            </li>
+            @if (FilteredBranches.Any())
+            {
+                var index = 0;
+                <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                    @foreach (var branch in FilteredBranches)
+                    {
+                        <li  
+                            class="p-2 selectable dropdown-item branch" 
+                            id="branch-@index"
+                            data-bs-toggle="dropdown" 
+                            @onclick="() => GetCommits(branch, false)"
+                        >
+                            @branch.Name
+                        </li>
+                        index++;
+                    }
+                </div>
+            }
+            @if (_networkError)
+            {
+                <li class="p-2 text-center text-danger">
+                    <em>Could not connect to Gitlab</em>
+                </li>
+            }
+        }
+        @if (_selectedBranch != null)
+        {
+            <li class="sticky-top bg-white p-1 border-bottom" style="height: 100%; width: 100%;">
+                <div class="row align-items-center p-2">
+                    <div class="col-auto p-0">
+                        <button id="back-to-branches-button" type="button" class="btn btn-sm text-primary" @onclick="() => _selectedBranch = null">Back</button>
+                        <span class="me-4">@_selectedBranch.Name</span>
+                    </div>
+                    <div class="col">
+                        <span>View All Commits</span>
+                        @if (_initialCheckBoxValue != null)
+                        {
+                            <input id="view-all-commits-checkbox" class="form-check-input ms-2" type="checkbox" checked="@_initialCheckBoxValue.Value" @onchange="ViewAllCommitsClicked" style="margin-top: 2px;">
+                        }
+                    </div>
+                    <div class="col-auto">
+                       <button id="close-git-commit-selector" class="btn-close btn-sm" type="button" @onclick="CloseSelector"></button>
+                    </div>
+                </div>
+                @{
+                    var _placeholder = '\uf52a';
+                }
+                <input id="commit-search" @bind="_commitSearchQuery" @bind:event="oninput" class="form-control icon-placeholder my-1" placeholder="@_placeholder Search Commits"/>
+
+            </li>
+            @if (FilteredCommits.Any())
+            {
+                <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                    @foreach (var commit in FilteredCommits)
+                    {
+                        <li class="p-2 list-group-item commit">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-10">
+                                    <CommitDetails Commit="commit"/>
+                                </div>
+                                <div class="col-auto">
+                                    <input class="form-check-input me-1" type="checkbox" @key="commit.Id" checked="@(_currentCommits.Any(c => c.Id == commit.Id))" @onchange="args => CheckboxClicked(commit, args)">
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </div>
+                <li class="d-flex fixed-bottom sticky-top border-top bg-white p-2 justify-content-center">
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" @onclick="Cancel">
+                                Cancel
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary btn-sm" type="button" disabled="@CannotLink" @onclick="LinkCommits">
+                                Link
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            }
+            else
+            {
+                <div class="text-center p-2">
+                    <em>No recent commits within 2 weeks</em>
+                </div>
+            }
+            @if (_networkError)
+            {
+                <li class="p-2 text-center text-danger">
+                    <em>Could not connect to Gitlab</em>
+                </li>
+            }
+        }
+    </ul>
+</div>

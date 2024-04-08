@@ -1,0 +1,194 @@
+<!-- Modal component using DisplayPanel to view a user story and/or task over all other content -->
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Repositories
+@inject IUserStoryRepository UserStoryRepository
+@inject IUserStoryTaskRepository UserStoryTaskRepository
+
+<DisplayPanel
+    @ref="_panel"
+    CssClass="@_displayPanelCss"
+    CloseAll="CloseAll"
+>
+    @if (_selectedStory != null)
+    {
+        <div id="selected-story" class="col-lg col-xsm-auto" style="min-width: 0px;">
+            <div class="position-relative p-2">
+                <FullStory
+                    Story="_selectedStory"
+                    @bind-IsEditing="_isEditingStory"
+                    OnClose="CloseStory"
+                    OnViewTaskDetails="SelectTask"
+                    OnSave="OnStorySaved"
+                    IsEditingTask="_isEditingTask && _selectedTask?.UserStory == _selectedStory"
+                    RefreshStory="RefreshStory"
+                ></FullStory>
+            </div>
+        </div>
+    }
+    @if (_selectedTask != null)
+    {
+        <div id="task-edit-form" class="@("col-lg col-xsm-auto " + (_selectedStory != null ? "border-start" : ""))" style="min-width: 0px;">
+            <div class="@("position-relative p-2 " + (_selectedStory != null ? "border-top border-top-0" : ""))">
+                <TaskEditForm
+                    OnStorySelect="SelectStory"
+                    Task="_selectedTask"
+                    OnClose="CloseTask"
+                    OnUpdate="async (taskId) => await TaskUpdated(taskId)"
+                    OnEditStatusChanged="isEditingTask => _isEditingTask = isEditingTask"
+                    StoryLinkDisabled="_selectedStory != null"
+                    WorklogEntryFocusedOnInit="_worklogEntryToFocusOnInit"
+                >
+                </TaskEditForm>
+            </div>
+        </div>
+    }
+</DisplayPanel>
+
+@code {
+
+    /// <summary>
+    /// Callback for whenever a user story is directly modified or one of its child tasks is modified
+    /// </summary>
+    [Parameter]
+    public EventCallback<UserStory> StoryUpdated { get; set; }
+
+    private UserStoryTask _selectedTask;
+
+    private UserStory _selectedStory;
+
+    private WorklogEntry _worklogEntryToFocusOnInit;
+
+    private DisplayPanel _panel;
+
+    private bool _isEditingTask;
+
+    private bool _isEditingStory;
+
+    private string _displayPanelCss => _selectedStory != null && _selectedTask != null ? "full row py-md-2" : "row py-md-2";
+
+    /// <summary> 
+    /// Closes the task half of the panel. 
+    /// If the a story was not being displayed, closes the modal entirely.
+    /// </summary>   
+    private void CloseTask() {
+        _selectedTask = null;
+        if (_selectedStory == null) _panel.Close();
+    }
+
+    /// <summary> 
+    /// Sets the current UserStory to view to the given UserStory and opens the modal.
+    /// </summary>
+    /// <param name="story">A UserStory to start displaying</param>
+    /// <returns>A task</returns>
+    public async Task SelectStory(UserStory story) 
+    {
+        if (story.Id == default) {
+            _selectedStory = story;
+            _isEditingStory = true;
+        } else {
+            _selectedStory = await UserStoryRepository.GetByIdAsync(story.Id,
+                UserStoryIncludes.Display
+            );
+            _isEditingStory = false;
+        }  
+        _panel.Open();
+        StateHasChanged();
+    }
+
+    /// <summary> 
+    /// Sets the current UserStoryTask to view to the given UserStoryTask and opens the modal.
+    /// </summary>
+    /// <param name="story">A UserStoryTask to start displaying</param>
+    /// <returns>A task</returns>
+    public async Task SelectTask(UserStoryTask task)
+    {
+        if (task.Id != default) {
+            _selectedTask = await UserStoryTaskRepository.GetByIdAsync(task.Id, 
+                UserStoryTaskIncludes.Creator, 
+                UserStoryTaskIncludes.StoryGroup, 
+                UserStoryTaskIncludes.Users
+            );
+        } else {
+            _selectedTask = task;
+        }
+        _isEditingTask = false;
+        if (_selectedStory == null) _panel.Open();
+        StateHasChanged();
+    }
+
+    /// <summary> 
+    /// Sets the current UserStoryTask to view to the given UserStoryTask and opens the modal.
+    /// </summary>
+    /// <param name="story">A UserStoryTask to start displaying</param>
+    /// <param name="worklogEntry">(Optional) when specified will attempt to task modal on given worklog</param>
+    /// <returns>A task</returns>
+    public async Task SelectTaskAndWorklog(UserStoryTask task, WorklogEntry worklogEntry)
+    {
+        _worklogEntryToFocusOnInit = worklogEntry;
+        await SelectTask(task);
+    }
+
+    /// <summary> 
+    /// Closes the story half of the panel. 
+    /// If the a task was not being displayed, closes the modal entirely.
+    /// </summary>
+    private void CloseStory()
+    {
+        _selectedStory = null;
+        _isEditingStory = false;
+        if (_selectedTask == null) _panel.Close();
+    }
+
+    /// <summary> 
+    /// Updates the currently displayed story (and task if displaying one) and the invokes the StoryUpdated Eventcallback
+    /// </summary>
+    /// <returns>A task</returns>
+    private async Task OnStorySaved()
+    {
+        _selectedStory = await UserStoryRepository.GetByIdAsync(_selectedStory.Id,
+            UserStoryIncludes.Display
+        );
+        if (_selectedTask is not null) {
+            _selectedTask = await UserStoryTaskRepository.GetByIdAsync(_selectedTask.Id, UserStoryTaskIncludes.StoryGroup, UserStoryTaskIncludes.Creator);
+        }
+        StateHasChanged();
+        await StoryUpdated.InvokeAsync(_selectedStory);
+    }
+
+    /// <summary> 
+    /// Updates the currently displayed task (and story if displaying one) and the invokes the StoryUpdated Eventcallback
+    /// </summary>
+    /// <returns>A task</returns>
+    private async Task TaskUpdated(long taskId)
+    {
+        _selectedTask = await UserStoryTaskRepository.GetByIdAsync(taskId, UserStoryTaskIncludes.StoryGroup, UserStoryTaskIncludes.Creator);
+
+        if (_selectedStory is not null)
+        {
+            _selectedStory = await UserStoryRepository.GetByIdAsync(_selectedStory.Id,
+                UserStoryIncludes.Display
+            );
+        }
+        StateHasChanged();
+        await StoryUpdated.InvokeAsync(_selectedTask.UserStory);
+    }
+
+    /// <summary> 
+    /// Invokes the StoryUpdated Eventcallback with the current selected story.
+    /// </summary>
+    /// <returns>A task</returns>
+    public async Task RefreshStory()
+    {
+        await StoryUpdated.InvokeAsync(_selectedStory);
+    }
+
+    /// <summary> 
+    /// Sets the selected task and story to null.
+    /// </summary>
+    private void CloseAll()
+    {
+        _selectedStory = null;
+        _selectedTask = null;
+    }
+}

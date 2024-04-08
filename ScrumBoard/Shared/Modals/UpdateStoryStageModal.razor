@@ -1,0 +1,65 @@
+<!--Modal to confirm updating story stage when tasks are updated-->
+
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Repositories
+@using ScrumBoard.Repositories.Changelog
+@using ScrumBoard.Utils
+@implements IUpdateStoryStageModal
+@inject IUserStoryRepository UserStoryRepository
+@inject IUserStoryChangelogRepository UserStoryChangelogRepository
+
+<AllTasksDoneModal @ref="_allTasksDoneModal"/>
+<ConfirmStoryReviveModal @ref="_confirmStoryReviveModal"></ConfirmStoryReviveModal>
+
+@code {
+    [CascadingParameter(Name = "Self")]
+    private User Self { get; set; }
+
+    private AllTasksDoneModal _allTasksDoneModal;
+
+    private ConfirmStoryReviveModal _confirmStoryReviveModal;
+
+    //// <summary> Updates user story stage given the tasks new stage </summary>
+    /// <param name="task"> Task that the stage is being applied to </param>
+    /// <param name="newStage"> New stage for the task </param>
+    /// <returns> Whether the task operation has been cancelled by the user </returns>
+    public async Task<bool> Show(UserStoryTask task, Stage newStage) {
+        var story = await UserStoryRepository.GetByIdAsync(task.UserStoryId, UserStoryIncludes.Tasks);
+        var oldStoryStage = story.Stage;
+
+        // Set of all task stages that are present within the story after the task is moved
+        var presentStages = story.Tasks
+            .Where(otherTask => otherTask.Id != task.Id)
+            .Select(otherTask => otherTask.Stage)
+            .Concat(new[] { newStage })
+            .ToHashSet();
+        if (!presentStages.Except(new List<Stage>() { Stage.Done, Stage.Deferred }).Any() && presentStages.Count == 2)
+        {           
+            var newStoryStage = await _allTasksDoneModal.Show(presentStages.ToList());
+            if (newStoryStage.HasValue) {
+                story.Stage = newStoryStage.Value; 
+            } else {
+                return true;
+            }            
+        } else if (presentStages.Count() == 1 && presentStages.Any(stage => stage == Stage.Done || stage == Stage.Deferred)) {
+            story.Stage = presentStages.Single();
+        } else if (story.Stage == Stage.Todo && newStage != Stage.Todo) {
+            story.Stage = Stage.InProgress;
+        } else if ((story.Stage == Stage.Done || story.Stage == Stage.Deferred) && newStage != Stage.Done && newStage != Stage.Deferred)  {           
+            var isCancelled = await _confirmStoryReviveModal.Show(story.Stage);
+            if (isCancelled) return true;
+            story.Stage = Stage.InProgress;
+        } 
+
+        if (oldStoryStage != story.Stage) {
+            await UserStoryRepository.UpdateAsync(story.CloneForPersisting());
+            await UserStoryChangelogRepository.AddAsync(new(
+                Self.Id, 
+                story.Id, 
+                nameof(UserStoryTask.Stage), 
+                Change<object>.Update(oldStoryStage, story.Stage)
+            ));
+        }
+        return false;
+    }
+}

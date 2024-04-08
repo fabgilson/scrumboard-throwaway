@@ -1,0 +1,26 @@
+::deep .backlog-list:empty::after, ::deep .sprint-list:empty::after {
+    text-align: center;
+    
+    /* Borrowed from .list-group-item */
+    padding: 0.5rem 1rem;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,.125);
+    
+    /* Borrowed from .rounded-bottom */
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+::deep .backlog-list:empty::after {
+    content: "No stories in backlog";
+}
+
+::deep .sprint-list:empty::after {
+    content: "No stories in sprint";
+}
+
+::deep .backlog-list, ::deep .sprint-list, ::deep .changelog-list {
+    max-height: calc(100vh - 9em);
+    overflow: auto;
+}

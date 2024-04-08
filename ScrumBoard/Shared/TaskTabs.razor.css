@@ -1,0 +1,3 @@
+::deep .worklog-item:hover, ::deep .worklog-item:hover .commit-item {
+    background-color: #e4e5e8 !important;
+}

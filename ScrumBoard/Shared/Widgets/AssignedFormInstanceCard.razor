@@ -1,0 +1,67 @@
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.Forms
+@using ScrumBoard.Pages
+<div class="pt-3">
+    <div class="row mb-3">
+        <div class="col-1 d-flex align-items-center">
+            <div class="align-items-center run-number">@Assignment.RunNumber</div>
+        </div>
+        <div class="col d-flex align-items-center">
+            <div class="instance-name">@Assignment.Name</div>
+        </div>
+        <div class="col d-flex align-items-center start-date">
+            Opening: @Assignment.StartDate
+        </div>
+        <div class="col d-flex align-items-center end-date">
+            Closing: @Assignment.EndDate
+        </div>
+        <div class="col d-flex justify-content-end">
+            <button class="btn align-items-end" @onclick="() => _viewingProjects = !_viewingProjects">
+                <i class="@(_viewingProjects ? "bi-chevron-up" : "bi-chevron-down")"/>
+            </button>
+        </div>
+    </div>
+    @if (_viewingProjects)
+    {   <div class="d-flex justify-content-center">
+            <div style="width: 95%">
+                @foreach (var project in Projects)
+                {
+                    <div class="d-flex p-2">
+                        <div class="me-2 project-name">@project.Name</div>
+                        <div class="flex-grow-1">
+                            @{
+                                var uniqueRecipients = Assignment.GetUniqueRecipients(project.Id);
+                            }
+                            @foreach (var user in uniqueRecipients)
+                            {
+                                <div id="project-select-user-@user.Id" class="text user-image-container">
+                                    <UserAvatar class="user-image" User="user"/>
+                                </div>
+                            }
+                        </div>
+                        <NavLink 
+                            class="btn btn-outline-primary" 
+                            @onclick="() => NavigationManager.NavigateTo(PageRoutes.ToViewFormResponses(Assignment.Id, project.Id), true)"
+                        >
+                            View Submissions
+                        </NavLink>
+                    </div>
+                        
+                }
+            </div>
+        </div>
+    }
+</div>
+
+
+@code
+{
+    [Inject] protected NavigationManager NavigationManager { get; set; }
+    
+    [Parameter] public Assignment Assignment { get; set; }
+
+    public IEnumerable<Project> Projects => Assignment.GetProjects();
+
+    private bool _viewingProjects = false;
+}

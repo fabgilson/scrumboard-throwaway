@@ -1,0 +1,15 @@
+::deep .status-item:hover {
+    filter: brightness(100%);
+    
+}
+
+::deep .status-item {
+    color: black;
+    cursor: pointer;
+    border-radius: 0;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    
+}

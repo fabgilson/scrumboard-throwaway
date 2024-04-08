@@ -1,0 +1,45 @@
+@using EnumsNET
+@if (Status != null)
+{
+    <div @attributes="@AdditionalAttributes">
+        @switch (Status)
+        {
+            case FormSaveStatus.Saved:
+                <div id=@($"save-status-indicator-{FormSaveStatus.Saved.GetName()}-display") class="d-flex align-items-center">
+                    <span id="saved-text" class="text-success me-2">Saved</span>
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                </div>
+                break;
+            case FormSaveStatus.Saving:
+                <div id=@($"save-status-indicator-{FormSaveStatus.Saving.GetName()}-display") class="d-flex align-items-center">
+                    <span id="saving-text" class="text-primary me-1">Saving</span>
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status" aria-hidden="true"></div>
+                </div>
+                break;
+            case FormSaveStatus.SavedWithWarnings:
+                <div id=@($"save-status-indicator-{FormSaveStatus.SavedWithWarnings.GetName()}-display") class="d-flex align-items-center">
+                    <span id="saved-with-warnings-text" class="text-primary me-1">Saved with warnings</span>
+                    <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                </div>
+                break;
+            default:
+                <div id=@($"save-status-indicator-{FormSaveStatus.Unsaved.GetName()}-display") class="d-flex align-items-center">
+                    <span id="unsaved-text" class="text-danger me-2">Unsaved</span>
+                    <i class="bi bi-x-circle text-danger me-2"></i>
+                </div>
+                break;
+        }
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public FormSaveStatus? Status { get; set; }
+    
+    [Parameter]
+    public EventCallback<FormSaveStatus?> StatusChanged { get; set; }
+    
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+}

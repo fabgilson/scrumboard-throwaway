@@ -1,0 +1,261 @@
+<!-- A component to display a full user story. Also holds an EditUserStory form to switch to edit/create mode. -->
+
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Widgets.Messages
+@using ScrumBoard.Utils
+@inherits BaseProjectScopedComponent
+
+@if (IsEditing)
+{
+    <EditUserStory
+        Story="Story"
+        OnCancel="OnEditingCancelled"
+        OnSave="StorySaved"     
+/>
+}
+else
+{
+    <ProjectViewLoaded Type="ViewLoadedUsageEventType.UserStory" ResourceId="Story.Id"/>
+    <div id="full-story-view-@Story.Id" @key="Story.Id" class="bg-white">
+        <div class="row flex-nowrap">
+            <div class="col">
+                <div class="row">
+                    <div id="story-name-@Story.Id" class="col" style="min-width: 15em;">
+                        <h2>@Story.Name</h2>
+                    </div>
+                    <div class="col-auto">
+                        <div class="row align-items-center gx-2">
+                            <div id="story-estimate-@Story.Id" class="col-auto rounded-pill badge bg-secondary me-1">
+                                @(LanguageUtils.PluraliseNoun("point", Story.Estimate))
+                            </div>
+                            <div class="col-auto">
+                                <h4 class="mb-0">
+                                    <PriorityIndicator Priority="Story.Priority"/>
+                                </h4>                        
+                            </div>
+                            <div id="story-stage-@Story.Id" class="col-auto">
+                                <h4 class="mb-0">
+                                    <StageBadge Stage="Story.Stage"/>
+                                </h4>
+                            </div>
+                            @if (!IsReadOnly) {
+                                <div class="col-auto">
+                                    <button id="edit-story-button" type="button" class="btn btn-outline-primary btn-sm" @onclick="async () => await IsEditingChanged.InvokeAsync(true)">
+                                        <span class="bi bi-pencil"/>
+                                        Edit
+                                    </button>
+                                    @if (Story.Stage is (Stage.Todo or Stage.InProgress or Stage.UnderReview) && Story.StoryGroup is Sprint {Stage: SprintStage.Started})
+                                    {
+                                        <button id="defer-story-button" type="button" class="btn btn-outline-danger btn-sm ms-2" @onclick="ShowDeferralConfirmation">
+                                            <span class="bi bi-graph-down-arrow"/>
+                                            Defer
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn-close" aria-label="Close" @onclick="OnClose"/>
+            </div>
+        </div>   
+        <div class="row pb-2">
+            <div id="story-description-@Story.Id">
+                <Markdown Source="@Story.Description"/>
+            </div>
+            @if (Story.ReviewComments != null)
+            {
+                <div class="text-break">
+                    <span class="fw-bold">
+                        Comments
+                    </span>
+                    <br>
+                    <span class="text-muted" style="white-space: pre-wrap">
+                        @Story.ReviewComments
+                    </span>
+                </div>
+            }
+        </div>
+        <div class="row pb-3">
+            <div class="col">
+                <ul class="list-group list-group-smart-border overflow-auto border-top border-bottom" style="max-height: 18rem;">
+                    @foreach (var acceptanceCriteria in Story.AcceptanceCriterias)
+                    { 
+                        <li id="story-ac-@Story.Id-@acceptanceCriteria.Id" class="list-group-item" style="overflow-wrap: anywhere;">
+                            <div>
+                                <div class="d-inline-block fw-bold" style="@(Story.AcceptanceCriterias.Count() < 10 ? "" : "min-width: 2.5em")">
+                                    AC@(acceptanceCriteria.InStoryId)
+                                </div>
+                                <span style="white-space: pre-wrap">
+                                    @acceptanceCriteria.Content
+                                </span>
+                            </div>
+                            @if (acceptanceCriteria.Status != null)
+                            {
+                                <AcceptanceCriteriaStatusBadge class="ms-1" Status="acceptanceCriteria.Status.Value"/>
+                            }
+                            @if (acceptanceCriteria.ReviewComments != null)
+                            {
+                                <br>
+                                <span class="text-muted ms-1" style="white-space: pre-wrap">
+                                    @acceptanceCriteria.ReviewComments
+                                </span>
+                            }
+
+                        </li>                                                                                     
+                    }
+                </ul>      
+            </div>
+        </div>
+        <div class="row">
+            <nav>
+                <div class="nav nav-tabs flex-nowrap" id="nav-tab" role="tablist">
+                    <button 
+                        class="nav-link active" 
+                        id="nav-tasks-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#nav-tasks" 
+                        type="button" 
+                        role="tab" 
+                        aria-controls="nav-tasks" 
+                        aria-selected="true"
+                    >
+                        Tasks
+                    </button>
+                    <button 
+                        class="nav-link" 
+                        id="nav-changelog-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#nav-changelog" 
+                        type="button" 
+                        role="tab" 
+                        aria-controls="nav-changelog" 
+                        aria-selected="false"
+                    >
+                        Changelog
+                    </button>
+                    <button 
+                        class="nav-link" 
+                        id="nav-worklog-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#nav-worklog" 
+                        type="button" 
+                        role="tab" 
+                        aria-controls="nav-worklog" 
+                        aria-selected="false"
+                    >
+                        Worklog
+                    </button>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent">
+                <div 
+                    class="tab-pane fade show active" 
+                    id="nav-tasks" 
+                    role="tabpanel" 
+                    aria-labelledby="nav-tasks-tab"
+                >
+                    <div class="row pb-0 pt-2 px-2 gx-1">
+                        <div class="col fw-bold small">
+                            <span>@GetTaskCounts()</span>
+                            <span class="d-inline-block">@GetDeferredCount()</span>
+                        </div>
+                        <div class="col-auto fw-bold small">@Story.GetStoryCompletionRate()% Completion Rate</div>
+                    </div>
+                    <ul class="list-group mt-2 overflow-auto" style="max-height: 15rem;">
+                        @if (!Story.Tasks.Any()) 
+                        {
+                            <li class="list-group-item text-center">
+                                <em>This story has no tasks</em>
+                            </li>
+                            
+                        }
+                        @foreach (var task in Story.Tasks) {
+                            <li 
+                                id="story-task-@Story.Id-@task.Id"
+                                @key="task.Id" 
+                                class="list-group-item selectable" 
+                                @onclick="async () => await OpenTaskDetails(task)"
+                            >
+                                <TaskListItem 
+                                    Task="task"
+                                />
+                            </li>
+                        }
+                    </ul>
+                    @if (!IsReadOnly)
+                    {
+                        <div class="col-auto pt-2">
+                            <button class="@AddTaskCssClasses" type="button" id="add-task" @onclick="StartAddingTask">
+                                <i class="bi bi-plus-lg align-middle"/>
+                                <span>Add Task</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                <div 
+                    class="tab-pane fade" 
+                    id="nav-changelog" 
+                    role="tabpanel" 
+                    aria-labelledby="nav-changelog-tab"
+                >
+                    <ul class="list-group mt-2" style="max-height: 20rem;overflow-y:auto">
+                        @foreach(var entry in _changelog) {
+                            <li class="list-group-item" style="overflow-wrap: anywhere;">
+                                <MessageListItem Message="entry"/>
+                            </li>    
+                        }
+                    </ul>
+                    
+                </div>
+                <div 
+                    class="tab-pane fade" 
+                    id="nav-worklog" 
+                    role="tabpanel" 
+                    aria-labelledby="nav-worklog-tab"
+                >
+                    <div class="list-group mt-2" style="max-height:20rem; overflow-y: auto; overflow-x: hidden;">
+                        @if (_worklog.Count == 0) 
+                        {
+                            <li class="list-group-item text-center">
+                                <em>No items in worklog</em>
+                            </li>
+                            
+                        }
+                        @foreach (var entry in _worklog) {
+                            @if(_editedWorklogEntry !=  null && entry == _editedWorklogEntry) {
+                                <div class="list-group-item p-2 mb-2">
+                                    <EditWorklogEntry 
+                                        Entry="_editedWorklogEntry" 
+                                        OnClose="() => _editedWorklogEntry = null"  
+                                        RefreshWorklogs="RefreshWorklogs"                                     
+                                    />
+                                </div>
+                            } else {
+                                <div class="list-group-item" style="min-width: 0px;">
+                                    <WorklogEntryListItem ShowTaskName="true" Entry="entry" IsEditing="_editedWorklogEntry != null" EditWorklog="StartEditingWorklog"/>                               
+                                </div>
+                            }                            
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ConfirmModal Title="Confirm Deferral" @ref="_confirmModal">
+        <Body>
+            <div class="text" id="confirm-deferral-modal">
+                You are about to defer story
+                <span id="confirm-deferral-modal-story-name">"@Story.Name".</span> 
+                <span id="confirm-deferral-modal-tasks-to-defer" class="fw-bold">This will move @LanguageUtils.PluraliseNoun("task", Story.GetNotCompletedTasksCount()) to deferred.</span> 
+                Are you sure you wish to continue?
+            </div>
+        </Body>
+    </ConfirmModal>
+}

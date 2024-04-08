@@ -1,0 +1,35 @@
+#gravatar-hint {
+    position: absolute;
+    width: 120%;
+    max-width: 20rem;
+    background-color: #04163d;
+    color: white;
+}
+
+#user-display-container:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#user-display-container {
+    position: relative;
+}
+
+#click-container {
+    cursor: pointer;
+}
+
+.name-container {
+    color:white;
+}
+
+::deep .current-user-avatar {
+    padding: 3px;
+    background-color: white;
+    max-width: 1.9rem;
+    max-height: 1.9rem;
+    border: 1px solid black;
+}
+
+#close-button {
+    color: white;
+}

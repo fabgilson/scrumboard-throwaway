@@ -1,0 +1,194 @@
+@attribute [Route(PageRoutes.ProjectCeremonies)]
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Models.Entities
+@inherits BaseProjectScopedComponent
+
+<div class="container">
+    @if (Project is not null)
+    {
+        <ProjectViewLoaded Type="ViewLoadedUsageEventType.Ceremonies" ResourceId="_sprint?.Id"/>
+        if (!Project.Sprints.Any())
+        {
+            <ErrorMessage>This project does not have a sprint to log formal event time against</ErrorMessage>
+        }
+        else
+        {
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <h1 class="m-0">Formal Events</h1>
+                </div>
+                <div class="col-auto">
+                    <button
+                        class="@("btn border dropdown-toggle" + (_sprint == null ? " btn-primary" : "") + (_editingOverheadEntry != null ? " disabled" : ""))"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        @if (_sprint == null)
+                        {
+                            @("Whole Project")
+                        }
+                        else
+                        {
+                            <div class="row gx-1 d-inline me-1">
+                                <span class="col-auto">
+                                    @_sprint.Name
+                                </span>
+                                <span class="col ">
+                                    <SprintStageBadge Stage="@_sprint.Stage"/>
+                                </span>
+                            </div> 
+                        }
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sprint-menu-button">
+                        @foreach (var sprint in Project.Sprints)
+                        {
+                            <li class="selectable">
+                                <button type="button" class="dropdown-item" id="sprint-select-@sprint.Id" @onclick="() => SelectSprint(sprint)">
+                                    <div class="row gx-3">
+                                        <div class="col">
+                                            @sprint.Name
+                                        </div>
+                                        <div class="col d-flex justify-content-end">
+                                            <SprintStageBadge Stage="@sprint.Stage"/>
+                                        </div>
+                                    </div>                                   
+                                </button>
+                            </li>
+                        }
+                        <li class="dropdown-divider"/>
+                        <li class="selectable">
+                            <button type="button" class="dropdown-item" id="select-whole-project" @onclick="() => SelectSprint(null)">
+                                Whole Project
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <FilterButton FilterEnabled="_overheadEntryFilter.FilterEnabled" ClearFilters="_overheadEntryFilter.Clear">
+                        <li>
+                            <span class="text-muted">
+                                Users
+                            </span>
+                            <InputMember 
+                                id="input-assignee-filter" 
+                                class="d-inline-block" 
+                                AllUsers="_members" 
+                                @bind-Value="_overheadEntryFilter.UserFilter" 
+                                MaxUsers="_members.Count"
+                                IdPrefix="filter"
+                            />
+                        </li>
+                        <li>
+                            <span class="text-muted">
+                                Sessions
+                            </span>
+                            <InputTag 
+                                TTag="OverheadSession" 
+                                @bind-Value="_overheadEntryFilter.SessionFilter" 
+                                TagProvider="OverheadSessionRepository.GetAllAsync(query => query.OrderBy(session => session.Name))"
+                                NoneSetText="All Sessions"
+                            />
+                        </li>
+                    </FilterButton>
+                </div>
+                <div class="col"></div>
+                <div class="col-auto">
+                    @if (_editingOverheadEntry == null && _sprint?.Id == _loggableSprint?.Id && RoleInCurrentProject != ProjectRole.Guest)
+                    {
+                        <button id="start-logging-overhead" class="btn btn-outline-primary" @onclick="AddOverhead">
+                            <span class="bi bi-plus"></span>
+                            Log Formal Event
+                        </button>
+                    }
+                </div>
+                
+            </div>
+            if (_editingOverheadEntry != null && (_editingOverheadEntry.Id == 0 || !_overheadEntries.Select(entry => entry.Id).Contains(_editingOverheadEntry.Id)))
+            {
+                <div class="card p-2 mb-2 mt-2">
+                    <EditOverheadEntry
+                        Entry="_editingOverheadEntry"
+                        OnClose="OnOverheadClosed"/>
+                </div>
+            }
+            
+            if (_totalTime.HasValue)
+            {
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        @(_overheadEntryFilter.FilterEnabled ? "Filtered" : "Total") Time Spent
+                        <span class="fw-bold" id="total-time-spent">
+                            @DurationUtils.DurationStringFrom(_totalTime.Value)
+                        </span>
+                        @if (_overheadEntries.TotalPages > 1)
+                        {
+                            <text>
+                                (this page @DurationUtils.DurationStringFrom(TimeOnPage))
+                            </text>
+                        }
+                    </div>
+                </div>
+            }
+            if (_overheadEntries != null)
+            {
+                <div class="list-group mt-3">
+                    @foreach (var entry in _overheadEntries)
+                    {
+                        <div class="list-group-item">
+                            @if (_editingOverheadEntry?.Id == entry.Id)
+                            {
+                                <EditOverheadEntry
+                                    Entry="_editingOverheadEntry"
+                                    OnClose="OnOverheadClosed"
+                                />
+                            }
+                            else
+                            {
+                                <OverheadEntryListItem 
+                                    Entry="entry" 
+                                    IsEditing="_editingOverheadEntry != null" 
+                                    EditOverhead="StartEditingOverhead"
+                                />
+                            }
+                        </div>
+                    }
+                    @if (!_overheadEntries.Any())
+                    {
+                        <div class="list-group-item text-center">
+                            @if (_overheadEntryFilter.FilterEnabled)
+                            {
+                                <span>
+                                    No formal events logged match the filter for this @(_sprint == null ? "project" : "sprint")
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    No formal events have been logged for this @(_sprint == null ? "project" : "sprint")
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+                if (_overheadEntries.Any())
+                {
+                    <div class="row justify-content-between">
+                        <div class="col-auto mt-1">
+                            @((_currentPage - 1) * _pageSize + 1) to @((_currentPage - 1) * _pageSize + _overheadEntries.Count) of @(_overheadEntries.TotalCount)
+                        </div>
+                        <div class="col-auto mt-2">
+                            <PageButtons
+                                TotalPages="_overheadEntries.TotalPages"
+                                CurrentPage="_currentPage"
+                                CurrentPageChanged="ChangePage"/>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    }
+</div>

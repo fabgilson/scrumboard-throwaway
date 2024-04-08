@@ -1,0 +1,134 @@
+<!-- A component to display a table of worklog entries -->
+@using ScrumBoard.Models
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.UsageData
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@inherits BaseProjectScopedComponent
+
+<ProjectViewLoaded Type="ViewLoadedUsageEventType.WorklogReport" ResourceId="Sprint?.Id ?? -1"/>
+<StoryTaskDisplayPanel @ref="_storyTaskPanel"/>
+
+<div> 
+    <div>
+        <div class="row border rounded p-4 pt-2 pb-2 m-0 mb-4 mt-2">
+            <div class="col border-end text-center" id="total-stories-worked">
+                <span class="text-muted">Stories Worked</span>
+                <h2 class="d-block">@_numberStoriesWorked</h2>
+            </div>
+            <div class="col border-end text-center" id="total-story-points">
+                <span class="text-muted">Total Effort</span>
+                <h2 class="d-block">@_totalStoryPoints</h2>
+            </div>
+            <div class="col text-center" id="total-time-logged">
+                <span class="text-muted">Total Time Spent</span>
+                <h2 class="d-block">@DurationUtils.DurationStringFrom(_totalTime)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="row gx-3 mb-2">    
+        <div class="col-auto">
+            <FilterButton FilterEnabled="_worklogEntryFilter.FilterEnabled" ClearFilters="_worklogEntryFilter.ClearFilters">
+                <li class="mb-1">
+                    <span class="text-muted">
+                        Assignees
+                    </span>
+                    <InputMember 
+                        id="input-assignee-filter" 
+                        class="d-inline-block" 
+                        AllUsers="_members" 
+                        ValueChanged="_worklogEntryFilter.AssigneeFilterChanged"
+                        MaxUsers="_members.Count"
+                        IdPrefix="table"
+                    />
+                </li>
+                @if (_worklogEntryFilter.AssigneeFilter.Any())
+                {
+                    <li class="mb-2">
+                        <input class="form-check-input" type="checkbox" @bind-value="_worklogEntryFilter.IncludePairAssigneeEnabled" id="toggle-include-pair">
+                        <label for="toggle-include-pair" class="form-check-label text-muted">Include worklogs paired</label>
+                    </li>
+                }
+                <li class="mb-2">
+                    <span class="text-muted">
+                        Task Tags
+                    </span>
+                    <InputTag TTag="UserStoryTaskTag" NoneSetText="All Tags" @bind-Value="_worklogEntryFilter.TaskTagsFilter" TagProvider="UserStoryTaskTagRepository.GetAllAsync()"/>
+                </li>
+                <li class="mb-2">
+                    <span class="text-muted">
+                        Worklog Tags
+                    </span>
+                    <InputTag TTag="WorklogTag" NoneSetText="All Tags" @bind-Value="_worklogEntryFilter.WorklogTagsFilter" TagProvider="WorklogTagRepository.GetAllAsync()"/>
+                </li>
+                <li>                    
+                    <div class="form-check">
+                        <label class="form-check-label text-muted" for="week-checkbox">
+                            Enable Date Range
+                        </label>
+                        <input class="form-check-input" type="checkbox" id="week-checkbox" @bind="_worklogEntryFilter.DateRangeFilterEnabled">                        
+                    </div>
+                    @if (_worklogEntryFilter.DateRangeFilterEnabled) {
+                        <label class="form-check-label text-muted mt-1" for="date-menu-start-day" min="@EarliestDate.ToString("yyyy-MM-dd")">
+                            Start Day
+                        </label>
+                        <input id="date-menu-start-day" class="form-control" type="date" @bind-value="_worklogEntryFilter.DateRangeStart" required>
+                        <label class="form-check-label text-muted mt-1" for="date-menu-start-day" min="@EarliestDate.ToString("yyyy-MM-dd")">
+                            End Day
+                        </label>
+                        <input id="date-menu-end-day" class="form-control" type="date" @bind-value="_worklogEntryFilter.DateRangeEnd" required>
+                    }                
+                </li>
+            </FilterButton>
+        </div>
+        @if (_columnConfiguration != null)
+        {
+            <div class="col-auto">
+                 <button 
+                    class="btn border dropdown-toggle" 
+                    type="button" id="manage-columns-menu-button" 
+                    data-bs-toggle="dropdown" 
+                    data-bs-auto-close="outside"
+                    aria-expanded="false">
+                        <span>
+                            <span class="bi-list-ol"/>
+                            Manage Columns
+                        </span>
+                </button>
+                <ul class="dropdown-menu p-0 border-0" aria-labelledby="manage-columns-menu-button">
+                    <SortableList 
+                        TItem="TableColumnConfiguration" 
+                        Items="_columnConfiguration" 
+                        ItemsChanged="UpdateColumnConfiguration" 
+                        ElementCss="list-group-item px-2"
+                        Handle=".handle"
+                        >
+                        <Template Context="item">
+                            <div class="row gx-1">
+                                <div class="col-auto handle" style="cursor: grab;">
+                                    <span class="bi bi-list"/>
+                                </div>
+                                <div class="col">
+                                    @item.Column.GetName()
+                                </div>
+                                <div class="col-auto" style="cursor: pointer;">
+                                    <span class="@(item.Hidden ? "bi bi-eye-slash" : "bi bi-eye")" @onclick="() => ToggleColumnHidden(item)"/>
+                                </div>
+                            </div>
+                        </Template>
+                    </SortableList>
+                </ul>
+            </div>
+        }
+    </div>
+    <div>
+        <WorklogTableData
+            WorklogEntryFilter="_worklogEntryFilter"
+            TableEntryClicked="ViewWorklogTask"
+            Columns="GetColumns()"
+            IsMarkingTable="IsMarkingTable"/>
+    </div>
+    
+</div>

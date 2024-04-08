@@ -1,0 +1,24 @@
+<!-- Component for rendering the difference between two objects -->
+
+@if (From is string fromString && To is string toString)
+{
+    <TextDifferenceToken From="@fromString" To="@toString"/>
+}
+else
+{
+    <ValueToken Token="new Models.Messages.ValueToken(From)"/>
+    <ArrowToken/>
+    <ValueToken Token="new Models.Messages.ValueToken(To)"/>
+}
+
+
+
+
+@code {
+    [Parameter]
+    public ScrumBoard.Models.Messages.DifferenceToken Token { get; set; }
+
+    private object From => Token.From;
+    
+    private object To => Token.To;
+}

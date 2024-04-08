@@ -1,0 +1,101 @@
+<!-- Edit form component for creating or editing a sprint. -->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Utils
+@inherits BaseProjectScopedForm
+
+@if (_project != null)
+{
+<div>
+    <EditForm id="create-sprint-form" Model="Model" OnValidSubmit="SubmitForm" class="list-group">    
+        @* Automatically validate form against data annotations specified on model class, and display any errors beside the relevant control*@
+        <ObjectGraphDataAnnotationsValidator />
+        <li class="list-group-item grey-input-group-background rounded-top border-bottom-0 story-list">
+            <div class="row mb-1">               
+                <div class="col-sm-auto form-group">
+                    <label for="name-input">Sprint Name:</label>
+                    <InputText id="name-input" placeholder="Enter a sprint name" class="form-control" @bind-Value="Model.Name" />
+                    <ValidationMessage For="@(() => Model.Name)" id="name-validation-message"/>
+                </div>
+                <div class="col col-sm-auto mt-2 mt-sm-0 form-group">
+                    <label for="start-date-input">Start Date:</label>
+                    <InputDate disabled="@(!_isNewSprint && !Sprint.Stage.Equals(SprintStage.Created))" id="start-date-input" class="form-control" placeholder="Enter start date" @bind-Value="Model.StartDateOptional" />
+                    <ValidationMessage For="@(() => Model.StartDateOptional)" id="start-date-validation-message"/>
+                </div>
+
+                <div class="col col-sm-auto mt-2 mt-sm-0 form-group">
+                    <div class="row">
+                        <div class="col">
+                            <div>
+                                <label for="end-date-input">End Date:</label>
+                                <BasicHtmlTooltip>
+                                    Note: This is the product submission date, formal sessions that occur after submission 
+                                    deadline (e.g Review, Retrospective) will be logged after this date
+                                </BasicHtmlTooltip>
+                            </div>
+                            <InputDate disabled="@(!_isNewSprint && Sprint.Stage.IsWorkDone())" id="end-date-input" class="form-control" min="@_now.ToString("yyyy-MM-dd")" placeholder="Enter end date" @bind-Value="Model.EndDateOptional" />
+                            <ValidationMessage For="@(() => Model.EndDateOptional)" id="end-date-validation-message"/>
+                        </div>
+                    </div>                    
+                </div>             
+                <div class="col mt-3 mt-xl-0">
+                    <div class="d-flex justify-content-end">                       
+                        <button 
+                            type="button"
+                            class="col-auto btn btn-outline-secondary me-2"
+                            @onclick="async () => await OnCancel.InvokeAsync()"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit"
+                            class="col-auto btn btn-primary"
+                            disabled="@_isCurrentlySubmitting"
+                        >
+                            @(_isNewSprint ? "Create" : "Save")
+                        </button>
+                    </div>
+                    <div class="text-end text-nowrap pt-1">
+                        Total points:
+                        <span class="fw-bold">
+                            @_totalPoints
+                        </span>
+                        Total estimate:
+                        <span class="fw-bold">
+                            @(DurationUtils.DurationStringFrom(_totalEstimate))
+                        </span>
+                    </div>
+                    
+                </div>              
+                <ValidationMessage id="stories-validation-message" For="@(() => Model.StoryStartForms)"/>   
+            </div>
+            @if (_saveError) {            
+                <div class="row mb-1" style="font-size:small;">
+                    <div class="col">
+                        <span class="text-danger" id="sprint-concurrency-error">Sprint has been updated while you were editing. Please cancel and try again.</span>
+                    </div>           
+                </div>                   
+            } 
+        </li>    
+        <SortableList 
+            TItem="UserStory" 
+            @bind-Items="Model.Stories"            
+            class="list-group rounded-0 rounded-bottom sprint-list" 
+            ElementCss="list-group-item selectable"
+            ItemClicked="StoryClicked"
+            Group="backlog"
+        >
+            <Template Context="item">
+                @if (Sprint.Stage == SprintStage.Started) {
+                    <BacklogStoryListItem UserStoryStartForm="GetStoryForm(item)" Story="item"/>   
+                } else {
+                    <BacklogStoryListItem Story="item"/>   
+                }                                              
+            </Template>
+        </SortableList> 
+    </EditForm>
+</div>
+}
+
+<RemoveUserStoryModal @ref="RemoveUserStoryModal"/>

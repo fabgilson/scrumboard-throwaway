@@ -1,0 +1,26 @@
+@using Models.Gitlab
+
+<div class="row">
+    <div class="col overflow-hidden">
+        <small class="text-muted">Commit<a href="@Commit.WebUrl" style="margin-left: 4px;">@Commit.Id</a></small>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        @Commit.Message
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <small class="text-muted">@Commit.AuthorName</small>
+    </div>
+    <div class="col">
+        <small class="text-muted">@Commit.AuthoredDate</small>
+    </div>
+</div>
+
+@code 
+{
+    [Parameter]
+    public GitlabCommit Commit { get; set; }
+}

@@ -1,0 +1,10 @@
+@inherits InputText
+
+<!--Renders input component with oninput event binding-->
+
+<input 
+    @attributes="@AdditionalAttributes" 
+    class="@CssClass" 
+    @bind="@CurrentValueAsString" 
+    @bind:event="oninput" 
+/>

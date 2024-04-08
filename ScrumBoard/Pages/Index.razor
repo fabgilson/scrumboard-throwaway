@@ -1,0 +1,92 @@
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Models.Entities.UsageData
+@using ScrumBoard.Repositories
+@using ScrumBoard.Services.StateStorage
+@using ScrumBoard.Shared.UsageData
+@attribute [Route(PageRoutes.Root)]
+
+<ViewLoaded Type="ViewLoadedUsageEventType.RootHomepage"/>
+<div id="index-page">  
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                Logged in as <strong>@_userName</strong>.
+            </div>        
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3 class="mt-5 mb-3">Current Projects</h3>
+            </div>
+        </div>     
+        <div class="row">
+            <ul class="list-group col-auto ms-3">
+                @foreach (var project in currentProjects)
+                {
+                    <li class="list-group-item list-group-item-action homepage-project-item" @onclick="@(() => ChangeProject(project))">
+                        <h5 class="m-1">
+                            <div>
+                                @project.Name
+                            </div>         
+                        </h5>
+                    </li>        
+                }
+                @if (!currentProjects.Any()) {
+                    <li class="list-group-item list-group-item-action homepage-project-item disabled">
+                        <h5 class="m-1">
+                            <div>
+                                You don't have any projects
+                            </div>         
+                        </h5>
+                    </li> 
+                }
+            </ul> 
+        </div>
+    </div>     
+</div>
+
+
+
+@code {
+    [CascadingParameter(Name = "Self")]
+    private User Self { get; set; }
+
+    [Inject]
+    protected IUserRepository _userRepository { get; set; }
+
+    [Inject]
+    protected IScrumBoardStateStorageService _stateStorageService { get; set; }
+
+    [Inject]
+    protected IProjectRepository _projectRepository { get; set; }
+
+    [Inject]
+    protected ILogger<Index> _logger { get; set; }
+
+    [Inject]
+    protected NavigationManager _navigationManager { get; set; }
+
+    private string _userName = "";
+
+    private IEnumerable<Project> currentProjects = new List<Project>();
+
+    protected override void OnInitialized()
+    {
+        _userName = $"{Self.FirstName} {Self.LastName}";
+        currentProjects = Self.GetProjects();   
+    }
+
+    private async Task ChangeProject(Project project) {
+        var selectedProjectId = await _stateStorageService.GetSelectedProjectIdAsync();
+
+        ProjectRole? role = await _projectRepository.GetRole(project.Id, Self.Id);
+        if (!role.HasValue) {
+            _logger.LogWarning($"User tried to select project they were not a member of UserId={Self.Id} ProjectId={project.Id}");
+            return;
+        }
+
+        await _stateStorageService.SetSelectedProjectIdAsync(project.Id);
+        _logger.LogDebug($"Current project set to {selectedProjectId}");                     
+        _navigationManager.NavigateTo(PageRoutes.ToProjectHome(project.Id), true);            
+    }
+}

@@ -1,0 +1,61 @@
+@inherits BaseProjectScopedComponent
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Extensions
+@using ScrumBoard.Utils
+@using Models;
+
+<div id="task-card-@TaskModel.Id" 
+    class="draggable task-card rounded-top"
+    @attributes="AdditionalAttributes"
+    style="min-width: 237px;"
+>
+    <div>
+        <ProgressBar Total="1" class="p-0 rounded-0 rounded-top mb-1" style="height: 5px">
+            <ProgressSegment Value="1" class="@StageDetails.StageStyles[TaskModel.Stage].GetCss()"/>
+        </ProgressBar>
+        <CondensedUserStoryTaskDisplay TaskModel="TaskModel"/>
+        <div class="row text-muted section mt-2 justify-content-between">
+            <div class="col-auto d-flex">
+                <div>
+                    <div class="px-2">
+                        Assignees
+                    </div>
+                    <div
+                        @onclick:stopPropagation="true"
+                        @onclick:preventDefault="true">
+                        <InputMember
+                            id="assignee-select"
+                            IdPrefix="assignee"
+                            Value="@TaskModel.GetAssignedUsers()"
+                            UserProvider="GetValidAssignees"
+                            ValueChanged="UpdateAssignees"
+                            Disabled=IsReadOnly
+                        />
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-auto d-flex">
+                <div>
+                    <div class="px-2">
+                        Reviewers
+                    </div>
+                    <div
+                        @onclick:stopPropagation="true"
+                        @onclick:preventDefault="true">
+                        <InputMember
+                            id="reviewer-select"
+                            IdPrefix="reviewer"
+                            Value="@TaskModel.GetReviewingUsers()"
+                            UserProvider="GetValidReviewers"
+                            ValueChanged="UpdateReviewers"
+                            Disabled=IsReadOnly
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+<ResultModal TResult="bool" @ref="_resultModal">  
+  <div class="modal-header">
+    <h5 class="modal-title" id="tasks-not-done-modal">Update story</h5>
+    <ResultButton Value="true" class="btn-close" aria-label="Close"/>
+  </div>
+  <div class="modal-body">
+    <p>This review was just finished by <b>@_userWhoFinishedReview.GetFullName()</b>.</p>
+    <p>Would you like to <span class="text-danger fw-bold">move the review back to in-progress</span> and continue editing?</p>
+  </div>
+  <div class="modal-footer">
+    <div class="row">
+        <div class="col-6 m-0">
+          <ResultButton
+            Value="false"
+            id="close-modal"
+            class="btn btn-primary w-100">
+            No, I am finished editing
+          </ResultButton>
+        </div>
+        <div class="col-6 m-0">
+          <ResultButton
+            Value="true"
+            id="confirm-story-update"
+            class="btn btn-warning w-100">
+            Yes, re-open the review to continue editing
+          </ResultButton>
+        </div>
+    </div>
+  </div>     
+</ResultModal>
+
+@code {
+  
+    private User _userWhoFinishedReview;
+
+    private ResultModal<bool> _resultModal;
+    
+    public virtual Task<bool> Show(User userWhoFinishedReview)
+    {
+      _userWhoFinishedReview = userWhoFinishedReview;
+        return _resultModal.Show();
+    }
+}

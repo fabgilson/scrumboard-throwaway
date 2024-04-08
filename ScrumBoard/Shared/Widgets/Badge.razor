@@ -1,0 +1,26 @@
+@using ScrumBoard.Models
+<div @attributes="_attributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] 
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public BadgeStyle Style { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+
+    private Dictionary<string, object> _attributes = new();
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _attributes = new Dictionary<string, object>(AdditionalAttributes);
+
+        _attributes.TryGetValue("class", out var klass);
+        _attributes["class"] = $"{klass} badge {Style.GetCss()} d-inline-flex align-items-center";
+    }
+}

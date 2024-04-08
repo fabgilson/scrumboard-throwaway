@@ -1,0 +1,74 @@
+<!-- A component containing the table header, table data rows, and pagination buttons for the worklog table -->
+
+@inherits BaseProjectScopedComponent
+
+@using Models
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Extensions
+
+<div class="table-responsive-xl">
+    <table class="table table-hover">
+        <thead>
+        <tr class="bg-light">  
+            @foreach (var column in Columns)
+            {
+                <TableHeader 
+                    Descending="_descending" 
+                    Column="column"
+                    OrderByColumn="_orderbyColumn"
+                    OrderItems="@((tuple) => OrderWorklog(tuple.Item1, tuple.Item2))"
+                >
+                    <span>@column.GetName()</span>
+                </TableHeader>                                
+            }                                 
+        </tr>
+        </thead>       
+        <tbody>          
+            @foreach (var entry in _worklogTableEntries)
+            {
+                <WorklogTableRow Entry="entry" OnSelected="HandleRowClicked" Columns="Columns"/>
+            }               
+        </tbody>
+        @if (_worklogTableEntries.Any()) {
+            <tfoot>
+                <tr id="table-summary-row">
+                    <td colspan="@Columns.Count">
+                        <div class="row justify-content-end">
+                            <div class="col-auto fw-bold">
+                                <span id="total-time-personal">Total time spent (@Self.GetFullName()): @PersonalTime</span>
+                            </div>
+                            <div class="col-auto fw-bold">
+                                <span id="total-time-filtered">
+                                    @{var message = "Total time spent (" + (WorklogEntryFilter.AssigneeFilterEnabled ? "Filtered " : "All ") + "Users):";}
+                                    @message @FilteredUserTime</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>               
+            </tfoot>
+        }
+    </table>
+    
+    @if (!_worklogTableEntries.Any()) {
+        <div id="table-row-placeholder" class="w-100 text-center text-secondary" style="height: 3rem;">
+            <div>There are no entries to display. Please check the current filters.</div>
+        </div>
+    }
+</div>
+@if (_worklogTableEntries.Any()) {
+    <div class="row">
+        <div class="col-auto">
+            <PageButtons 
+                TotalPages="_totalPages" 
+                CurrentPage="_currentPageNumber"
+                CurrentPageChanged="ChangePage"
+            />   
+        </div>
+        <div class="col">
+            @if(_isLoading) {
+                <LoadingSpinner/>
+            }
+        </div> 
+                   
+    </div>    
+}

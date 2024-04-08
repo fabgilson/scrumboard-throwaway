@@ -1,0 +1,91 @@
+<!-- Modal to select reviewers for a project that has a sprint in review -->
+@using ScrumBoard.Extensions
+@using ScrumBoard.Models.Entities
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Shared.Widgets
+@inherits BaseProjectScopedComponent
+
+<ResultModal TResult="bool" @ref="_resultModal" style="max-width:40rem;">
+    <div class="modal-header">
+        <h5 class="modal-title" id="review-sprint-modal">Manage Reviewers</h5>
+        <ResultButton TResult="bool" Value="true" class="btn-close" aria-label="Close"/>
+    </div>
+    <div class="modal-body">
+        <div>
+            <div>
+                Select a partner project to add its developers as reviewers for the current project
+                <BasicHtmlTooltip PlacementDirection="bottom" TooltipContainer=".modal-body">
+                    Only projects that have at least one developer that is not a member (Reviewer, Developer, or Leader) of the current project are shown.
+                    <br/>
+                    <br/>
+                    Only the icons for members that will be added to the current project as reviewers are shown.
+                </BasicHtmlTooltip>
+                @{
+                    const char placeholder = '\uf52a';
+                }
+                <input id="project-search" @bind="SearchQuery" @bind:event="oninput" class="form-control icon-placeholder my-1" placeholder="@placeholder">
+                <div class="list-group">
+                    @{
+                        var i = _allProjects.Count();
+                    }
+                    @foreach (var project in FilteredProjects)
+                    {
+                        var zIndex = i--;
+                        var classList = "list-group-item d-flex justify-content-between align-items-center py-0 selectable project-list-item ";
+                        if (project == _selectedProject) classList += "selected";
+                        <div class="@classList" @onclick="() => SelectProject(project)" style="z-index: @zIndex">
+                            <div>
+                                @project.Name
+                            </div>
+                            <div>
+                                <InputMember Value="project.GetWorkingMembers().ToList()" Disabled/>
+                            </div>
+                        </div>
+                    }
+                    @if (!_allProjects.Any())
+                    {
+                        <li class="list-group-item d-flex justify-content-center">
+                            No projects available as reviewers
+                        </li>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        @if (_selectedProject != null)
+        {
+            <button
+                id="confirm-select-reviewers"
+                class="btn btn-primary"
+                @onclick="async () => await AddMembersOfProjectAsReviewers(_selectedProject)">
+                Add Developers as Reviewers
+            </button>
+        }
+    </div>
+    <div class="modal-body">
+        <div>
+            <div>
+                Current Reviewers
+                <ProjectMemberList OnlyShowSingleRole="true" AllowedRole="ProjectRole.Reviewer"></ProjectMemberList>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button
+            id="remove-reviewers"
+            class="btn btn-danger"
+            @onclick="async () => await RemoveAllReviewersFromProject()">
+            Remove All Reviewers
+        </button>
+    </div>
+    <div class="modal-footer">
+        <ResultButton
+            TResult="bool"
+            Value="true"
+            id="close-modal"
+            class="btn btn-outline-secondary">
+            Close
+        </ResultButton>
+    </div>
+</ResultModal>

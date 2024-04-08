@@ -1,0 +1,142 @@
+<!--Component to input a tag by selecting from a list of tags in a dropdown-->
+
+@using Models.Entities
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Extensions
+@using Repositories
+@using ScrumBoard.Models
+@typeparam TTag where TTag : ITag
+
+<div @attributes=AdditionalAttributes >
+    @if (!Value.Any()) {
+        <Badge id="no-tags-placeholder" class="me-1" Style="BadgeStyle.Light">
+            @NoneSetText           
+        </Badge>
+    }
+    @foreach (var tag in _currentlyShownTags) {
+        <Badge class="me-1" Style="tag.Style">
+            <div>
+                @tag.Name
+            </div>
+            @if (!Disabled)
+            {
+                <button
+                    id="tag-delete-@tag.Id"
+                    type="button"
+                    class="@("btn-close " + (tag.Style == BadgeStyle.Dark ? "btn-close-white" : ""))"
+                    style="font-size: 0.75em;"
+                    @onclick="@(() => ValueChanged.InvokeAsync(Value.Where(t => t.Id != tag.Id).ToList()))"/>
+            }
+        </Badge>
+    }
+    @if (Value.Count > MaximumToDisplay) {
+        <div class="d-inline-block" style="cursor: pointer" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+            <Badge 
+                id="toggle-show-tags"
+                class="me-1" 
+                Style=BadgeStyle.Dark
+                onclick="@ToggleShowMoreTags"   
+            >
+                @(_showMoreTags ? "Show Fewer" : $"Show {Value.Count - MaximumToDisplay + 1} More")
+            </Badge>
+        </div>
+    }
+
+    @if (UnselectedTags.Any() && !Disabled) 
+    {
+        <button 
+            class="btn badge border text-light bg-primary selectable" 
+            type="button" 
+            id="tag-menu-button" 
+            data-bs-toggle="dropdown"
+            aria-expanded="false"            
+        >
+            <span class="bi bi-plus-lg"></span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="tag-menu-button" style="z-index: 1001;">
+            @foreach (var tag in UnselectedTags.OrderBy(x => x.Name))
+            {
+                <li>
+                    <button 
+                        class="dropdown-item" 
+                        type="button"
+                        id="tag-select-@tag.Id" 
+                        @onclick="@(() => ValueChanged.InvokeAsync(Value.Concat(new []{ tag }).ToList()))"
+                    >
+                        @tag.Name
+                    </button>
+                </li>
+            }      
+        </ul>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Whether to limit the number of tags shown initially
+    /// </summary>
+    [Parameter]
+    public bool LimitShown { get; set; }
+    
+    /// <summary>
+    /// Number beyond which tags get collapsed below "show more" button
+    /// </summary>
+    private int MaximumToDisplay => LimitShown ? 5 : int.MaxValue;
+
+    [Parameter]
+    public ICollection<TTag> Value { get; set; }
+
+    [Parameter]
+    public EventCallback<ICollection<TTag>> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public string NoneSetText { get; set; } = "No Tags";
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Task that provides the complete list of all available tags, null may be provided if selection is not required
+    /// </summary>
+    [Parameter] 
+    public Task<List<TTag>> TagProvider { get; set; }
+
+    private IEnumerable<TTag> UnselectedTags => _validTags.Where(tag => !Value.Select(t =>  t.Id).Contains(tag.Id));
+
+    private List<TTag> _validTags = new();
+
+    private bool _showMoreTags = false;
+
+    private void ToggleShowMoreTags() {
+        _showMoreTags = !_showMoreTags;
+        StateHasChanged();
+    }
+
+    private ICollection<TTag> _currentlyShownTags {
+        get {
+            var orderedCompleteSetOfTags = Value.OrderBy(x => x.Name).ToList();
+            if (_showMoreTags || orderedCompleteSetOfTags.Count <= MaximumToDisplay) return orderedCompleteSetOfTags;
+            return orderedCompleteSetOfTags.Take(MaximumToDisplay - 1).ToList(); 
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TagProvider != null)
+            _validTags = await TagProvider;
+    }
+
+    private bool _isFirstParameterSet = true;
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if(_isFirstParameterSet) {
+            _isFirstParameterSet = false;
+            _showMoreTags = !Disabled;
+        }
+    }
+
+}

@@ -1,0 +1,32 @@
+@if (InsideEditContext is not null)
+{
+    <EditForm EditContext="InsideEditContext" @attributes="AdditionalAttributes">
+        <DataAnnotationsValidator />
+        <div class="row"> 
+            <div class="col-6">
+                <div>
+                    <label for="date-input">@DateLabel</label>
+                </div>
+                <InputDate 
+                    id="date-input" 
+                    class="form-control" 
+                    min="@MinDateTimeString" 
+                    @bind-Value="_model.Date"
+                />
+                <ValidationMessage id="date-input-validation-message" For="() => _model.Date" />
+            </div>              
+            <div class="col-6">
+                <div class="text">
+                    <label for="time-input">@TimeLabel</label>
+                </div>
+                <InputTime 
+                    id="time-input" 
+                    class="form-control" 
+                    @bind-Value="_model.Time"
+                    placeholder="Enter time (e.g 10:00am)"
+                />
+                <ValidationMessage id="time-input-validation-message" For="() => _model.Time" />
+            </div>
+        </div>
+    </EditForm>
+}

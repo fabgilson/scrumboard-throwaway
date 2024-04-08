@@ -1,0 +1,23 @@
+<!-- Component for rendering markdown content -->
+@using System.Text.Encodings.Web
+@using Markdig
+@using Markdig.Extensions.AutoIdentifiers
+@using Markdig.Renderers.Html
+@using Markdig.Syntax
+@using Markdig.Syntax.Inlines
+@using ScrumBoard.Pages
+@using ScrumBoard.Services
+
+<span @ref="_element" class="markdown" @attributes="AdditionalAttributes">
+    @if (_pipeline is not null)
+    {
+        @if (NoFormat)
+        {
+            @(_content)
+        }
+        else
+        {
+            @((MarkupString)_content)
+        }
+    }
+</span>

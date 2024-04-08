@@ -1,0 +1,33 @@
+ <button 
+    class="btn border dropdown-toggle" 
+    type="button" id="filter-menu-button" 
+    data-bs-toggle="dropdown" 
+    data-bs-auto-close="outside"
+    aria-expanded="false">
+        <span class="@(FilterEnabled ? "text-primary" : "")">
+            <span class="bi-filter"/>
+            Filter
+        </span>
+</button>
+<ul class="dropdown-menu p-2" aria-labelledby="filter-menu-button">
+    @ChildContent
+    <li>
+        <button 
+            type="button"
+            class="btn btn-sm btn-outline-primary mt-3"
+            @onclick="ClearFilters">
+            Clear
+        </button>
+    </li>
+</ul>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public bool FilterEnabled {  get; set; }
+
+    [Parameter]
+    public EventCallback ClearFilters { get; set; }
+}

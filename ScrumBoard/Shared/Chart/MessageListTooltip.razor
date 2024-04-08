@@ -1,0 +1,27 @@
+@using Models
+@using Models.Messages
+@using ScrumBoard.Shared.Widgets.Messages
+@using Repositories
+
+<!--Tooltip component that renders an array of MessageListItem subcomponents.
+    Does not display messages past a limit and instead displays the number of excess messages. -->
+
+<div class="border bg-white m-1 p-2" style="font-size: 0.75em;">
+    @foreach (var message in Messages)
+    {
+        <div class="message">
+            <MessageListItem Message="message"/>
+        </div>
+    }
+    @if (ExcessNumber > 0) {
+        <span id="excess-message" class="text-secondary">+ @ExcessNumber more</span>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<IMessage> Messages { get; set; }
+    
+    [Parameter]
+    public int ExcessNumber { get; set; }
+}

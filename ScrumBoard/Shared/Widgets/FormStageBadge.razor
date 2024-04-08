@@ -1,0 +1,14 @@
+@using ScrumBoard.Models.Entities.Forms.Instances
+
+<Badge @attributes="AdditionalAttributes" Style="@FormStageDetails.StageStyles[Stage]">
+    @FormStageDetails.StageDescriptions[Stage]
+</Badge>
+
+@code
+{
+    [Parameter]
+    public FormStatus Stage { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+}

@@ -1,0 +1,59 @@
+<!--Modal to confirm changing project while editing-->
+
+
+<ResultModal TResult="Result" @ref="_resultModal">  
+    <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Confirm</h5>
+        <ResultButton Value="Result.Close" class="btn-close" aria-label="Close"/>
+    </div>
+    <div class="modal-body">
+        Changes made will not be saved
+    </div>
+    <div class="modal-footer">     
+        <ResultButton
+            Value="Result.Close"
+            id="close-modal"
+            class="btn btn-outline-secondary"
+        >
+            Close
+        </ResultButton>
+        <ResultButton
+            Value="Result.ProceedWithoutSaving"
+            id="proceed-without-save"
+            class="btn btn-danger"
+        >
+            Proceed without saving
+        </ResultButton>
+        <ResultButton
+          Value="Result.ProceedAndSave"
+          id="save-and-proceed" 
+          disabled="@(!_canSave)" 
+          class="btn btn-success"
+        >
+          Save and proceed
+        </ResultButton>
+    </div> 
+</ResultModal>
+
+@code {
+    public enum Result {
+        Close,
+        ProceedWithoutSaving,
+        ProceedAndSave,
+    }
+
+    private ResultModal<Result> _resultModal;
+
+    private bool _canSave;
+
+    /// <summary>
+    /// Updates canSave state and displays modal.
+    /// </summary>
+    /// <param name="canSave">boolean canSave value to update to</param>
+    /// <returns>Task with a Result enum value</returns>
+    public async Task<Result> Show(bool canSave) {
+        _canSave = canSave;
+        StateHasChanged();
+        return await _resultModal.Show();
+    }
+}

@@ -1,0 +1,116 @@
+@using ScrumBoard.Shared.Widgets.Messages
+@using ScrumBoard.Models.Entities.ReflectionCheckIns
+<div class="row my-3 card" id="check-in-display-container-@IsoWeek-@Year">
+    <div class="card-header">
+        <div class="row">
+            <div class="col d-flex" id="check-in-title-row">
+                <div class="fs-4 my-auto">Week @IsoWeek, @Year</div>
+                <span class="align-text-bottom my-auto ms-3">
+                    (@GetFirstDayOfWeek(Year, IsoWeek).ToString("dddd dd MMM") - @GetLastDayOfWeek(Year, IsoWeek).ToString("dddd dd MMM"))
+                </span>
+                <div class="ms-4 w-auto my-auto" id="check-in-status-badge">
+                    <ReflectionCheckInStatusBadge Status="CheckIn?.CompletionStatus ?? CheckInCompletionStatus.NotYetStarted"/>
+                </div>
+            </div>
+            <div class="col-auto d-flex">
+                @if (CheckIn is not null)
+                {
+                    if (EnableChangelog)
+                    {
+                        <span class="my-auto">
+                            Show changelog 
+                            <input 
+                                class="me-3" 
+                                type="checkbox"
+                                @bind-value="_showChangelog"
+                                @bind-value:after="async () => await LoadChangelog()"
+                            />
+                        </span>
+                    }
+                    <em class="my-auto">
+                        Started: @CheckIn.Created.ToString("dd MMM hh:mm tt"),
+                        Last updated: @(CheckIn.LastUpdated == default ? "never" : CheckIn.LastUpdated.ToString("dd MMM hh:mm tt"))
+                    </em>
+                }
+            </div>
+        </div>
+    </div>
+    @if (CheckIn is not null)
+    {
+        <div class="card-body">
+            <div class="row">
+                <div class="col-2">What I did well</div>
+                <div class="col-10" id="did-well-comments-display">
+                    @if (string.IsNullOrWhiteSpace(CheckIn.WhatIDidWell))
+                    {
+                        <p><em>(Blank)</em></p>
+                    }
+                    else
+                    {
+                        <p>@CheckIn.WhatIDidWell</p>
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">What I did not do so well this week</div>
+                <div class="col-10" id="did-not-do-so-well-comments-display">
+                    @if (string.IsNullOrWhiteSpace(CheckIn.WhatIDidNotDoWell))
+                    {
+                        <p><em>(Blank)</em></p>
+                    }
+                    else
+                    {
+                        <p>@CheckIn.WhatIDidNotDoWell</p>
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">What I will do differently</div>
+                <div class="col-10" id="will-do-differently-comments-display">
+                    @if (string.IsNullOrWhiteSpace(CheckIn.WhatIWillDoDifferently))
+                    {
+                        <p><em>(Blank)</em></p>
+                    }
+                    else
+                    {
+                        <p>@CheckIn.WhatIWillDoDifferently</p>
+                    }
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(CheckIn.AnythingElse))
+            {
+                <div class="row">
+                    <div class="col-2">Anything else</div>
+                    <div class="col-10">
+                        @if (_showAnythingElse)
+                        {
+                            <p id="show-anything-else-comments-display">@CheckIn.AnythingElse</p>
+                        }
+                        else
+                        {
+                            <button 
+                                id="show-anything-else-comments-button"
+                                class="btn btn-toolbar p-0 fst-italic text-muted"
+                                @onclick="() => _showAnythingElse = true"
+                            >
+                                Click to show
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        if (_showChangelog)
+        {
+            <div class="card-footer">
+                <h4>Changelog</h4>
+                @foreach (var changelogEntry in _changelogEntries)
+                {
+                    <li class="list-group-item">
+                        <MessageListItem Message="changelogEntry"/>
+                    </li>
+                }
+            </div>
+        }
+    }
+</div>

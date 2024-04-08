@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.Components
+@using ScrumBoard.Shared.Inputs
+@using ScrumBoard.Models.Forms.Feedback
+@using ScrumBoard.Models.Forms.Feedback.TemplateBlocks
+<div class="row">
+    <div class="col">
+        <div class="row mb-2 mt-1">
+            <div class="col">
+                <label class="text-muted">
+                    Response Required
+                </label>
+                <InputCheckbox @bind-Value="Question.Required"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label class="text-muted">
+                    Prompt
+                </label>
+                <InputMarkdown class="form-control text-area-expand prompt-input" @bind-Value="Question.Prompt"/>
+                <ValidationMessage id="prompt-validation-message" For="() => Question.Prompt"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public FormTemplateBlockForm FormBlockForm { get; set; }
+
+    private QuestionForm Question => (QuestionForm)FormBlockForm;
+}

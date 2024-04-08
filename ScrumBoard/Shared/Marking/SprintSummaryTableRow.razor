@@ -1,0 +1,44 @@
+@inherits BaseProjectScopedComponent
+@using ScrumBoard.Shared.Widgets
+@using ScrumBoard.Models
+
+<tr>
+    <td>
+        <span>@Metric.GetName()</span>
+    </td>
+    @foreach (var weekStart in WeekStartDatesAscending)
+    {
+        var timeThisWeek = _timePerWeek.Where(x => x.WeekStart == weekStart).ToList();
+        <td>
+            @if (Metric != MarkingTableMetric.ShortestWorklogDuration || !timeThisWeek.Any()) 
+            {
+                <span id="@Metric-week-@GetIsoWeekForDate(weekStart)">@TimeSpan.FromTicks(timeThisWeek.Sum(x => x.Ticks))</span>
+            } 
+            else
+            {
+                <span id="@Metric-week-@GetIsoWeekForDate(weekStart)">@TimeSpan.FromTicks(timeThisWeek.Min(x => x.Ticks))</span>
+            }
+            @if (timeThisWeek.Count(x => x.Ticks > 0) > 1) // more than one sprint had time logged this week
+            {
+                <span class="m-1 marking-summary-tooltip">
+                    <BasicHtmlTooltip IsWiderTooltip="true">
+                        <span>Week @GetIsoWeekForDate(weekStart) spanned multiple sprints.</span>
+                        @if (Metric != MarkingTableMetric.AvgLogDuration)
+                        {
+                           foreach (var weeklyTimeSpan in timeThisWeek)
+                               {
+                                   <br/><span>@weeklyTimeSpan.SprintName: <strong>@TimeSpan.FromTicks(weeklyTimeSpan.Ticks)</strong></span>
+                               } 
+                        }
+                    </BasicHtmlTooltip>
+                </span>
+            }
+        </td>
+    }
+    <td>
+        @if (ShowTotal)
+        {
+            <span id="@Metric-total"><strong>@TimeSpan.FromTicks(CalculateTotalTimeSpentOnMetric(_timePerWeek))</strong></span>
+        }
+    </td>
+</tr>
